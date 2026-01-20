@@ -19,7 +19,6 @@ Metis is a low-level swap primitive providing granular control over transactions
 - ALWAYS get a quote before building a swap transaction
 - ALWAYS include `quoteResponse` from `/quote` in `/swap` request
 - PREFER Ultra API unless you need custom instructions, CPI, or full control
-- USE `restrictIntermediateTokens=true` (default) for route stability
 - MANAGE your own RPC for transaction broadcasting
 
 ## Common Mistakes
@@ -41,6 +40,13 @@ Metis is a low-level swap primitive providing granular control over transactions
 | Maximum MEV protection | **Ultra** |
 | Lowest execution fees | **Ultra** |
 | No complexity management | **Ultra** |
+
+## Alternative Integration Methods
+
+If you need to interact with the Jupiter Swap Aggregator program differently. For on-chain integrations, default to CPI or Flash Fill (workflows below):
+
+- **Swap Instructions**: Use `/swap-instructions` to compose with instructions and build your own transaction. See [Build Your Own Transaction With Instructions](#build-your-own-transaction-with-instructions).
+- **Flash Fill or CPI**: Interact with your own Solana program using the Flash Fill method or Cross Program Invocation. See [Build Your Own Transaction With Flash Fill Or CPI](#build-your-own-transaction-with-flash-fill-or-cpi).
 
 ---
 
@@ -175,9 +181,11 @@ const instructionsResponse = await fetch('https://api.jup.ag/swap/v1/swap-instru
   }),
 }).then(r => r.json());
 
+
 // Build your own transaction with these instructions
 const { computeBudgetInstructions, setupInstructions, swapInstruction, cleanupInstruction } = instructionsResponse;
 ```
+
 
 ---
 
@@ -201,8 +209,9 @@ const programLabels = await fetch(
 ```
 
 ---
+## Workflows
 
-## Complete Flow: Quote → Swap → Send
+### Quote → Swap → Send (end-to-end)
 
 ```typescript
 import { Connection, VersionedTransaction } from '@solana/web3.js';
@@ -252,6 +261,74 @@ async function metisSwap(inputMint: string, outputMint: string, amount: string) 
 }
 ```
 
+Notes:
+- `swap.swapTransaction` is base64; deserialize before signing.
+- Blockhash validity is short; send quickly after signing.
+- `maxRetries` and `skipPreflight` trade speed vs safety.
+
+### Optimize for Landing
+
+Use Metis to estimate priority fees, compute units, and slippage during `/swap`:
+
+```typescript
+const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+  body: JSON.stringify({
+    quoteResponse,
+    userPublicKey: wallet.publicKey.toBase58(),
+    dynamicComputeUnitLimit: true,
+    dynamicSlippage: true,
+    prioritizationFeeLamports: {
+      priorityLevelWithMaxLamports: {
+        maxLamports: 1_000_000,
+        priorityLevel: 'veryHigh',
+      },
+    },
+  }),
+}).then(r => r.json());
+```
+
+### Build Your Own Transaction With Instructions
+
+Use `/swap-instructions` when you want to compose custom instructions or control the transaction layout.
+
+### Workflow
+
+1. Get a quote from `/quote`.
+2. Call `/swap-instructions` with `quoteResponse`.
+3. Deserialize the returned instructions and build a versioned transaction with ALTs.
+4. Sign and send with your own RPC connection.
+
+### Notes
+
+- If you hit transaction size limits, reduce `maxAccounts` on `/quote`.
+- Place `computeBudgetInstructions` before setup, swap, and cleanup instructions.
+
+### Build Your Own Transaction With Flash Fill Or CPI
+
+Use these flows when integrating from an on-chain program.
+
+### CPI Workflow
+
+1. Borrow SOL to open a wSOL account owned by your program.
+2. CPI into Jupiter to swap user input into wSOL (or target mint).
+3. Close the wSOL account and send SOL to the program.
+4. Transfer SOL back to the user.
+
+### Flash Fill Workflow
+
+1. Borrow SOL from the program to open a wSOL account for the borrower.
+2. Swap user input to wSOL using a versioned transaction with ALTs.
+3. Close the wSOL account and send SOL to the borrower.
+4. Repay the borrowed SOL back to the program.
+
+### References
+
+- [jupiter-cpi-swap-example](https://github.com/jup-ag/jupiter-cpi-swap-example)
+- [sol-swap-cpi](https://github.com/jup-ag/sol-swap-cpi)
+- [sol-swap-flash-fill](https://github.com/jup-ag/sol-swap-flash-fill)
+
 ---
 
 ## Adding Integrator Fees
@@ -274,10 +351,29 @@ const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
   body: JSON.stringify({
     userPublicKey: wallet.publicKey.toBase58(),
     quoteResponse: quote,
-    feeAccount: '<your-fee-token-account>', // Must match output mint
+    feeAccount: '<your-fee-token-account>', // ATA must match output mint
   }),
 }).then(r => r.json());
 ```
+
+---
+
+## Tips and Best Practices
+1. **`outAmount` is the best possible output**: The `outAmount` in the quote response refers to the best possible output amount based on the route at the time of the quote. This means `slippageBps` does not affect `outAmount` - it only determines the minimum acceptable output during execution.
+2. **ALWAYS get a quote before building a swap transaction**
+3. **PREFER Ultra API unless you need custom instructions, CPI, or full control**
+4. **USE `restrictIntermediateTokens=true` (default) for route stability**
+5. **MANAGE your own RPC for transaction broadcasting**
+6. Use `maxAccounts` to limit the number of accounts in the transaction if it exceeds the max limit
+
+### Requote with Lower Max Accounts
+
+In some cases where you might be limited or require strict control by adding your own instructions to the swap transaction, you might face issues with exceeding transaction size limit. Use the `maxAccounts` param in the `/quote` endpoint to reduce the total number of accounts used for a swap.
+
+**Key Points:**
+- Start with `maxAccounts=64` and incrementally reduce when requoting
+- Lower max accounts may yield worse routes or no route at all
+- Max raw bytes of a Solana transaction is 1232 bytes
 
 ---
 

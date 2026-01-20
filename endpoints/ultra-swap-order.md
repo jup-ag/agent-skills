@@ -128,7 +128,9 @@ const result = await fetch('https://api.jup.ag/ultra/v1/execute', {
 
 ---
 
-## Complete Flow: Get Order → Sign → Execute
+## Workflows
+
+### Complete Flow: Get Order → Sign → Execute
 
 ```typescript
 import { Keypair, VersionedTransaction } from '@solana/web3.js';
