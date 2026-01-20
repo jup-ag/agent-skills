@@ -47,7 +47,6 @@ https://api.jup.ag/ultra/v1
 | GET | `/order` | Get swap quote + unsigned transaction |
 | POST | `/execute` | Execute signed transaction |
 
-
 ---
 
 
@@ -67,7 +66,7 @@ GET /ultra/v1/order
 | `outputMint` | string | Yes | Output token mint address |
 | `amount` | string | Yes | Amount in native units (before decimals) |
 | `taker` | string | Yes* | User's wallet address (*without taker, no tx returned) |
-| `referralAccount` | string | No | For integrator fees (parameter to pay for networks fees and rent on behalf of your users). See [integrator payer](./ultra-swap-integrator-payer.md) for more details |
+| `referralAccount` | string | No | For integrator fees (parameter to pay for networks fees and rent on behalf of your users). See [integrator payer](./ultra-swap-integrator-payer.md) for more details only if explicitly requested by the user |
 | `closeAuthority` | string | No | Public key of the account that will be the close authority of the token accounts created during the swap |
 | `referralFee` | number | No | Fee in basis points collected from the swap |
 
@@ -96,7 +95,7 @@ POST /ultra/v1/execute
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `signedTransaction` | string | Yes | Base64-encoded signed transaction |
+| `signedTransaction` | string | Yes | Properly Base64-encoded signed transaction. It can NEVER be just a signature|
 | `requestId` | string | Yes | Request ID from `/order` response |
 
 
