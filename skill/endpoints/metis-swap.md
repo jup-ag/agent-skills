@@ -1,6 +1,7 @@
 ---
 title: Metis Swap API
-description: Low-level swap primitive providing granular control over transactions. Designed for builders who need full authority over routing, instructions, and execution.
+description: Low-level swap primitive exposing granular control over swap instructions. Designed for maximum flexibility, transparency, and composability. Beneficial for fine-tuning every aspect of a swap transaction.
+baseUrl: https://api.jup.ag/swap/v1
 notes:
   - Metis v7 is now an independent public good at https://metis.builders. Binary access requires 10,000 staked JUP.
   - See https://dev.jup.ag/blog/metis-v7 for migration details and v7 features.
@@ -293,7 +294,7 @@ const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
 
 Use `/swap-instructions` when you want to compose custom instructions or control the transaction layout.
 
-### Workflow
+### Specific Workflows
 
 1. Get a quote from `/quote`.
 2. Call `/swap-instructions` with `quoteResponse`.
@@ -359,6 +360,7 @@ const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
 ---
 
 ## Tips and Best Practices
+### General
 1. **`outAmount` is the best possible output**: The `outAmount` in the quote response refers to the best possible output amount based on the route at the time of the quote. This means `slippageBps` does not affect `outAmount` - it only determines the minimum acceptable output during execution.
 2. **ALWAYS get a quote before building a swap transaction**
 3. **PREFER Ultra API unless you need custom instructions, CPI, or full control**

@@ -1,18 +1,45 @@
 ---
 title: Fees and Pricing
-description: Fee structures for Jupiter APIs including platform fees, integrator fees, and gasless mechanisms.
+description: Fee structures for Jupiter ULTRA SWAP ORDER and METIS SWAP API including platform fees, integrator fees, and gasless mechanisms.
 ---
 
 # Fees and Pricing
 
 ## Ultra Swap Fees
 
+Ultra has 8-10x lower fees than market average, with only 5 to 10 bps of the swap amount as a fee.
+
 ### Platform Fees
 
-| Pair Type | Fee |
-|-----------|-----|
-| Non-stable pairs | 0.1% |
-| Stable pairs (USDC/USDT) | 0.03% |
+| Token Type | Fee (bps) |
+|------------|-----------|
+| Buying Jupiter tokens (SOL/Stable → JUP/JLP/jupSOL) | 0 |
+| Pegged Assets (LST-LST, Stable-Stable) | 0 |
+| SOL-Stable | 2 |
+| LST-Stable | 5 |
+| Everything else | 10 |
+| New Tokens (within 24 hours token age) | 50 |
+
+**Token support:** SPL and Token2022 tokens are both supported.
+
+### Fee Mint Priority
+
+Ultra decides which mint to take fees in based on this priority:
+
+1. **SOL** - Native Solana
+2. **Stablecoins** - USDC, USDT, etc.
+3. **LSTs** - JupSOL, etc.
+4. **Bluechips** - Large market cap tokens
+5. **Others** - Everything else
+
+Check fees via the `/fees` endpoint:
+
+```bash
+curl -X GET 'https://api.jup.ag/ultra/v1/fees?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=So11111111111111111111111111111111111111112' \
+  -H 'x-api-key: your-api-key'
+```
+
+Or check `feeMint` and `feeBps` fields in the `/order` response.
 
 ### Gasless Support
 
@@ -37,7 +64,9 @@ Metis itself has no platform fee. You manage:
 
 ### Ultra Swap Integrator Fees
 
-Add fees via referral program:
+Add fees via referral program.
+
+**Important:** Ultra takes 20% of your integrator fees.
 
 ```typescript
 const orderParams = new URLSearchParams({
@@ -147,7 +176,8 @@ body: JSON.stringify({
 
 | Feature | Ultra | Metis |
 |---------|-------|-------|
-| Platform fee | 0.03-0.1% | None |
+| Platform fee | 0-50 bps (varies by token type) | None |
+| Integrator fee share | 80% (Ultra takes 20%) | 100% (you keep all) |
 | Priority fee | Auto-optimized | Manual |
 | Gasless | Automatic | Not available |
 | Integrator fee | Via referral | Via platformFeeBps |

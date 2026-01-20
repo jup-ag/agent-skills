@@ -20,50 +20,9 @@ Reference these guidelines when:
 - Optimizing Jupiter API performance
 - Ensuring proper error handling
 
-**Important Migration Notice**: `lite-api.jup.ag` will be deprecated on January 31, 2026. Migrate to `api.jup.ag` with API key authentication. For more information, see [migration](./migration.md)
+**Important Migration Notice**: `lite-api.jup.ag` will be deprecated on January 31, 2026. Migrate to `api.jup.ag` with API key authentication. For more information, see [migration](./about/migration.md)
 
-## Base URLs
-
-| Api Version | URL | Auth Required |
-|------|-----|---------------|
-| Newest (recommended) | `https://api.jup.ag` | Yes (`x-api-key` header) |
-| Lite (deprecated) | `https://lite-api.jup.ag` | No |
-
-## Authentication
-
-All Jupiter APIs require an API key to be passed via the `x-api-key` header (Lite does not require an API key)
-
-### API Key Setup
-
-1. Create account at [portal.jup.ag](https://portal.jup.ag)
-2. Generate API key
-3. Add to requests: `headers: { 'x-api-key': 'YOUR_API_KEY' }`
-
-**Get the API key at**: https://portal.jup.ag
-
-## Rate Limits
-
-### Fixed Rate Limits
-
-IMPORTANT: Ultra swaps are not included
-
-| Tier | Rate Limit |  Window |
-|------|------------|-------|
-| **Free** | 60 requests/minute | 60 seconds |
-| **Pro I** | 600 requests/minute  | 10-second |
-| **Pro II** | 3000 requests/minute  | 10 seconds |
-| **Pro III** | 6000 requests/minute | 10 seconds |
-| **Pro IV** | 30000 requests/minute | 10 seconds |
-
-
-Fixed rate limits are distributed in 3 buckets:
-- Price API Bucket: dedicated for `/price/v3` endpoint 
-- Studio API Bucket: dedicated for `/studio` endpoints 
-- Default Bucket: Used for all other endpoints but Price, Studio and Ultra Swaps
-
-### Dynamic Rate Limits (Ultra API only)
-Ultra scales with your 24h swap volume - no Pro plan needed.
-Base Quota + (Volume × Multiplier) = Your limit
+For environment and infrastructure details, see [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
 
 ## Latency
 ### Optimization Tips
@@ -113,19 +72,8 @@ Each endpoint file contains:
 
 ---
 
-## Quick Reference: Common Parameter Mistakes
-
-| Parameter | Wrong | Correct |
-|-----------|-------|---------|
-| Amount | `"1"` (1 token) | `1000000` (1 USDC with 6 decimals) |
-| Slippage | `5` (5%) | `500` (500 bps = 5%) |
-| SOL mint | Custom address | `So11111111111111111111111111111111111111112` |
-| API endpoint | `quote-api.jup.ag` | `api.jup.ag` |
-
----
-
 ## Additional References
-- [Jupiter API Environment and Infrastructure](./environment-and-infrastructure.md)
-- [Fees and Pricing](./fees-and-pricing.md)
-- [Common Errors and Misconceptions](./common-errors.md)
-- [Ultra Swap API vs Metis Swap API](./ultra-swap-vs-metis-swap.md)
+- [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
+- [Fees and Pricing](./about/fees-and-pricing.md)
+- [Common Errors and Misconceptions](./about/common-errors.md)
+- [Ultra Swap API vs Metis Swap API](./about/ultra-swap-vs-metis-swap.md)

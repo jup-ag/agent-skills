@@ -11,11 +11,14 @@ Jupiter's API is hosted on AWS infrastructure. For optimal latency, deploy your 
 
 ### Recommended Regions
 
-| Region | Location | Latency |
-|--------|----------|---------|
-| `us-east-1` | N. Virginia | Lowest |
-| `us-west-2` | Oregon | Low |
-| `eu-west-1` | Ireland | Medium |
+| Region | Location | Area |
+|--------|----------|------|
+| `us-east-1` | N. Virginia | North America East Coast |
+| `us-east-2` | Ohio | North America Central |
+| `eu-central-1` | Frankfurt | Central Europe |
+| `eu-west-1` | Ireland | Western Europe |
+| `ap-southeast-1` | Singapore | Southeast Asia |
+| `ap-northeast-1` | Tokyo | Northeast Asia |
 
 ## Base URLs
 
@@ -79,7 +82,7 @@ Quota = Base + (24h Volume × Multiplier)
 
 ### 1. Server Collocation
 
-Deploy on AWS `us-east-1` or nearby regions for lowest latency.
+Deploy on AWS `us-east-1` or any recommended region for lowest latency.
 
 ### 2. Connection Pooling
 
@@ -110,12 +113,14 @@ const [quote, holdings, shield] = await Promise.all([
 
 ### 4. Use Appropriate Endpoints
 
-| Need | Endpoint | Latency |
-|------|----------|---------|
-| SOL balance only | `/holdings/{address}/native` | 30ms |
-| Full holdings | `/holdings/{address}` | 70ms |
-| Token search | `/search` | 15ms |
-| Token warnings | `/shield` | 150ms |
+| Need | Endpoint |
+|------|----------|
+| SOL balance only | `/holdings/{address}/native` |
+| Full holdings | `/holdings/{address}` |
+| Token search | `/search` |
+| Token warnings | `/shield` |
+| Ultra swap order | `/order` |
+| Ultra swap execute | `/execute` |
 
 ## Response Codes
 
@@ -126,14 +131,6 @@ const [quote, holdings, shield] = await Promise.all([
 | 401 | Unauthorized | Check API key |
 | 429 | Rate limited | Implement backoff |
 | 500 | Server error | Retry with backoff |
-
-### Rate Limit Headers
-
-```
-X-RateLimit-Limit: 600
-X-RateLimit-Remaining: 598
-X-RateLimit-Reset: 1704067200
-```
 
 ## Error Handling Best Practices
 
@@ -164,20 +161,30 @@ async function jupiterFetch(endpoint: string) {
 
 Check real-time API status at: [status.jup.ag](https://status.jup.ag)
 
-### Latency Benchmarks (P50)
+## Core Programs
 
-| Endpoint | Latency |
-|----------|---------|
-| `/ultra/v1/order` | 300ms |
-| `/ultra/v1/execute` | 700ms (Iris), 2s (JupiterZ) |
-| `/ultra/v1/holdings` | 70ms |
-| `/ultra/v1/shield` | 150ms |
-| `/ultra/v1/search` | 15ms |
-| `/swap/v1/quote` | 200ms |
-| `/price/v3` | 50ms |
+All of Jupiter's programs are deployed on Solana Mainnet only.
+
+| Program | Address |
+|---------|---------|
+| Jupiter Swap | `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4` |
+| Jupiter Referral | `REFER4ZgmyYx9c6He5XfaTMiGfdLwRnkV4RPp9t9iF3` |
+| Jupiter Perpetuals | `PERPHjGBqRHArX4DySjwM6UJHiR3sWAatqfdBS2qQJu` |
+| Jupiter Doves | `DoVEsk76QybCEHQGzkvYPWLQu9gzNoZZZt3TPiL597e` |
+| Jupiter Lend Earn | `jup3YeL8QhtSx1e253b2FDvsMNC87fDrgQZivbrndc9` |
+| Jupiter Lend Borrow | `jupr81YtYssSyPt8jbnGuiWon5f6x9TcDEFxYe3Bdzi` |
+| Jupiter Lend Earn Rewards | `jup7TthsMgcR9Y3L277b8Eo9uboVSmu1utkuXHNUKar` |
+| Jupiter Lend Liquidity | `jupeiUmn818Jg1ekPURTpr4mFo29p46vygyykFJ3wZC` |
+| Jupiter Lend Borrow Oracle | `jupnw4B6Eqs7ft6rxpzYLJZYSnrpRgPcr589n5Kv4oc` |
+| Jupiter Limit Order V2 | `j1o2qRpjcyUwEvwtcfhEQefh773ZgjxcVRry7LDqg5X` |
+| Jupiter DCA | `DCA265Vj8a9CEuX1eb1LWRnDT7uK6q1xMipnNyatn23M` |
+| Jupiter Lock | `LocpQgucEQHbqNABEYvBvwoxCPsSbG91A1QaQhQQqjn` |
+| Jupiter Governance | `GovaE4iu227srtG2s3tZzB4RmWBzw8sTwrCLZz7kN7rY` |
+| Jupiter Voter | `voTpe3tHQ7AjQHMapgSue2HJFAh2cGsdokqN3XqmVSj` |
 
 ## References
 
 - [Portal](https://portal.jup.ag) - API key management
+- [Dev Portal](https://dev.jup.ag) - API documentation
 - [Status](https://status.jup.ag) - API status page
 - [Migration Guide](./migration.md) - Migrate from lite-api

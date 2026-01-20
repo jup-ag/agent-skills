@@ -2,12 +2,15 @@
 
 A skill for AI coding assistants that provides comprehensive Jupiter API specification guidelines and best practices. Enables agents or LLMs to write, review, and refactor Jupiter API related code with knowledge of optimal patterns, proper error handling, and recommended practices for development and integration with the Jupiter API.
 
-## What's Included
+## What does the skill cover
 
 - **SKILL.md** - Main skill file with quick reference and guidelines
-- **_endpoints.md** - Overview of all Jupiter API endpoint categories
 - **endpoints/** - Detailed documentation for each API endpoint
+  - **_endpoints.md** - Overview of all Jupiter API endpoint categories
 - **responses/** - Response examples for each API endpoint
+- **about/** - Documentation for API behaviour, comparisons, and other conceptual topics
+
+## usage
 
 ## API Categories
 
@@ -26,21 +29,13 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 | Send (coming soon) | Token transfers via invite links |
 | Studio (coming soon) | Token creation with Dynamic Bonding Curve |
 
-## Ultra vs Metis
-
-| Use Case | Recommended API |
-|----------|-----------------|
-| Simple swaps, new developers | **Ultra** |
-| Need managed tx landing | **Ultra** |
-| Most trading applications | **Ultra** |
-| Custom tx composition | **Metis** |
-| CPI integration | **Metis** |
-| Specific broadcasting strategies | **Metis** |
-
 ## Installation
 
-TBD
+### Quick Install
 
+```bash
+npx add-skill @jup-ag/jup-skills
+```
 ## License
 
 MIT

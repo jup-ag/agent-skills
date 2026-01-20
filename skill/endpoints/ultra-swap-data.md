@@ -1,26 +1,24 @@
+---
+title: Ultra Swap data API
+description: Jupiter API Data Endpoints providing information on wallet holdings, token information and metadata and associated warnings for specified mint addresses.
+baseUrl: https://api.jup.ag/ultra/v1
+notes:
+  - See `../responses/ultra-swap-data.md` for response examples.
+---
+
 # Ultra Swap Data API
 
-Ultra is Jupiter's flagship trading solution. These endpoints handle data endpoints for tokens and accounts
-
-**Recommended for most use cases.**
-
-## Base URL
-
-```
-https://api.jup.ag/ultra/v1
-```
-
-## Guidelines
-   - NEVER skip error handling for both endpoints
+Jupiter API Data Endpoints providing information on wallet holdings, token information and metadata and associated warnings for specified mint addresses.
 
 ## Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/search` | Search for a token by symbol, name, or mint address |
-| GET | `/shield` | Retrieve token information and associated warnings for the specified mint addresses. |
-| GET | `/holdings` | Get the detailed token holdings of an account. |
+| GET | `/shield` | Retrieve token information and associated warnings for the specified mint addresses |
+| GET | `/holdings` | Get the detailed token holdings of an account |
 | GET | `/mint` | Get token mint information |
+| GET | `/fees` | Get fee info for a token pair |
 
 
 ---
@@ -146,6 +144,37 @@ const mintResponse = await (
 ).json();
 ```
 
+## 5. GET /fees
+
+Get fee information for a token pair before swapping.
+
+```
+GET /ultra/v1/fees
+```
+
+**Query Parameters**:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `inputMint` | string | Yes | Input token mint address |
+| `outputMint` | string | Yes | Output token mint address |
+
+### Example
+
+```typescript
+const feesResponse = await (
+  await fetch(`https://api.jup.ag/ultra/v1/fees?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=So11111111111111111111111111111111111111112`,
+    {
+      headers: {
+        'x-api-key': 'your-api-key',
+      },
+    }
+  )
+).json();
+
+// Returns fee category and bps for the token pair
+```
+
 ---
 
 ## Workflows
@@ -208,7 +237,7 @@ async function safeSwap(mint: string, outputMint: string, wallet: Keypair, amoun
 ---
 
 ## Tips and Best Practices
-
+### General
 1. **Check `/shield`** before displaying unknown tokens to users: Critical warning on token -> Block swap, show warning to user.
 2. **Use `/holdings`** to get wallet balances before initiating swaps
 3. **For large wallets**: Wallets with thousands of token holdings may have slower response times - response time varies depending on the number of token holdings
