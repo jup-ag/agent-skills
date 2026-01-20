@@ -24,7 +24,7 @@ The category ID (in parentheses) is the filename prefix used to group endpoints.
 
 ### 3. Lend (lend)
 
-**Description:** Deposit and withdraw assets to earn yield through the Jupiter Lending Protocol.
+**Description:** Deposit assets into yield-bearing vaults and receive auto-compounding jlTokens. Includes endpoints for deposit, withdraw, mint, redeem, position queries, and earnings tracking.
 
 ### 4. Trigger (trigger)
 

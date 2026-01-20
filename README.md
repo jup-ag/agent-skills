@@ -19,7 +19,7 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 | Ultra Swap Order | Flagship swap API with managed transaction landing and gasless support - recommended for most use cases |
 | Ultra Swap Data | Token search, shield warnings, holdings, and mint information |
 | Metis Swap | Low-level swap API for advanced control and custom transaction composition |
-| Lend (coming soon) | Deposit and withdraw assets to earn yield |
+| Lend | Deposit and withdraw assets to earn yield |
 | Trigger (coming soon) | Limit orders with **price** conditions |
 | Recurring (coming soon) | Dollar-cost averaging (DCA) strategies |
 | Token | Token metadata and search |
@@ -33,7 +33,7 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 ### Quick Install
 
 ```bash
-npx add-skill @jup-ag/jup-skills
+npx skill add jup-ag/jup-skills
 ```
 ## License
 

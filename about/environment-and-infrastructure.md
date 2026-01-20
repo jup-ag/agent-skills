@@ -176,6 +176,19 @@ All of Jupiter's programs are deployed on Solana Mainnet only.
 | Jupiter Governance | `GovaE4iu227srtG2s3tZzB4RmWBzw8sTwrCLZz7kN7rY` |
 | Jupiter Voter | `voTpe3tHQ7AjQHMapgSue2HJFAh2cGsdokqN3XqmVSj` |
 
+
+## Jupiter Lend Program
+
+### Program ID
+
+| Program | Address |
+|---------|---------|
+| Jupiter Lend Earn | `jup3YeL8QhtSx1e253b2FDvsMNC87fDrgQZivbrndc9` |
+| Jupiter Lend Borrow | `jupr81YtYssSyPt8jbnGuiWon5f6x9TcDEFxYe3Bdzi` |
+| Jupiter Lend Earn Rewards | `jup7TthsMgcR9Y3L277b8Eo9uboVSmu1utkuXHNUKar` |
+| Jupiter Lend Liquidity | `jupeiUmn818Jg1ekPURTpr4mFo29p46vygyykFJ3wZC` |
+| Jupiter Lend Borrow Oracle | `jupnw4B6Eqs7ft6rxpzYLJZYSnrpRgPcr589n5Kv4oc` |
+
 ## Monitoring
 
 ### API Status

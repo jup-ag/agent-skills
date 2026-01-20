@@ -1,15 +1,15 @@
 ---
-name: jup-skills
-description: Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API integrations, ensuring optimal performance, proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations, or DeFi integrations on Solana.
+name: integrating-jupiter
+description: Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
 license: MIT
 metadata:
   author: jupiter
   version: "1.0.0"
 ---
 
-# Jupiter API Skill
+# Jupiter API Integration
 
-Comprehensive Jupiter API specification guidelines and best practices for applications integrating with Jupiter's DeFi infrastructure on Solana. This guide covers 10 API categories including swaps, pricing, token data, limit orders, DCA, portfolio tracking, lending, transfers, and token creation.
+Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
 
 ## When to use
 

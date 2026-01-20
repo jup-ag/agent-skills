@@ -236,6 +236,9 @@ const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
 }).then(r => r.json());
 ```
 
+## Lend Fees
+There are no fees to use the Earn Protocol on Jupiter Lend.
+
 ## References
 
 - [Add Fees to Ultra](https://dev.jup.ag/docs/ultra/add-fees-to-ultra)

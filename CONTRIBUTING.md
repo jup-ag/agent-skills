@@ -25,4 +25,7 @@ To document API behavior, comparisons, or other conceptual topics:
 ## Important Guidelines
 
 - **Reference all new files**: Every new file must be referenced in either `SKILL.md` or `_endpoints.md`
-- **Keep files concise**: Files should not exceed 500 lines to maintain skill performance. If content is too long, split it into multiple files with appropriate cross-references
+- ** Add a table of contents to the file**: If the file is longer that 100 lines, add a table of contents to the file. this helps the agent navigate faster and not have to scroll through the entire file.
+- **Keep files concise**: Files should not exceed 500-700 lines to maintain skill performance and not bloat the context window of the agent. If content is too long, split it into multiple files with appropriate cross-references
+- **Assume the agent is brilliant**: Only add context the agent does not already have.
+- **Always keed one level deep directory structure**: Do not create nested directories. Skills scaale on navigation, preventing navigation overhead ensures fast and reliable access to information.
