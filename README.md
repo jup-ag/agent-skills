@@ -33,7 +33,7 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 ### Quick Install
 
 ```bash
-npx add-skill @jup-ag/jup-skills
+npx skill add jup-ag/jup-skills
 ```
 ## License
 
