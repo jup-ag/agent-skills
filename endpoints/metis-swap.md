@@ -2,7 +2,8 @@
 title: Metis Swap API
 description: Low-level swap primitive providing granular control over transactions. Designed for builders who need full authority over routing, instructions, and execution.
 notes:
-  - Metis v7 is now an independent public good at [metis.builders](https://metis.builders). Binary access requires 10,000 staked JUP.
+  - Metis v7 is now an independent public good at https://metis.builders. Binary access requires 10,000 staked JUP.
+  - See https://dev.jup.ag/blog/metis-v7 for migration details and v7 features.
 ---
 
 # Metis Swap API
@@ -23,7 +24,6 @@ Metis is a low-level swap primitive providing granular control over transactions
 
 ## Common Mistakes
 
-- Forgetting to set `userPublicKey` in `/swap` request
 - Not handling `lastValidBlockHeight` for transaction expiry
 - Using `ExactOut` mode with unsupported AMMs
 - Not initializing destination token account before swap
