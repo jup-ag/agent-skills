@@ -1,3 +1,8 @@
+---
+title: Migrate from Lite API
+description: Guide on how to migrate from Lite API to Jupiter API. Lite API will be deprecated on January 31, 2026.
+---
+
 # Migrate from Lite API
 
 ## Overview

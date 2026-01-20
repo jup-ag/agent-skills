@@ -218,6 +218,7 @@ console.log('Body:', JSON.stringify(data, null, 2));
 After getting a signature, check:
 - [Solscan](https://solscan.io)
 - [Solana Explorer](https://explorer.solana.com)
+- [Orb Explorer](https://orbmarkets.io/?category=trending)
 
 ### 4. Test with Small Amounts
 
@@ -225,6 +226,6 @@ Always test integrations with small amounts first.
 
 ## References
 
-- [Ultra Response Codes](./responses/ultra-swap-order.md)
-- [Metis Response Codes](./responses/metis-swap.md)
+- [Ultra Response Codes](../responses/ultra-swap-order.md)
+- [Metis Response Codes](../responses/metis-swap.md)
 - [Jupiter V6 IDL](https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4#programIdl)

@@ -18,7 +18,6 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 |----------|-------------|
 | Ultra Swap Order | Flagship swap API with managed transaction landing and gasless support - recommended for most use cases |
 | Ultra Swap Data | Token search, shield warnings, holdings, and mint information |
-| Ultra Swap Integrator Payer | Pay network fees and rent on behalf of users |
 | Metis Swap | Low-level swap API for advanced control and custom transaction composition |
 | Lend (coming soon) | Deposit and withdraw assets to earn yield |
 | Trigger (coming soon) | Limit orders with **price** conditions |

@@ -1,8 +1,8 @@
 ---
 title: Ultra Swap Order API
-description: Jupiter's flagship trading solution. Handles all trading optimizations, requires no RPC, and provides gasless support. Recommended for most use cases.
+description: Jupiter's recommended by default trading solution. Handles all trading optimizations, requires no RPC, and provides gasless support. Recommended for most use cases.
+baseUrl: https://api.jup.ag/ultra/v1
 notes:
-  - Base URL: https://api.jup.ag/ultra/v1
   - See `../responses/ultra-swap-order.md` for response examples.
 ---
 
@@ -67,7 +67,7 @@ GET /ultra/v1/order
 | `outputMint` | string | Yes | Output token mint address |
 | `amount` | string | Yes | Amount in native units (before decimals) |
 | `taker` | string | Yes* | User's wallet address (*without taker, no tx returned) |
-| `referralAccount` | string | No | For integrator fees (parameter to pay for networks fees and rent on behalf of your users). See [integrator payer](./ultra-swap-integrator-payer.md) for more details only if explicitly requested by the user |
+| `referralAccount` | string | No | For integrator fees (parameter to pay for networks fees and rent on behalf of your users). See [integrator payer](../about/ultra-swap-integrator-payer.md) for more details only if explicitly requested by the user |
 | `closeAuthority` | string | No | Public key of the account that will be the close authority of the token accounts created during the swap |
 | `referralFee` | number | No | Fee in basis points collected from the swap |
 | `slippageBps` | number | No | Slippage tolerance in basis points (0-10000) |

@@ -1,6 +1,6 @@
 ---
 title: Jupiter API Environment and Infrastructure
-description: Infrastructure details, server locations, and optimization tips for Jupiter API integrations.
+description: Infrastructure details, server locations, optimization tips for Jupiter API integrations and resources
 ---
 
 # Jupiter API Environment and Infrastructure
@@ -155,12 +155,6 @@ async function jupiterFetch(endpoint: string) {
 }
 ```
 
-## Monitoring
-
-### API Status
-
-Check real-time API status at: [status.jup.ag](https://status.jup.ag)
-
 ## Core Programs
 
 All of Jupiter's programs are deployed on Solana Mainnet only.
@@ -181,6 +175,12 @@ All of Jupiter's programs are deployed on Solana Mainnet only.
 | Jupiter Lock | `LocpQgucEQHbqNABEYvBvwoxCPsSbG91A1QaQhQQqjn` |
 | Jupiter Governance | `GovaE4iu227srtG2s3tZzB4RmWBzw8sTwrCLZz7kN7rY` |
 | Jupiter Voter | `voTpe3tHQ7AjQHMapgSue2HJFAh2cGsdokqN3XqmVSj` |
+
+## Monitoring
+
+### API Status
+
+Check real-time API status at: [status.jup.ag](https://status.jup.ag)
 
 ## References
 

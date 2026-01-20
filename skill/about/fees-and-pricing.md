@@ -135,7 +135,7 @@ const orderParams = new URLSearchParams({
 
 **Note**: When using `payer`, transaction requires TWO signatures (user + integrator).
 
-See [ultra-swap-integrator-payer.md](./endpoints/ultra-swap-integrator-payer.md) for details.
+See [ultra-swap-integrator-payer.md](./ultra-swap-integrator-payer.md) for details.
 
 ## Priority Fees
 
