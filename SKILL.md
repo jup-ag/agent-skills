@@ -47,7 +47,7 @@ For environment and infrastructure details, see [Jupiter API Environment and Inf
 
 ## How to use
 
-Read individual api endpoint files for detailed explanations and code examples.
+Read individual api endpoint files from `endpoints/` for detailed explanations and code examples.
 
 ```
 endpoints/ultra-swap-order.md
@@ -55,7 +55,7 @@ endpoints/lend-deposit.md
 endpoints/trigger-order.md
 ```
 
-Read individual api endpoint response types for response examples and field descriptions.
+For response examples and field descriptions, refer to the corresponding files in `responses/`.
 
 ```
 responses/ultra-swap-order.md

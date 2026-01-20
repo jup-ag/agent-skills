@@ -1,10 +1,28 @@
 ---
-title: Ultra Swap data API
+title: Ultra Swap Data API
 description: Jupiter API Data Endpoints providing information on wallet holdings, token information and metadata and associated warnings for specified mint addresses.
 baseUrl: https://api.jup.ag/ultra/v1
 notes:
   - See `../responses/ultra-swap-data.md` for response examples.
 ---
+
+## Table of Contents
+
+- [Ultra Swap Data API](#ultra-swap-data-api)
+  - [Endpoints](#endpoints)
+  - [1. GET /search](#1-get-search)
+  - [2. GET /shield](#2-get-shield)
+  - [3. GET /holdings/{address}](#3-get-holdingsaddress)
+  - [4. GET /routers](#4-get-routers)
+  - [Workflows](#workflows)
+    - [Complete Flow: Validate Token Before Swap](#complete-flow-validate-token-before-swap)
+    - [Complete Flow: Check Available Routers](#complete-flow-check-available-routers)
+  - [Tips and Best Practices](#tips-and-best-practices)
+    - [General](#general)
+  - [References](#references)
+
+---
+
 
 # Ultra Swap Data API
 
@@ -37,23 +55,7 @@ GET /ultra/v1/search
 |-----------|------|----------|-------------|
 | `query` | string | Yes | Token symbol, name or mint address for query by . Acepts up to 100 tokens in a single request using a comma separated list.|
 
-
-
-### Example
-
-```typescript
-const searchResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/search?query=So11111111111111111111111111111111111111112`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key',
-      },
-    }
-  )
-).json();
-```
-
-
+See [Complete Workflows](#workflows) for full integration examples.
 
 ## 2. GET /shield
 
@@ -69,22 +71,7 @@ GET /ultra/v1/shield
 |-----------|------|----------|-------------|
 | `mints` | string | Yes | Mint addresses to get warnings for.
 
-
-
-### Example
-
-```typescript
-const shieldResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/shield?mints=So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,someTokenAddressForEducationalPurposes`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key',
-      },
-    }
-  )
-).json();
-```
-
+See [Complete Workflows](#workflows) for full integration examples.
 
 ## 3. GET /holdings/{address}
 
@@ -100,80 +87,19 @@ GET /ultra/v1/holdings/{address}
 |-----------|------|----------|-------------|
 | `address` | string | Yes | Solana wallet address to get holdings for. |
 
+See [Complete Workflows](#workflows) for full integration examples.
 
-### Example
+## 4. GET /routers
 
-```typescript
-const holdingsResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/holdings/3X2LFoTQecbpqCR7G5tL1kczqBKurjKPHhKSZrJ4wgWc`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key',
-      },
-    }
-  )
-).json();
-```
-
-## 4. GET /mint
-
-Get token mint information.
+Request for the list of routers available in the routing engine of Ultra, which is Juno (Jupiter's liquidity engine).
 
 ```
-GET /ultra/v1/mint
+GET /ultra/v1/routers
 ```
 
-**Query Parameters**:
+**Query Parameters**: None
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `address` | string | Yes | Token mint address to get information for. |
-
-
-### Example
-
-```typescript
-const mintResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/mint?address=So11111111111111111111111111111111111111112`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key',
-      },
-    }
-  )
-).json();
-```
-
-## 5. GET /fees
-
-Get fee information for a token pair before swapping.
-
-```
-GET /ultra/v1/fees
-```
-
-**Query Parameters**:
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `inputMint` | string | Yes | Input token mint address |
-| `outputMint` | string | Yes | Output token mint address |
-
-### Example
-
-```typescript
-const feesResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/fees?inputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&outputMint=So11111111111111111111111111111111111111112`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key',
-      },
-    }
-  )
-).json();
-
-// Returns fee category and bps for the token pair
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -234,6 +160,71 @@ async function safeSwap(mint: string, outputMint: string, wallet: Keypair, amoun
 }
 ```
 
+### Complete Flow: Check Available Routers
+
+```typescript
+async function displayAvailableRouters() {
+  // Step 1: Get list of available routers
+  const routers = await fetch(
+    'https://api.jup.ag/ultra/v1/routers',
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+
+  console.log('Available routers:', routers);
+  
+  // Example response structure:
+  // {
+  //   "routers": [
+  //     {
+  //       "id": "iris",
+  //       "name": "Iris",
+  //       "description": "Jupiter's aggregator routing engine"
+  //     },
+  //     {
+  //       "id": "jupiterz",
+  //       "name": "JupiterZ",
+  //       "description": "RFQ-based routing"
+  //     },
+  //     {
+  //       "id": "dflow",
+  //       "name": "DFlow",
+  //       "description": "Order flow auction routing"
+  //     }
+  //   ]
+  // }
+  
+  return routers;
+}
+
+// Use case: Display routing options to users
+async function getSwapWithRouterInfo(inputMint: string, outputMint: string, amount: string) {
+  // Step 1: Check available routers
+  const availableRouters = await fetch(
+    'https://api.jup.ag/ultra/v1/routers',
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+  
+  console.log(`Available routing engines: ${availableRouters.routers.map(r => r.name).join(', ')}`);
+  
+  // Step 2: Get order (Ultra automatically selects best router)
+  const order = await fetch(
+    `https://api.jup.ag/ultra/v1/order?` +
+    `inputMint=${inputMint}&outputMint=${outputMint}` +
+    `&amount=${amount}&taker=${walletAddress}`,
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+  
+  // Step 3: Check which router was used
+  console.log(`Router used for this swap: ${order.router}`);
+  console.log(`Swap type: ${order.swapType}`);
+  
+  // Router will be one of: "iris", "jupiterz", "dflow", or "okx"
+  // swapType will be: "aggregator" or "rfq"
+  
+  return order;
+}
+```
+
 ---
 
 ## Tips and Best Practices
@@ -248,4 +239,4 @@ async function safeSwap(mint: string, outputMint: string, wallet: Keypair, amoun
 ## References
 - [Response Examples](../responses/ultra-swap-data.md)
 - [Ultra Swap API Reference](https://dev.jup.ag/api-reference/ultra)
-
+- [Routing Documentation](https://dev.jup.ag/docs/routing)

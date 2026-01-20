@@ -5,6 +5,31 @@ baseUrl: https://api.jup.ag/ultra/v1
 notes:
   - See `../responses/ultra-swap-order.md` for response examples.
 ---
+## Table of Contents
+
+- [Ultra Swap Order API](#ultra-swap-order-api)
+  - [Base URL](#base-url)
+  - [Guidelines](#guidelines)
+  - [Common Mistakes](#common-mistakes)
+  - [Ultra vs Metis: When to Use](#ultra-vs-metis-when-to-use)
+  - [Endpoints](#endpoints)
+  - [1. GET /order](#1-get-order)
+    - [Manual Mode](#manual-mode)
+      - [Manual Mode Parameters](#manual-mode-parameters)
+  - [2. POST /execute](#2-post-execute)
+  - [Workflows](#workflows)
+    - [Complete Flow: Get Order → Sign → Execute](#complete-flow-get-order--sign--execute)
+    - [Manual Mode Flow: Custom Fees + Jito](#manual-mode-flow-custom-fees--jito)
+  - [Fees](#fees)
+  - [Rate Limits](#rate-limits)
+  - [Tips and Best Practices](#tips-and-best-practices)
+    - [General](#general)
+    - [Manual Mode Tips](#manual-mode-tips)
+    - [When to Increase Fees](#when-to-increase-fees)
+  - [References](#references)
+
+---
+
 
 # Ultra Swap Order API
 
@@ -75,18 +100,7 @@ GET /ultra/v1/order
 | `priorityFeeLamports` | number | No | Priority fee in lamports (must be > 0, only available in [manual mode](https://dev.jup.ag/docs/ultra/manual-mode)) |
 | `jitoTipLamports` | number | No | Jito tip in lamports (minimum 1000, only available in [manual mode](https://dev.jup.ag/docs/ultra/manual-mode)) |
 
-### Example
-
-```typescript
-const orderResponse = await fetch(
-  'https://api.jup.ag/ultra/v1/order' +
-  '?inputMint=So11111111111111111111111111111111111111112' +
-  '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' +
-  '&amount=100000000' +
-  '&taker=' + walletAddress,
-  { headers: { 'x-api-key': API_KEY } }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ### Manual Mode
 
@@ -111,22 +125,7 @@ Manual Mode gives you explicit control over slippage, priority fees, and Jito ti
 | `priorityFeeLamports` | Priority fee for RPC inclusion | Must be > 0 |
 | `jitoTipLamports` | Jito tip for MEV protection | Minimum 1000 lamports |
 
-#### Manual Mode Example
-
-```typescript
-const orderResponse = await fetch(
-  'https://api.jup.ag/ultra/v1/order' +
-  '?inputMint=So11111111111111111111111111111111111111112' +
-  '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' +
-  '&amount=100000000' +
-  '&taker=' + walletAddress +
-  '&slippageBps=100' +                    // 1% slippage
-  '&broadcastFeeType=maxCap' +            // Pay up to specified fees
-  '&priorityFeeLamports=100000' +         // 0.0001 SOL priority fee
-  '&jitoTipLamports=10000',               // 0.00001 SOL Jito tip
-  { headers: { 'x-api-key': API_KEY } }
-).then(r => r.json());
-```
+See [Manual Mode Flow](#manual-mode-flow-custom-fees--jito) in workflows for complete example.
 
 ---
 
@@ -145,33 +144,7 @@ POST /ultra/v1/execute
 | `signedTransaction` | string | Yes | Properly Base64-encoded signed transaction. It can NEVER be just a signature|
 | `requestId` | string | Yes | Request ID from `/order` response |
 
-
-
-### Example
-
-```typescript
-import { VersionedTransaction } from '@solana/web3.js';
-
-// Sign the transaction
-const tx = VersionedTransaction.deserialize(
-  Buffer.from(orderResponse.transaction, 'base64')
-);
-tx.sign([wallet]);
-const signedTx = Buffer.from(tx.serialize()).toString('base64');
-
-// Execute
-const result = await fetch('https://api.jup.ag/ultra/v1/execute', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-  },
-  body: JSON.stringify({
-    signedTransaction: signedTx,
-    requestId: orderResponse.requestId,
-  }),
-}).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -234,7 +207,7 @@ async function ultraSwapManualMode(
     amount,
     taker: wallet.publicKey.toBase58(),
     slippageBps: slippageBps.toString(),
-    broadcastFeeType: 'maxCap',
+    broadcastFeeType: 'maxCap', // Pay up to specified fees
     priorityFeeLamports: priorityFeeLamports.toString(),
     jitoTipLamports: jitoTipLamports.toString(),
   });

@@ -1,7 +1,19 @@
 ---
-title: Lend Liquidation Bot
+title: Jupiter Lend (Juplend) Liquidation Bot
 description: Walkthrough on building a liquidation bot with Jupiter Lend including fetching liquidations, flash loans, and executing liquidations.
 ---
+## Table of Contents
+
+- [Lend Liquidation Bot](#lend-liquidation-bot)
+  - [Prerequisites](#prerequisites)
+  - [Liquidation Flow](#liquidation-flow)
+    - [Fetch Liquidations](#fetch-liquidations)
+    - [Flash Borrow and Payback](#flash-borrow-and-payback)
+    - [Get Liquidation Instructions](#get-liquidation-instructions)
+    - [Get Jupiter Quote and Swap Instructions](#get-jupiter-quote-and-swap-instructions)
+    - [Full Liquidation Bot Example](#full-liquidation-bot-example)
+  - [References](#references)
+
 
 # Lend Liquidation Bot
 
@@ -38,7 +50,7 @@ The liquidation bot follows these steps:
 
 ---
 
-## Fetch Liquidations
+### Fetch Liquidations
 
 By using the SDK, you can fetch all available liquidations.
 
@@ -63,7 +75,7 @@ const fetchLiquidationsByVaultId = await getLiquidations({
 
 ---
 
-## Flash Borrow and Payback
+### Flash Borrow and Payback
 
 By using the SDK, you can flashloan to borrow the debt amount and flash payback what you flash borrowed.
 
@@ -89,7 +101,7 @@ const fetchFlashPaybackIx = await getFlashPaybackIx({
 
 ---
 
-## Get Liquidation Instructions
+### Get Liquidation Instructions
 
 By using the SDK, you can get the liquidation instructions.
 
@@ -104,7 +116,7 @@ const fetchLiquidateIx = await getLiquidateIx({
 
 ---
 
-## Get Jupiter Quote and Swap Instructions
+### Get Jupiter Quote and Swap Instructions
 
 For this step, you will need to request to the Jupiter Swap API to get the quote and swap instructions.
 
@@ -113,7 +125,7 @@ For this step, you will need to request to the Jupiter Swap API to get the quote
 
 ---
 
-## Full Liquidation Bot Example
+### Full Liquidation Bot Example
 
 ```typescript
 import {
@@ -436,5 +448,5 @@ async function runLiquidationBot() {
 - [Lend SDK Guide](./lend-sdk.md)
 - [Lend API Endpoints](../endpoints/lend.md)
 - [Metis Swap API](../endpoints/metis-swap.md)
-- [About Jupiter Lend](./juplend.md)
+- [About Jupiter Lend](https://dev.jup.ag/docs/lend)
 - [Liquidation Documentation](https://dev.jup.ag/docs/lend/liquidation)

@@ -1,7 +1,29 @@
 ---
-title: Lend SDK
-description: Walkthrough on integrating via the Jupiter Lend SDK including instruction methods, CPI context accounts, and read functions.
+title: Jupiter Lend (Juplend) SDK
+description: Walkthrough on integrating Jupiter Lend (Juplend) with the Jupiter Lend SDK including instruction methods, CPI context accounts, and read functions.
 ---
+
+## Table of Contents
+
+- [Lend SDK](#lend-sdk)
+  - [Installation](#installation)
+  - [Setup](#setup)
+  - [Instruction Methods](#instruction-methods)
+    - [Get Deposit Instruction](#get-deposit-instruction)
+    - [Get Withdraw Instruction](#get-withdraw-instruction)
+    - [Example Instruction Usage](#example-instruction-usage)
+  - [CPI (Cross-Program Invocation)](#cpi-cross-program-invocation)
+    - [Deposit Context Accounts](#deposit-context-accounts)
+    - [Withdraw Context Accounts](#withdraw-context-accounts)
+    - [Example CPI Usage](#example-cpi-usage)
+  - [Read Functions](#read-functions)
+    - [Get All Lending Tokens](#get-all-lending-tokens)
+    - [Get Token Details](#get-token-details)
+    - [Get User Position](#get-user-position)
+  - [References](#references)
+
+---
+
 
 # Lend SDK
 

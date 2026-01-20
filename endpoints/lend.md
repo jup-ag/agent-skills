@@ -8,6 +8,42 @@ notes:
   - See `../about/lend-liquidation.md` for building a liquidation bot.
 ---
 
+## Table of Contents
+
+- [Lend API](#lend-api)
+  - [Base URL](#base-url)
+  - [Guidelines](#guidelines)
+  - [Common Mistakes](#common-mistakes)
+  - [Key Concepts](#key-concepts)
+  - [Prerequisites](#prerequisites)
+    - [Dependencies](#dependencies)
+    - [RPC Setup](#rpc-setup)
+    - [Development Wallet](#development-wallet)
+      - [Setup a wallet](#setup-a-wallet)
+    - [Load a wallet](#load-a-wallet)
+  - [Endpoints](#endpoints)
+  - [1. GET /tokens](#1-get-tokens)
+  - [2. GET /positions](#2-get-positions)
+  - [3. GET /earnings](#3-get-earnings)
+  - [4. POST /deposit](#4-post-deposit)
+  - [5. POST /withdraw](#5-post-withdraw)
+  - [6. POST /mint](#6-post-mint)
+  - [7. POST /redeem](#7-post-redeem)
+  - [Instruction Endpoints](#instruction-endpoints)
+  - [Workflows](#workflows)
+    - [Complete Flow: Deposit Assets](#complete-flow-deposit-assets)
+    - [Complete Flow: Withdraw Assets](#complete-flow-withdraw-assets)
+    - [Complete Flow: Mint Shares with Token Selection](#complete-flow-mint-shares-with-token-selection)
+    - [Complete Flow: Redeem Shares](#complete-flow-redeem-shares)
+    - [Complete Flow: Monitor Earnings](#complete-flow-monitor-earnings)
+  - [Tips and Best Practices](#tips-and-best-practices)
+    - [General](#general)
+    - [Decimal Reference](#decimal-reference)
+    - [When to Use Which Endpoint](#when-to-use-which-endpoint)
+  - [References](#references)
+
+---
+
 # Lend API
 
 ## Base URL
@@ -103,20 +139,7 @@ GET /lend/v1/earn/tokens
 
 **Query Parameters**: None
 
-### Example
-
-```typescript
-const tokensResponse = await fetch(
-  'https://api.jup.ag/lend/v1/earn/tokens',
-  { headers: { 'x-api-key': API_KEY } }
-).then(r => r.json());
-
-// Filter for USDC vault
-const usdcVault = tokensResponse.find(
-  t => t.mint === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-);
-console.log(`USDC APY: ${usdcVault.supplyRate}%`);
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -134,14 +157,7 @@ GET /lend/v1/earn/positions
 |-----------|------|----------|-------------|
 | `users` | string | Yes | Comma-separated list of wallet addresses |
 
-### Example
-
-```typescript
-const positionsResponse = await fetch(
-  `https://api.jup.ag/lend/v1/earn/positions?users=${walletAddress}`,
-  { headers: { 'x-api-key': API_KEY } }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -160,14 +176,7 @@ GET /lend/v1/earn/earnings
 | `user` | string | Yes | User wallet address |
 | `positions` | string | No | Comma-separated position identifiers |
 
-### Example
-
-```typescript
-const earningsResponse = await fetch(
-  `https://api.jup.ag/lend/v1/earn/earnings?user=${walletAddress}`,
-  { headers: { 'x-api-key': API_KEY } }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -187,25 +196,7 @@ POST /lend/v1/earn/deposit
 | `amount` | string | Yes | Amount in native units (smallest unit) |
 | `signer` | string | Yes | User's wallet address |
 
-### Example
-
-```typescript
-const depositResponse = await fetch(
-  'https://api.jup.ag/lend/v1/earn/deposit',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    body: JSON.stringify({
-      asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-      amount: '1000000', // 1 USDC (6 decimals)
-      signer: walletAddress,
-    }),
-  }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -225,25 +216,7 @@ POST /lend/v1/earn/withdraw
 | `amount` | string | Yes | Amount in native units (smallest unit) |
 | `signer` | string | Yes | User's wallet address |
 
-### Example
-
-```typescript
-const withdrawResponse = await fetch(
-  'https://api.jup.ag/lend/v1/earn/withdraw',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    body: JSON.stringify({
-      asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-      amount: '500000', // 0.5 USDC
-      signer: walletAddress,
-    }),
-  }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -263,25 +236,7 @@ POST /lend/v1/earn/mint
 | `shares` | string | Yes | Number of shares to mint |
 | `signer` | string | Yes | User's wallet address |
 
-### Example
-
-```typescript
-const mintResponse = await fetch(
-  'https://api.jup.ag/lend/v1/earn/mint',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    body: JSON.stringify({
-      asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-      amount: '100', // 100 shares
-      signer: walletAddress,
-    }),
-  }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -301,25 +256,8 @@ POST /lend/v1/earn/redeem
 | `shares` | string | Yes | Number of shares to redeem |
 | `signer` | string | Yes | User's wallet address |
 
-### Example
+See [Complete Workflows](#workflows) for full integration examples.
 
-```typescript
-const redeemResponse = await fetch(
-  'https://api.jup.ag/lend/v1/earn/redeem',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
-    body: JSON.stringify({
-      asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-      shares: '100', // 100 shares
-      signer: walletAddress,
-    }),
-  }
-).then(r => r.json());
-```
 ---
 
 ## Instruction Endpoints
@@ -337,7 +275,7 @@ These return instruction objects with `programId`, `accounts`, and `data` instea
 
 ## Workflows
 
-### Complete Flow: Deposit Assets (IMPORTANT: Use endpoint /mint when the amount of shares to be obtained from deposit is specified)
+### Complete Flow: Deposit Assets
 
 ```typescript
 import { Keypair, VersionedTransaction, Connection } from '@solana/web3.js';
@@ -347,14 +285,23 @@ async function depositToEarn(
   amount: string,
   wallet: Keypair
 ) {
-  // Step 1. Get available tokens to verify asset is supported
+  // Step 1. Get available tokens and display rates
   const tokens = await fetch(
     'https://api.jup.ag/lend/v1/earn/tokens',
     { headers: { 'x-api-key': API_KEY } }
   ).then(r => r.json());
 
+  // Display available tokens with APY rates
+  console.log('Available tokens:');
+  tokens.forEach(token => {
+    console.log(`${token.symbol}: ${token.supplyRate}% APY (${token.rewardsRate}% rewards)`);
+  });
+
+  // Verify asset is supported
   const vault = tokens.find(t => t.mint === asset);
   if (!vault) throw new Error('Asset not supported');
+  
+  console.log(`Depositing to ${vault.symbol} with ${vault.supplyRate}% APY`);
 
   // Step 2. Create deposit transaction
   const depositResponse = await fetch(
@@ -398,7 +345,7 @@ async function depositToEarn(
 }
 ```
 
-### Complete Flow: Withdraw Assets (IMPORTANT: Use endpoint /redeem when the amount of shares to be withdrawed/burned is specified)
+### Complete Flow: Withdraw Assets
 
 ```typescript
 async function withdrawFromEarn(
@@ -455,6 +402,168 @@ transaction.sign([wallet]);
   console.log(`Transaction sent: https://solscan.io/tx/${signature}`);
    
   return signature;
+}
+```
+
+### Complete Flow: Mint Shares with Token Selection
+
+```typescript
+import { Keypair, VersionedTransaction, Connection } from '@solana/web3.js';
+
+async function mintSharesWithSelection(wallet: Keypair) {
+  // Step 1: Check available tokens and their rates
+  const tokens = await fetch(
+    'https://api.jup.ag/lend/v1/earn/tokens',
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+
+  // Display tokens with rates for user selection
+  console.log('Available tokens:');
+  tokens.forEach(token => {
+    console.log(`${token.symbol}: ${token.supplyRate}% APY (${token.rewardsRate}% rewards)`);
+    console.log(`  Total Supply: ${token.totalSupply}, Available: ${token.availableLiquidity}`);
+  });
+
+  // Step 2: User selects token and specifies shares
+  const selectedAsset = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC
+  const shares = '1000000'; // 1M shares
+
+  // Step 3: Mint shares
+  const mintResponse = await fetch(
+    'https://api.jup.ag/lend/v1/earn/mint',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+      body: JSON.stringify({
+        asset: selectedAsset,
+        shares,
+        signer: wallet.publicKey.toBase58()
+      }),
+    }
+  ).then(r => r.json());
+
+  // Step 4: Sign and send transaction
+  const transaction = VersionedTransaction.deserialize(
+    Buffer.from(mintResponse.transaction, 'base64')
+  );
+  transaction.sign([wallet]);
+  
+  const connection = new Connection(RPC_URL);
+  const transactionBinary = transaction.serialize();
+
+  const blockhashInfo = await connection.getLatestBlockhashAndContext({
+    commitment: 'processed',
+  });
+
+  const signature = await connection.sendRawTransaction(transactionBinary, {
+    maxRetries: 0,
+    skipPreflight: true,
+  });
+
+  console.log(`Minted ${shares} shares: https://solscan.io/tx/${signature}`);
+  return signature;
+}
+```
+
+### Complete Flow: Redeem Shares
+
+```typescript
+async function redeemShares(
+  asset: string,
+  shares: string,
+  wallet: Keypair
+) {
+  // Step 1: Check current position
+  const positions = await fetch(
+    `https://api.jup.ag/lend/v1/earn/positions?users=${wallet.publicKey}`,
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+
+  const position = positions.find(p => p.token.mint === asset);
+  if (!position) throw new Error('No position found');
+  
+  console.log(`Current shares: ${position.shares}`);
+  console.log(`Underlying assets: ${position.underlyingAssets}`);
+  console.log(`Redeeming ${shares} shares...`);
+
+  // Step 2: Redeem shares
+  const redeemResponse = await fetch(
+    'https://api.jup.ag/lend/v1/earn/redeem',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+      body: JSON.stringify({
+        asset,
+        shares,
+        signer: wallet.publicKey.toBase58()
+      }),
+    }
+  ).then(r => r.json());
+
+  // Step 3: Sign and send transaction
+  const transaction = VersionedTransaction.deserialize(
+    Buffer.from(redeemResponse.transaction, 'base64')
+  );
+  transaction.sign([wallet]);
+  
+  const connection = new Connection(RPC_URL);
+  const transactionBinary = transaction.serialize();
+
+  const blockhashInfo = await connection.getLatestBlockhashAndContext({
+    commitment: 'processed',
+  });
+
+  const signature = await connection.sendRawTransaction(transactionBinary, {
+    maxRetries: 0,
+    skipPreflight: true,
+  });
+
+  console.log(`Redeemed ${shares} shares: https://solscan.io/tx/${signature}`);
+  return signature;
+}
+```
+
+### Complete Flow: Monitor Earnings
+
+```typescript
+async function monitorEarnings(walletAddress: string) {
+  // Step 1: Get user positions
+  const positions = await fetch(
+    `https://api.jup.ag/lend/v1/earn/positions?users=${walletAddress}`,
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+
+  console.log('Your positions:');
+  positions.forEach(pos => {
+    console.log(`${pos.token.symbol}:`);
+    console.log(`  Shares: ${pos.shares}`);
+    console.log(`  Underlying Assets: ${pos.underlyingAssets}`);
+    console.log(`  Balance: ${pos.underlyingBalance}`);
+  });
+
+  // Step 2: Get earnings for all positions
+  const earnings = await fetch(
+    `https://api.jup.ag/lend/v1/earn/earnings?user=${walletAddress}`,
+    { headers: { 'x-api-key': API_KEY } }
+  ).then(r => r.json());
+
+  console.log('\nEarnings Summary:');
+  earnings.positions.forEach(pos => {
+    console.log(`${pos.mint}:`);
+    console.log(`  Total Deposited: ${pos.totalDeposited}`);
+    console.log(`  Current Value: ${pos.currentValue}`);
+    console.log(`  Earnings: ${pos.earnings} ($${pos.earningsUsd})`);
+  });
+  
+  console.log(`\nTotal Earnings: $${earnings.totalEarningsUsd}`);
+  
+  return { positions, earnings };
 }
 ```
 
