@@ -1,15 +1,15 @@
 ---
-name: jup-skills
-description: Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API integrations, ensuring optimal performance, proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations, or DeFi integrations on Solana.
+name: integrating-jupiter
+description: Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
 license: MIT
 metadata:
   author: jupiter
   version: "1.0.0"
 ---
 
-# Jupiter API Skill
+# Jupiter API Integration
 
-Comprehensive Jupiter API specification guidelines and best practices for applications integrating with Jupiter's DeFi infrastructure on Solana. This guide covers 10 API categories including swaps, pricing, token data, limit orders, DCA, portfolio tracking, lending, transfers, and token creation.
+Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
 
 ## When to use
 
@@ -47,7 +47,7 @@ For environment and infrastructure details, see [Jupiter API Environment and Inf
 
 ## How to use
 
-Read individual api endpoint files for detailed explanations and code examples.
+Read individual api endpoint files from `endpoints/` for detailed explanations and code examples.
 
 ```
 endpoints/ultra-swap-order.md
@@ -55,7 +55,7 @@ endpoints/lend-deposit.md
 endpoints/trigger-order.md
 ```
 
-Read individual api endpoint response types for response examples and field descriptions.
+For response examples and field descriptions, refer to the corresponding files in `responses/`.
 
 ```
 responses/ultra-swap-order.md

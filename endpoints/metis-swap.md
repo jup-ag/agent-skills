@@ -7,6 +7,41 @@ notes:
   - See https://dev.jup.ag/blog/metis-v7 for migration details and v7 features.
 ---
 
+## Table of Contents
+
+- [Metis Swap API](#metis-swap-api)
+  - [Guidelines](#guidelines)
+  - [Common Mistakes](#common-mistakes)
+  - [When to Use Metis vs Ultra](#when-to-use-metis-vs-ultra)
+  - [Alternative Integration Methods](#alternative-integration-methods)
+  - [Endpoints](#endpoints)
+  - [1. GET /quote](#1-get-quote)
+    - [Query Parameters](#query-parameters)
+  - [2. POST /swap](#2-post-swap)
+    - [Request Body](#request-body)
+  - [3. POST /swap-instructions](#3-post-swap-instructions)
+    - [Request Body](#request-body-1)
+    - [Response Fields](#response-fields)
+  - [4. GET /program-id-to-label](#4-get-program-id-to-label)
+  - [Workflows](#workflows)
+    - [Quote → Swap → Send (end-to-end)](#quote--swap--send-end-to-end)
+    - [Optimize for Landing](#optimize-for-landing)
+    - [Build Your Own Transaction With Instructions](#build-your-own-transaction-with-instructions)
+    - [Specific Workflows](#specific-workflows)
+      - [Build Your Own Transaction With Flash Fill Or CPI](#build-your-own-transaction-with-flash-fill-or-cpi)
+        - [CPI Workflow](#cpi-workflow)
+        - [Flash Fill Workflow](#flash-fill-workflow)
+    - [References](#references)
+  - [Adding Integrator Fees](#adding-integrator-fees)
+  - [Tips and Best Practices](#tips-and-best-practices)
+    - [General](#general)
+    - [Requote with Lower Max Accounts](#requote-with-lower-max-accounts)
+  - [References](#references-1)
+
+---
+
+
+
 # Metis Swap API
 
 Metis is a low-level swap primitive providing granular control over transactions. Designed for builders who need full authority over routing, instructions, and execution.
@@ -87,18 +122,7 @@ GET /swap/v1/quote
 | `platformFeeBps` | number | No | Integrator fee in basis points |
 | `maxAccounts` | number | No | Max accounts in transaction (default: 64) |
 
-### Example
-
-```typescript
-const quoteResponse = await fetch(
-  'https://api.jup.ag/swap/v1/quote' +
-  '?inputMint=So11111111111111111111111111111111111111112' +
-  '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' +
-  '&amount=100000000' +
-  '&slippageBps=50',
-  { headers: { 'x-api-key': 'your-api-key' } }
-).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -125,23 +149,7 @@ POST /swap/v1/swap
 | `dynamicComputeUnitLimit` | boolean | No | Simulate to get exact compute units |
 | `skipUserAccountsRpcCalls` | boolean | No | Skip RPC calls for user accounts |
 
-### Example
-
-```typescript
-const swapResponse = await fetch('https://api.jup.ag/swap/v1/swap', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'your-api-key',
-  },
-  body: JSON.stringify({
-    userPublicKey: wallet.publicKey.toBase58(),
-    quoteResponse,
-    wrapAndUnwrapSol: true,
-    prioritizationFeeLamports: 'auto',
-  }),
-}).then(r => r.json());
-```
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -167,26 +175,7 @@ Same as `/swap` endpoint.
 | `cleanupInstruction` | object | Cleanup instruction (unwrap SOL, etc.) |
 | `addressLookupTableAddresses` | array | ALT addresses for versioned transactions |
 
-### Example
-
-```typescript
-const instructionsResponse = await fetch('https://api.jup.ag/swap/v1/swap-instructions', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'your-api-key',
-  },
-  body: JSON.stringify({
-    userPublicKey: wallet.publicKey.toBase58(),
-    quoteResponse,
-  }),
-}).then(r => r.json());
-
-
-// Build your own transaction with these instructions
-const { computeBudgetInstructions, setupInstructions, swapInstruction, cleanupInstruction } = instructionsResponse;
-```
-
+See [Complete Workflows](#workflows) for full integration examples.
 
 ---
 
@@ -198,16 +187,7 @@ Map program IDs to DEX labels for error handling and filtering.
 GET /swap/v1/program-id-to-label
 ```
 
-### Example
-
-```typescript
-const programLabels = await fetch(
-  'https://api.jup.ag/swap/v1/program-id-to-label',
-  { headers: { 'x-api-key': 'your-api-key' } }
-).then(r => r.json());
-
-// Returns: { "programId": "DEX Label", ... }
-```
+Returns a mapping of program IDs to DEX labels for error handling and filtering.
 
 ---
 ## Workflows
@@ -301,23 +281,18 @@ Use `/swap-instructions` when you want to compose custom instructions or control
 3. Deserialize the returned instructions and build a versioned transaction with ALTs.
 4. Sign and send with your own RPC connection.
 
-### Notes
-
-- If you hit transaction size limits, reduce `maxAccounts` on `/quote`.
-- Place `computeBudgetInstructions` before setup, swap, and cleanup instructions.
-
-### Build Your Own Transaction With Flash Fill Or CPI
+#### Build Your Own Transaction With Flash Fill Or CPI
 
 Use these flows when integrating from an on-chain program.
 
-### CPI Workflow
+##### CPI Workflow
 
 1. Borrow SOL to open a wSOL account owned by your program.
 2. CPI into Jupiter to swap user input into wSOL (or target mint).
 3. Close the wSOL account and send SOL to the program.
 4. Transfer SOL back to the user.
 
-### Flash Fill Workflow
+##### Flash Fill Workflow
 
 1. Borrow SOL from the program to open a wSOL account for the borrower.
 2. Swap user input to wSOL using a versioned transaction with ALTs.
@@ -366,7 +341,9 @@ const swap = await fetch('https://api.jup.ag/swap/v1/swap', {
 3. **PREFER Ultra API unless you need custom instructions, CPI, or full control**
 4. **USE `restrictIntermediateTokens=true` (default) for route stability**
 5. **MANAGE your own RPC for transaction broadcasting**
-6. Use `maxAccounts` to limit the number of accounts in the transaction if it exceeds the max limit
+7. **Handle transaction size limits**: If you hit transaction size limits, reduce `maxAccounts` on `/quote`.
+8. **Place compute budget instructions correctly**: Place `computeBudgetInstructions` before setup, swap, and cleanup instructions.
+
 
 ### Requote with Lower Max Accounts
 
