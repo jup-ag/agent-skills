@@ -7,11 +7,11 @@ metadata:
   version: "1.0.0"
 ---
 
-# Jupiter API best practices
+# Jupiter API Skill
 
 Comprehensive Jupiter API specification guidelines and best practices for applications integrating with Jupiter's DeFi infrastructure on Solana. This guide covers 10 API categories including swaps, pricing, token data, limit orders, DCA, portfolio tracking, lending, transfers, and token creation.
 
-## When to Apply
+## When to use
 
 Reference these guidelines when: 
 - Writing new Jupiter API integrations
@@ -20,39 +20,71 @@ Reference these guidelines when:
 - Optimizing Jupiter API performance
 - Ensuring proper error handling
 
+**Important Migration Notice**: `lite-api.jup.ag` will be deprecated on January 31, 2026. Migrate to `api.jup.ag` with API key authentication. For more information, see [migration](./migration.md)
 
-## Prerequisites
-### Authentication
+## Base URLs
+
+| Api Version | URL | Auth Required |
+|------|-----|---------------|
+| Newest (recommended) | `https://api.jup.ag` | Yes (`x-api-key` header) |
+| Lite (deprecated) | `https://lite-api.jup.ag` | No |
+
+## Authentication
 
 All Jupiter APIs require an API key passed via the `x-api-key` header.
 
-```
-x-api-key: YOUR_API_KEY
-```
+### API Key Setup
+
+1. Create account at [portal.jup.ag](https://portal.jup.ag)
+2. Generate API key
+3. Add to requests: `headers: { 'x-api-key': 'YOUR_API_KEY }`
 
 **Get the API key at**: https://portal.jup.ag
 
-### Rate Limits
+## Rate Limits
 
-| Tier | Rate Limit | Notes |
+### Fixed Rate Limits
+
+IMPORTANT: Ultra swaps are not included
+
+| Tier | Rate Limit |  Window |
 |------|------------|-------|
-| **Free** | 60 requests/minute | 60-second sliding window |
-| **Pro** | 100-5000 requests/10 seconds | Based on tier purchased |
-| **Ultra** | Dynamic | Scales with executed swap volume |
+| **Free** | 60 requests/minute | 60 seconds |
+| **Pro I** | 600 requests/minute  | 10-second |
+| **Pro II** | 3000 requests/minute  | 10 seconds |
+| **Pro III** | 6000 requests/minute | 10 seconds |
+| **Pro IV** | 30000 requests/minute | 10 seconds |
+
+
+Fixed rate limits are distributed in 3 buckets:
+- Price API Bucket: dedicated for `/price/v3` endpoint 
+- Studio API Bucket: decicated for `/studio` endpoints 
+- Default Bucket: Used for all other endpoints but Price, Studio and Ultra Swaps
+
+### Dynamic Rate Limits (Ultra API only)
+Ultra scales with your 24h swap volume - no Pro plan needed.
+Base Quota + (Volume × Multiplier) = Your limit
+
+## Latency
+### Optimization Tips
+- Server Collocation: Deploy services on the same AWS regions as Jupiter's API Gateway
+- Avoid complex queries
+- User the most direct endpoint for the data you need
 
 ---
 
 ## Quick API Overview
-### 1. Ultra Swap API - Flagship swap API - recommended for most use cases
-### 2. Metis Swap API - Low-level swap API for advanced control 
-### 3. Price V3 API - Token prices (V2 is deprecated)
-### 4. Tokens V2 API - Token information and search (V1 is deprecated) 
-### 5. Trigger (Limit Order)API -  Limit orders
-### 6. Recurring (DCA Order) API - DCA / recurring orders
-### 7. Portfolio API - Defi wallet positions across protocols
-### 8. Lend API -  Lending/earning operations
-### 9. Send API - Token transfers via invite links
-### 10. Studio API - Token creation (Dynamic Bonding Curve)
+### 1. Ultra Swap Order (ultra-swap-order) API - Flagship swap API - recommended for most use cases
+### 2. Ultra Swap Data Endpoints (ultra-swap-data) API - Get data about a token and its mint information, get the details about the detailed token holdings of an account and retrieve token information and associated warnings for the specified mint addresses.
+### 3. Metis Swap (metis-swap) API - Low-level swap API for advanced control 
+### 4. Price V3 (price) API - Token prices (V2 is deprecated)
+### 5. Tokens V2 (token) API - Token information and search (V1 is deprecated) 
+### 6. Trigger (trigger) API -  Limit orders
+### 7. Recurring (recurring) API - DCA / recurring orders
+### 8. Portfolio (portfolio) API - Defi wallet positions across protocols
+### 9. Lend (lend) API -  Lending/earning operations
+### 10. Send (send) API - Token transfers via invite links
+### 11. Studio (studio) API - Token creation (Dynamic Bonding Curve)
 
 ## How to use
 Read invidual api endpoint files for detailed explanations and code examples.
@@ -63,8 +95,17 @@ endpoint/lend-deposit.md
 endpoint/trigger-order.md
 ```
 
+Read individual api endpoint response types 
+
+```
+response/ultra-swap-order.md
+response/lend-deposit.md
+response/trigger-order.md
+```
+
 Each endpoint file contains:
 - Brief explanation of the endpoint functionality
+- Workflows using the endpoint
 - Tips and tricks for using the endpoint
 - Correct code example with explanation
 - Additional context and references
