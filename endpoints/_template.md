@@ -6,6 +6,25 @@ notes:
   - See `../responses/[response-file].md` for response examples.
 ---
 
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [API Name](#api-name)
+  - [Base URL](#base-url)
+  - [Guidelines](#guidelines)
+  - [Common Mistakes](#common-mistakes)
+  - [Endpoints](#endpoints)
+  - [1. METHOD /endpoint1](#1-method-endpoint1)
+    - [Example](#example)
+  - [2. METHOD /endpoint2](#2-method-endpoint2)
+    - [Example](#example-1)
+  - [Workflows](#workflows)
+    - [Complete Flow: Primary Workflow Name](#complete-flow-primary-workflow-name)
+    - [Specific Workflow Name: Use Case](#specific-workflow-name-use-case)
+  - [Tips and Best Practices](#tips-and-best-practices)
+    - [General](#general)
+    - [Category-specific Tips](#category-specific-tips)
+  - [References](#references)
+
 # API Name
 
 ## Base URL
