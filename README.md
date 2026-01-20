@@ -24,7 +24,7 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 | Recurring (coming soon) | Dollar-cost averaging (DCA) strategies |
 | Token | Token metadata and search |
 | Price | Real-time and historical pricing |
-| Portfolio (coming soon) | DeFi wallet positions across protocols |
+| Portfolio | DeFi wallet positions across protocols |
 | Send (coming soon) | Token transfers via invite links |
 | Studio (coming soon) | Token creation with Dynamic Bonding Curve |
 

@@ -40,7 +40,7 @@ For environment and infrastructure details, see [Jupiter API Environment and Inf
 ### 5. Tokens V2 (`token`) API - Token information and search (V1 is deprecated) 
 ### 6. Trigger (`trigger`) API -  Limit orders
 ### 7. Recurring (`recurring`) API - DCA / recurring orders
-### 8. Portfolio (`portfolio`) API - Defi wallet positions across protocols
+### 8. Portfolio (`portfolio`) API - Track wallet positions, balances, and JUP staking across Jupiter platforms
 ### 9. Lend (`lend`) API -  Lending/earning operations
 ### 10. Send (`send`) API - Token transfers via invite links
 ### 11. Studio (`studio`) API - Token creation (Dynamic Bonding Curve)
@@ -51,6 +51,7 @@ Read individual api endpoint files from `endpoints/` for detailed explanations a
 
 ```
 endpoints/ultra-swap-order.md
+endpoints/portfolio.md
 endpoints/lend-deposit.md
 endpoints/trigger-order.md
 ```
@@ -59,6 +60,7 @@ For response examples and field descriptions, refer to the corresponding files i
 
 ```
 responses/ultra-swap-order.md
+responses/portfolio.md
 responses/lend-deposit.md
 responses/trigger-order.md
 ```

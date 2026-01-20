@@ -44,7 +44,7 @@ The category ID (in parentheses) is the filename prefix used to group endpoints.
 
 ### 8. Portfolio (portfolio)
 
-**Description:** Track DeFi wallet positions across protocols and view aggregated portfolio data.
+**Description:** Track DeFi wallet positions across Jupiter platforms and view aggregated portfolio data. Query user positions, balances, and staking information across multiple DeFi platforms and protocols.
 
 ### 9. Send (send)
 
