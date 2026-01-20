@@ -3,7 +3,7 @@ title: Ultra Swap Order API
 description: Jupiter's flagship trading solution. Handles all trading optimizations, requires no RPC, and provides gasless support. Recommended for most use cases.
 notes:
   - Base URL: https://api.jup.ag/ultra/v1
-  - See `./../responses/ultra-swap-order.md` for response examples.
+  - See `../responses/ultra-swap-order.md` for response examples.
 ---
 
 # Ultra Swap Order API
@@ -203,7 +203,7 @@ Quota = Base + (24h Volume × Multiplier)
 
 
 ## References
-- [Response Examples](/responses/ultra-swap-order.md)
+- [Response Examples](../responses/ultra-swap-order.md)
 - [Ultra Swap API Reference](https://dev.jup.ag/api-reference/ultra)
 - [Ultra V3 Blog](https://dev.jup.ag/blog/ultra-v3)
 - [Add Fees to Ultra Swap](https://dev.jup.ag/docs/ultra/add-fees-to-ultra)

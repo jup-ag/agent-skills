@@ -92,25 +92,55 @@ const shieldResponse = await (
 ```
 
 
-## . GET /holdings
+## 3. GET /holdings/{address}
 
-Request for token balances of an account including token account information
+Request for token balances of an account including token account information.
+
 ```
-GET /ultra/v1/shield
+GET /ultra/v1/holdings/{address}
+```
+
+**Path Parameters**:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Solana wallet address to get holdings for. |
+
+
+### Example
+
+```typescript
+const holdingsResponse = await (
+  await fetch(`https://api.jup.ag/ultra/v1/holdings/3X2LFoTQecbpqCR7G5tL1kczqBKurjKPHhKSZrJ4wgWc`,
+    {
+      headers: {
+        'x-api-key': 'your-api-key',
+      },
+    }
+  )
+).json();
+```
+
+## 4. GET /mint
+
+Get token mint information.
+
+```
+GET /ultra/v1/mint
 ```
 
 **Query Parameters**:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `mints` | string | Yes | Mint addresses to get warnings for.
+| `address` | string | Yes | Token mint address to get information for. |
 
 
 ### Example
 
 ```typescript
-const shieldResponse = await (
-  await fetch(`https://api.jup.ag/ultra/v1/shield?mints=So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,someTokenAddressForEducationalPurposes`,
+const mintResponse = await (
+  await fetch(`https://api.jup.ag/ultra/v1/mint?address=So11111111111111111111111111111111111111112`,
     {
       headers: {
         'x-api-key': 'your-api-key',
@@ -136,6 +166,6 @@ const shieldResponse = await (
 
 
 ## References
-- [Response Examples](/responses/ultra-swap-data.md)
+- [Response Examples](../responses/ultra-swap-data.md)
 - [Ultra Swap API Reference](https://dev.jup.ag/api-reference/ultra)
 

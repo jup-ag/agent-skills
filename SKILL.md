@@ -31,13 +31,13 @@ Reference these guidelines when:
 
 ## Authentication
 
-All Jupiter APIs require an API key passed via the `x-api-key` header.
+All Jupiter APIs require an API key to be passed via the `x-api-key` header (Lite does not require an API key)
 
 ### API Key Setup
 
 1. Create account at [portal.jup.ag](https://portal.jup.ag)
 2. Generate API key
-3. Add to requests: `headers: { 'x-api-key': 'YOUR_API_KEY }`
+3. Add to requests: `headers: { 'x-api-key': 'YOUR_API_KEY' }`
 
 **Get the API key at**: https://portal.jup.ag
 
@@ -58,7 +58,7 @@ IMPORTANT: Ultra swaps are not included
 
 Fixed rate limits are distributed in 3 buckets:
 - Price API Bucket: dedicated for `/price/v3` endpoint 
-- Studio API Bucket: decicated for `/studio` endpoints 
+- Studio API Bucket: dedicated for `/studio` endpoints 
 - Default Bucket: Used for all other endpoints but Price, Studio and Ultra Swaps
 
 ### Dynamic Rate Limits (Ultra API only)
@@ -69,38 +69,39 @@ Base Quota + (Volume × Multiplier) = Your limit
 ### Optimization Tips
 - Server Collocation: Deploy services on the same AWS regions as Jupiter's API Gateway
 - Avoid complex queries
-- User the most direct endpoint for the data you need
+- Use the most direct endpoint for the data you need
 
 ---
 
 ## Quick API Overview
-### 1. Ultra Swap Order (ultra-swap-order) API - Flagship swap API - recommended for most use cases
-### 2. Ultra Swap Data Endpoints (ultra-swap-data) API - Get data about a token and its mint information, get the details about the detailed token holdings of an account and retrieve token information and associated warnings for the specified mint addresses.
-### 3. Metis Swap (metis-swap) API - Low-level swap API for advanced control 
-### 4. Price V3 (price) API - Token prices (V2 is deprecated)
-### 5. Tokens V2 (token) API - Token information and search (V1 is deprecated) 
-### 6. Trigger (trigger) API -  Limit orders
-### 7. Recurring (recurring) API - DCA / recurring orders
-### 8. Portfolio (portfolio) API - Defi wallet positions across protocols
-### 9. Lend (lend) API -  Lending/earning operations
-### 10. Send (send) API - Token transfers via invite links
-### 11. Studio (studio) API - Token creation (Dynamic Bonding Curve)
+### 1. Ultra Swap Order (`ultra-swap-order`) API - Flagship swap API - recommended for most use cases
+### 2. Ultra Swap Data Endpoints (`ultra-swap-data`) API - Get data about a token and its mint information, the details about the detailed token holdings of an account or retrieve token information and associated warnings for the specified mint addresses.
+### 3. Metis Swap (`metis-swap`) API - Low-level swap API for advanced control 
+### 4. Price V3 (`price`) API - Token prices (V2 is deprecated)
+### 5. Tokens V2 (`token`) API - Token information and search (V1 is deprecated) 
+### 6. Trigger (`trigger`) API -  Limit orders
+### 7. Recurring (`recurring`) API - DCA / recurring orders
+### 8. Portfolio (`portfolio`) API - Defi wallet positions across protocols
+### 9. Lend (`lend`) API -  Lending/earning operations
+### 10. Send (`send`) API - Token transfers via invite links
+### 11. Studio (`studio`) API - Token creation (Dynamic Bonding Curve)
 
 ## How to use
-Read invidual api endpoint files for detailed explanations and code examples.
+
+Read individual api endpoint files for detailed explanations and code examples.
 
 ```
-endpoint/ultra-swap-order.md
-endpoint/lend-deposit.md
-endpoint/trigger-order.md
+endpoints/ultra-swap-order.md
+endpoints/lend-deposit.md
+endpoints/trigger-order.md
 ```
 
-Read individual api endpoint response types 
+Read individual api endpoint response types for response examples and field descriptions.
 
 ```
-response/ultra-swap-order.md
-response/lend-deposit.md
-response/trigger-order.md
+responses/ultra-swap-order.md
+responses/lend-deposit.md
+responses/trigger-order.md
 ```
 
 Each endpoint file contains:
@@ -110,6 +111,21 @@ Each endpoint file contains:
 - Correct code example with explanation
 - Additional context and references
 
-## Additional Features
-- Jupiter Lock 
-- Jupiter Routing Engines
+---
+
+## Quick Reference: Common Parameter Mistakes
+
+| Parameter | Wrong | Correct |
+|-----------|-------|---------|
+| Amount | `"1"` (1 token) | `1000000` (1 USDC with 6 decimals) |
+| Slippage | `5` (5%) | `500` (500 bps = 5%) |
+| SOL mint | Custom address | `So11111111111111111111111111111111111111112` |
+| API endpoint | `quote-api.jup.ag` | `api.jup.ag` |
+
+---
+
+## Additional References
+- [Jupiter API Environment and Infrastructure](./environment-and-infrastructure.md)
+- [Fees and Pricing](./fees-and-pricing.md)
+- [Common Errors and Misconceptions](./common-errors.md)
+- [Ultra Swap API vs Metis Swap API](./ultra-swap-vs-metis-swap.md)

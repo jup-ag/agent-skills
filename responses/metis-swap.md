@@ -1,6 +1,6 @@
 # Metis Swap API Responses
 
-This file contains response examples and field descriptions for the Metis Swap API endpoints including endpoints from `./../endpoints/metis-swap.md`
+This file contains response examples and field descriptions for the Metis Swap API endpoints including endpoints from `../endpoints/metis-swap.md`
 
 ---
 
@@ -247,33 +247,66 @@ Use this to:
 
 ---
 
-## Common Error Codes
+## Common Errors
 
-### Quote Errors
+Errors from the Metis Swap API, Jupiter Swap Program, DEXes, System, or Token programs.
+
+---
+
+### Jupiter Swap Program Errors
+
+| Code | Error | Debug |
+|------|-------|-------|
+| 6001 | SlippageToleranceExceeded | Try higher fixed slippage or use `dynamicSlippage` |
+| 6008 | NotEnoughAccountKeys | Likely modified swap transaction causing missing account keys |
+| 6014 | IncorrectTokenProgramID | Attempted platform fees on Token2022 token (also 0x177e) |
+| 6017 | ExactOutAmountNotMatched | Similar to slippage, output amount mismatch |
+| 6024 | InsufficientFunds | Insufficient funds for swap amount, tx fees, or rent |
+| 6025 | InvalidTokenAccount | Token account invalid, uninitialized, or unexpected |
+
+Full IDL: [Jupiter V6 on Solscan](https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4#anchorProgramIdl)
+
+### Solana Program Errors
+
+| Program | Error Reference |
+|---------|-----------------|
+| Token Program | [token/error.rs](https://github.com/solana-program/token/blob/main/program/src/error.rs) |
+| Token2022 Program | [token-2022/error.rs](https://github.com/solana-program/token-2022/blob/main/program/src/error.rs) |
+| Associated Token Account | [ata/error.rs](https://github.com/solana-program/associated-token-account/blob/main/program/src/error.rs) |
+| Other Solana Programs | [github.com/solana-program](https://github.com/solana-program) |
+
+### DEX Program Errors
+
+DEXes in routing may return errors. Check their IDLs on explorers, or reference common errors below.
 
 | Error | Description |
 |-------|-------------|
-| `Could not find any routes` | No route exists for the token pair |
-| `Amount too small` | Input amount below minimum |
-| `Invalid mint address` | Mint address is not valid |
+| Tick array or bitmap extension error | Similar to slippage—price/market moved out of range |
 
-### Swap Errors
+---
 
-| Error | Description |
-|-------|-------------|
-| `Invalid quote response` | Quote object is malformed or expired |
-| `User public key is required` | Missing `userPublicKey` field |
-| `Simulation failed` | Transaction simulation failed |
+### Routing Errors
 
-### Program Errors
+| Error | Description | Debug |
+|-------|-------------|-------|
+| `NO_ROUTES_FOUND` | No routes found for the swap | Check jup.ag if routable, check token liquidity |
+| `COULD_NOT_FIND_ANY_ROUTE` | Unable to find any valid route | Check jup.ag if routable, check token liquidity |
+| `ROUTE_PLAN_DOES_NOT_CONSUME_ALL_THE_AMOUNT` | Route cannot process entire input | Try reducing input amount |
+| `MARKET_NOT_FOUND` | Market address not found | Verify market exists and is active |
+| `TOKEN_NOT_TRADABLE` | Token mint not available for trading | Check jup.ag, check token liquidity |
+| `NOT_SUPPORTED` | Generic unsupported operation | Check specific error message |
+| `CIRCULAR_ARBITRAGE_IS_DISABLED` | Attempted to swap token for itself | Input and output must be different |
+| `CANNOT_COMPUTE_OTHER_AMOUNT_THRESHOLD` | Failed to calculate min output | Verify input amount and slippage params |
 
-| Code | Description |
-|------|-------------|
-| 6001 | Slippage tolerance exceeded |
-| 6002 | Invalid calculation |
-| 6003 | Missing or invalid accounts |
+---
 
-Full list: [Jupiter V6 IDL on Solscan](https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4#programIdl)
+### Swap Transaction Composing Errors
+
+| Error | Description | Debug |
+|-------|-------------|-------|
+| `MAX_ACCOUNT_GREATER_THAN_MAX` | Accounts exceed maximum allowed | Reduce `maxAccounts` parameter |
+| `INVALID_COMPUTE_UNIT_PRICE_AND_PRIORITIZATION_FEE` | Both compute unit price and prioritization fee specified | Use one or the other, not both |
+| `FAILED_TO_GET_SWAP_AND_ACCOUNT_METAS` | Failed to generate swap transaction | Check error message for details |
 
 ---
 

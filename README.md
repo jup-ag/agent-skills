@@ -13,8 +13,10 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 
 | Category | Description |
 |----------|-------------|
-| Ultra Swap | Flagship swap API - recommended for most use cases |
-| Metis Swap | Low-level swap API for advanced control |
+| Ultra Swap Order | Flagship swap API with managed transaction landing and gasless support - recommended for most use cases |
+| Ultra Swap Data | Token search, shield warnings, holdings, and mint information |
+| Ultra Swap Integrator Payer | Pay network fees and rent on behalf of users |
+| Metis Swap | Low-level swap API for advanced control and custom transaction composition |
 | Lend (coming soon) | Deposit and withdraw assets to earn yield |
 | Trigger (coming soon) | Limit orders with **price** conditions |
 | Recurring (coming soon) | Dollar-cost averaging (DCA) strategies |
@@ -23,6 +25,17 @@ A skill for AI coding assistants that provides comprehensive Jupiter API specifi
 | Portfolio (coming soon) | DeFi wallet positions across protocols |
 | Send (coming soon) | Token transfers via invite links |
 | Studio (coming soon) | Token creation with Dynamic Bonding Curve |
+
+## Ultra vs Metis
+
+| Use Case | Recommended API |
+|----------|-----------------|
+| Simple swaps, new developers | **Ultra** |
+| Need managed tx landing | **Ultra** |
+| Most trading applications | **Ultra** |
+| Custom tx composition | **Metis** |
+| CPI integration | **Metis** |
+| Specific broadcasting strategies | **Metis** |
 
 ## Installation
 

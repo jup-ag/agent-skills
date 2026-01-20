@@ -2,7 +2,7 @@
 title: Ultra Swap Data API Responses
 description: Response examples and field descriptions for the Ultra Swap Data API endpoints including /search, /shield, and /holdings.
 notes:
-  - See `./../endpoints/ultra-swap-data.md` for endpoint documentation.
+  - See `../endpoints/ultra-swap-data.md` for endpoint documentation.
 ---
 
 # Ultra Swap Data API Responses

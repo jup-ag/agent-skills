@@ -1,6 +1,6 @@
 # Ultra Swap Order API Responses
 
-This file contains response examples and field descriptions for the Ultra Swap Order API endpoints including endpoints from `./../endpoints/ultra-swap-order.md`
+This file contains response examples and field descriptions for the Ultra Swap Order API endpoints including endpoints from `../endpoints/ultra-swap-order.md`
 
 ---
 
