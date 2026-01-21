@@ -1,6 +1,6 @@
 ---
 name: integrating-jupiter
-description: Provides expert guidance for Jupiter API integrations (Ultra Swap, Metis Swap, Lend, Trigger, DCA). Covers swap workflows, error handling, and recommended patterns. Use when working with Jupiter API, Solana token swaps, JUP integrations, or DeFi trading implementations.
+description: Provides guidance for integrating with Jupiter API (Ultra Swap, Metis Swap, Lend, Trigger, DCA, Token, Price, Portofolio, Send, Studio). Covers swap workflows, error handling, and recommended patterns. Use when working with Jupiter API, Solana token swaps, JUP integrations, or DeFi trading implementations.
 license: MIT
 metadata:
   author: jupiter
@@ -9,7 +9,7 @@ metadata:
 
 # Jupiter API Integration
 
-Expert guidance for Jupiter API and SDK integrations with proper error handling and recommended patterns.
+Guidance for integrating with Jupiter API with proper error handling and recommended patterns.
 
 ## When to use
 
