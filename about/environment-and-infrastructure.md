@@ -25,7 +25,6 @@ Jupiter's API is hosted on AWS infrastructure. For optimal latency, deploy your 
 | Environment | URL | Description |
 |-------------|-----|-------------|
 | Production | `https://api.jup.ag` | Main API (requires API key) |
-| Lite (deprecated) | `https://lite-api.jup.ag` | Legacy API (no auth, DEPRECATED Jan 31, 2026) |
 
 ## Authentication
 
@@ -187,4 +186,3 @@ Check real-time API status at: [status.jup.ag](https://status.jup.ag)
 - [Portal](https://portal.jup.ag) - API key management
 - [Dev Portal](https://dev.jup.ag) - API documentation
 - [Status](https://status.jup.ag) - API status page
-- [Migration Guide](./migration.md) - Migrate from lite-api

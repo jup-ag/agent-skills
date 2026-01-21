@@ -20,8 +20,6 @@ Reference these guidelines when:
 - Optimizing Jupiter API performance
 - Ensuring proper error handling
 
-**Important Migration Notice**: `lite-api.jup.ag` will be deprecated on January 31, 2026. Migrate to `api.jup.ag` with API key authentication. For more information, see [migration](./about/migration.md)
-
 For environment and infrastructure details, see [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
 
 ## Latency
