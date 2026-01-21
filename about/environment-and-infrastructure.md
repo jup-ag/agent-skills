@@ -65,17 +65,46 @@ Requests are distributed across 3 buckets:
 2. **Studio API Bucket** - `/studio` endpoints
 3. **Default Bucket** - All other endpoints (except Ultra)
 
-### Dynamic Rate Limits (Ultra API)
+### Dynamic Rate Limits (Ultra Swap API)
 
-Ultra API uses volume-based rate limiting:
+The Ultra Swap API uses a unique rate limiting mechanism that scales with your executed swap volume over time.
 
-```
-Quota = Base + (24h Volume × Multiplier)
-```
+| Property | Value |
+|----------|-------|
+| Base URL | `https://api.jup.ag/ultra/` |
+| Cost | Free to use (swap fees apply) |
+| API Key | Required |
+| Rate | Base Quota + Added Quota |
 
-- No Pro plan required
-- Scales automatically with swap volume
-- Rolling 24h window
+**API Key Rules:**
+- Required for Dynamic Rate Limit
+- Free to generate via [Portal](https://portal.jup.ag)
+- Universal across all APIs
+- Pro plans do not apply to Ultra Swap API
+
+**How It Works:**
+
+Every 10 minutes, the system aggregates your swap volume from `/execute` for the rolling 24-hour period and updates your Added Quota.
+
+| Swap Volume | Requests Per Period | Window |
+|-------------|---------------------|--------|
+| $0 | 50 Base + 0 Added = 50 | 10s |
+| $10,000 | 50 Base + 1 Added = 51 | 10s |
+| $100,000 | 50 Base + 11 Added = 61 | 10s |
+| $1,000,000 | 50 Base + 115 Added = 165 | 10s |
+
+> **Note:** The formula is subject to change. If rate limits are too restrictive, contact support on [Discord](https://discord.gg/jup).
+
+### Managing Rate Limits
+
+If you receive a 429 response:
+
+1. Implement exponential backoff in your retry logic
+2. Wait for the sliding window to allow more requests
+3. Scale your Ultra Swap usage to unlock higher limits
+4. Contact support on [Discord](https://discord.gg/jup) if needed
+
+> **Warning:** Bursting beyond your allocation may result in temporary 429s, even after the refill period. Avoid aggressive retry patterns.
 
 ## Latency Optimization
 

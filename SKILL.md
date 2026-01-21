@@ -74,4 +74,4 @@ Each endpoint file contains:
 - [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
 - [Fees and Pricing](./about/fees-and-pricing.md)
 - [Common Errors and Misconceptions](./about/common-errors.md)
-- [Ultra Swap API vs Metis Swap API](./about/ultra-swap-vs-metis-swap.md)
+- [Ultra Swap API vs Metis Swap API](./ultra/ultra-swap-vs-metis-swap.md)

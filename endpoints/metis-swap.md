@@ -77,6 +77,8 @@ Metis is a low-level swap primitive providing granular control over transactions
 | Lowest execution fees | **Ultra** |
 | No complexity management | **Ultra** |
 
+For more information, see [Ultra Swap API vs Metis Swap API](../ultra/ultra-swap-vs-metis-swap.md).
+
 ## Alternative Integration Methods
 
 If you need to interact with the Jupiter Swap Aggregator program differently. For on-chain integrations, default to CPI or Flash Fill (workflows below):
