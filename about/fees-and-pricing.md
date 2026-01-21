@@ -1,9 +1,33 @@
 ---
 title: Fees and Pricing
-description: Fee structures for Jupiter ULTRA SWAP ORDER and METIS SWAP API including platform fees, integrator fees, and gasless mechanisms.
+description: Fee structures for Jupiter Ultra Swap and Metis Swap APIs including platform fees, integrator fees, and gasless mechanisms.
 ---
 
 # Fees and Pricing
+
+## Table of Contents
+
+- [Fees and Pricing](#fees-and-pricing)
+  - [Table of Contents](#table-of-contents)
+  - [Ultra Swap Fees](#ultra-swap-fees)
+    - [Platform Fees](#platform-fees)
+    - [Fee Mint Priority](#fee-mint-priority)
+    - [Gasless Support](#gasless-support)
+  - [Metis Swap Fees](#metis-swap-fees)
+  - [Integrator Fees](#integrator-fees)
+    - [Ultra Swap Integrator Fees](#ultra-swap-integrator-fees)
+    - [Metis Swap Integrator Fees](#metis-swap-integrator-fees)
+  - [Integrator Payer (Ultra)](#integrator-payer-ultra)
+  - [Priority Fees](#priority-fees)
+    - [Ultra](#ultra)
+    - [Metis](#metis)
+  - [Fee Comparison](#fee-comparison)
+  - [Common Fee \& Transaction Questions](#common-fee--transaction-questions)
+    - [Priority Fees \& Jito Tips](#priority-fees--jito-tips)
+    - [Wrapped SOL (WSOL)](#wrapped-sol-wsol)
+  - [References](#references)
+
+---
 
 ## Ultra Swap Fees
 

@@ -1,6 +1,6 @@
 ---
 name: integrating-jupiter
-description: Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
+description: Provides expert guidance for Jupiter API integrations (Ultra Swap, Metis Swap, Lend, Trigger, DCA). Covers swap workflows, error handling, and recommended patterns. Use when working with Jupiter API, Solana token swaps, JUP integrations, or DeFi trading implementations.
 license: MIT
 metadata:
   author: jupiter
@@ -9,69 +9,73 @@ metadata:
 
 # Jupiter API Integration
 
-Comprehensive Jupiter API specification guidelines and best practices from Jupiter Engineering. This skill provides expert guidance for writing, reviewing, and refactoring Jupiter API and SDK integrations (Ultra API, Jupiter Lend SDK, Jupiter Lend, etc) with proper error handling, and adherence to recommended patterns. Automatically activates when working with Jupiter API code, swap implementations
+Expert guidance for Jupiter API and SDK integrations with proper error handling and recommended patterns.
 
 ## When to use
 
-Reference these guidelines when: 
 - Writing new Jupiter API integrations
-- Reviewing code for Jupiter API issues
-- Refactoring existing Jupiter API code
-- Optimizing Jupiter API performance
-- Ensuring proper error handling
+- Reviewing or refactoring Jupiter API code
+- Debugging swap failures or API errors
+- Optimizing performance or transaction landing
 
-For environment and infrastructure details, see [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
+## Quick Start
 
-## Latency
-### Optimization Tips
-- Server Collocation: Deploy services on the same AWS regions as Jupiter's API Gateway
+1. Get API key from [portal.jup.ag](https://portal.jup.ag)
+2. Choose API: **Ultra** (recommended) or **Metis** (advanced control)
+3. See endpoint files in `endpoints/` for implementation details
+
+For environment details, see [environment-and-infrastructure.md](./about/environment-and-infrastructure.md)
+
+## Latency Tips
+
+- Deploy on AWS regions close to Jupiter's API Gateway
 - Avoid complex queries
-- Use the most direct endpoint for the data you need
+- Use the most direct endpoint for your needs
 
 ---
 
-## Quick API Overview
-### 1. Ultra Swap Order (`ultra-swap-order`) API - Flagship swap API - recommended for most use cases
-### 2. Ultra Swap Data Endpoints (`ultra-swap-data`) API - Get data about a token and its mint information, the details about the detailed token holdings of an account or retrieve token information and associated warnings for the specified mint addresses.
-### 3. Metis Swap (`metis-swap`) API - Low-level swap API for advanced control 
-### 4. Price V3 (`price`) API - Token prices (V2 is deprecated)
-### 5. Tokens V2 (`token`) API - Token information and search (V1 is deprecated) 
-### 6. Trigger (`trigger`) API -  Limit orders
-### 7. Recurring (`recurring`) API - DCA / recurring orders
-### 8. Portfolio (`portfolio`) API - Defi wallet positions across protocols
-### 9. Lend (`lend`) API -  Lending/earning operations
-### 10. Send (`send`) API - Token transfers via invite links
-### 11. Studio (`studio`) API - Token creation (Dynamic Bonding Curve)
+## API Overview
+
+| API | Description | Use Case |
+|-----|-------------|----------|
+| **Ultra Swap Order** | Flagship swap API with managed landing | Most applications |
+| **Ultra Swap Data** | Token search, holdings, shield warnings | Token information |
+| **Metis Swap** | Low-level swap primitive | CPI, custom transactions |
+| **Price** | Token prices (use V3) | Pricing data |
+| **Tokens** | Token metadata and search (use V2) | Token discovery |
+| **Trigger** | Limit orders | Conditional trading |
+| **Recurring** | DCA / recurring orders | Automated investing |
+| **Portfolio** | DeFi wallet positions | Position tracking |
+| **Lend** | Lending/earning operations | Yield strategies |
+| **Send** | Token transfers via invite links | Social transfers |
+| **Studio** | Token creation (Dynamic Bonding Curve) | Token launches |
+
+### Legacy APIs
+
+- **Price V2**: Deprecated, use V3
+- **Tokens V1**: Deprecated, use V2
 
 ## How to use
 
-Read individual api endpoint files from `endpoints/` for detailed explanations and code examples.
+Read endpoint files from `endpoints/` for detailed workflows and code examples:
 
-```
-endpoints/ultra-swap-order.md
-endpoints/lend-deposit.md
-endpoints/trigger-order.md
-```
+- `endpoints/ultra-swap-order.md` - Recommended swap implementation
+- `endpoints/metis-swap.md` - Advanced swap with full control
+- `endpoints/ultra-swap-data.md` - Token search and holdings
 
-For response examples and field descriptions, refer to the corresponding files in `responses/`.
-
-```
-responses/ultra-swap-order.md
-responses/lend-deposit.md
-responses/trigger-order.md
-```
+For response schemas, see corresponding files in `responses/`.
 
 Each endpoint file contains:
-- Brief explanation of the endpoint functionality
-- Workflows using the endpoint
-- Tips and tricks for using the endpoint
-- Correct code example with explanation
-- Additional context and references
+- Endpoint functionality and parameters
+- Complete workflows with code examples
+- Common mistakes and tips
+- Response examples
 
 ---
 
-## Additional References
-- [Jupiter API Environment and Infrastructure](./about/environment-and-infrastructure.md)
-- [Fees and Pricing](./about/fees-and-pricing.md)
-- [Common Errors and Misconceptions](./about/common-errors.md)
-- [Ultra Swap API vs Metis Swap API](./ultra/ultra-swap-vs-metis-swap.md)
+## References
+
+- [Environment and Infrastructure](./about/environment-and-infrastructure.md) - API keys, rate limits, regions
+- [Fees and Pricing](./about/fees-and-pricing.md) - Platform fees, integrator fees
+- [Common Errors](./about/common-errors.md) - Troubleshooting guide
+- [Ultra vs Metis](./ultra/ultra-swap-vs-metis-swap.md) - API comparison
