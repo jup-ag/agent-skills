@@ -37,6 +37,7 @@ The `payer` parameter allows integrators to cover network fees, priority fees, a
 ## Example
 
 ```typescript
+// Step 1. Get order with payer parameter
 const orderParams = new URLSearchParams({
   inputMint: 'So11111111111111111111111111111111111111112',
   outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -53,12 +54,60 @@ const orderResponse = await fetch(
   {
     headers: { 'x-api-key': process.env.JUPITER_API_KEY! },
   }
-).then(res => res.json());
+).then((res) => res.json());
 
-// Transaction requires TWO signatures:
-// 1. User signs first (partial)
-// 2. Integrator backend signs with payer key
-// 3. Send to /execute
+// Step 2. Deserialize and sign with user wallet
+const tx = VersionedTransaction.deserialize(
+  Buffer.from(orderResponse.transaction, 'base64')
+);
+tx.sign([userWallet]);
+
+// Step 3. Send partially signed tx to your backend
+const partiallySignedTx = Buffer.from(tx.serialize()).toString('base64');
+
+const result = await fetch('https://your-backend.com/api/sign-and-execute', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    partiallySignedTx,
+    requestId: orderResponse.requestId,
+  }),
+}).then((res) => res.json());
+
+// ============================================
+// BACKEND: Integrator signs and executes
+// ============================================
+
+// your-backend.com/api/sign-and-execute
+async function signAndExecute(req: Request) {
+  const { partiallySignedTx, requestId } = req.body;
+
+  // Step 4. Deserialize and add payer signature
+  const tx = VersionedTransaction.deserialize(
+    Buffer.from(partiallySignedTx, 'base64')
+  );
+
+  // payerKeypair is stored securely on your backend
+  const payerKeypair = Keypair.fromSecretKey(/* secure key storage */);
+  tx.sign([payerKeypair]);
+
+  const signedTx = Buffer.from(tx.serialize()).toString('base64');
+
+  // Step 5. Execute the fully signed transaction
+  const result = await fetch('https://api.jup.ag/ultra/v1/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.JUPITER_API_KEY!,
+    },
+    body: JSON.stringify({
+      signedTransaction: signedTx,
+      requestId,
+    }),
+  }).then((res) => res.json());
+
+  return result;
+}
 ```
 
 ## Close Authority
