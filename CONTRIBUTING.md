@@ -1,8 +1,9 @@
-# Contributing to Jupiter API Skill
+# Contributing to Jupiter Skills
 
 Thank you for your interest in contributing to the Jupiter API Skill! This guide will help you add new documentation to the project.
 
-## Adding API Endpoint Documentation
+## Integrating Jupiter Skill
+### Adding API Endpoint Documentation
 
 To document a new API endpoint:
 
@@ -21,6 +22,7 @@ To document API behavior, comparisons, or other conceptual topics:
    - Examples:
      - `ultra-swap-vs-metis-swap.md` for API comparisons
      - `common-errors.md` for error handling and debugging guides
+
 
 ## Important Guidelines
 
