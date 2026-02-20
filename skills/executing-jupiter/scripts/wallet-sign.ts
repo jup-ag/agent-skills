@@ -1,17 +1,9 @@
 #!/usr/bin/env tsx
 /**
- * wallet-sign.ts - Sign Solana transactions using a local wallet
- *
  * Usage:
- *   pnpm wallet-sign --unsigned-tx "BASE64_TX" --wallet ~/.config/solana/id.json
- *   pnpm wallet-sign --unsigned-tx "BASE64_TX" --wallet /path/to/wallet.json
+ *   pnpm wallet-sign -t "BASE64_TX" --wallet ~/.config/solana/id.json
  *
- * Supports:
- *   - Solana CLI JSON wallet format (array of 64 bytes)
- *
- * SECURITY NOTE: The --wallet flag is required. This script does not accept
- * private keys via command line arguments to prevent exposure in shell history
- * and process listings.
+ * SECURITY: Private keys must be in wallet files, not CLI args.
  */
 
 import { Command } from "commander";
@@ -23,83 +15,40 @@ import { fail, handleCliError } from "./utils.js";
 
 interface SignOptions {
   unsignedTx: string;
-  wallet?: string;
+  wallet: string;
 }
 
-/**
- * Expand tilde (~) in file paths to the user's home directory
- */
-function expandTilde(filePath: string): string {
-  if (filePath.startsWith("~")) {
-    return join(homedir(), filePath.slice(1));
-  }
-  return filePath;
-}
+function loadKeypair(filePath: string): Keypair {
+  const expanded = filePath.startsWith("~") ? join(homedir(), filePath.slice(1)) : filePath;
 
-function loadKeypairFromJson(filePath: string): Keypair {
-  const expandedPath = expandTilde(filePath);
-
-  if (!existsSync(expandedPath)) {
-    throw new Error(`Wallet file not found: ${expandedPath}`);
+  if (!existsSync(expanded)) {
+    throw new Error(`Wallet file not found: ${expanded}`);
   }
 
   try {
-    const fileContent = readFileSync(expandedPath, "utf-8");
-    const secretKey = JSON.parse(fileContent);
-
+    const secretKey = JSON.parse(readFileSync(expanded, "utf-8"));
     if (!Array.isArray(secretKey) || secretKey.length !== 64) {
-      throw new Error(
-        "Invalid wallet format. Expected JSON array of 64 bytes (Solana CLI format)"
-      );
+      throw new Error("Invalid wallet format. Expected JSON array of 64 bytes (Solana CLI format)");
     }
-
     return Keypair.fromSecretKey(Uint8Array.from(secretKey));
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error(`Invalid JSON in wallet file: ${expandedPath}`);
-    }
+    if (error instanceof SyntaxError) throw new Error(`Invalid JSON in wallet file: ${expanded}`);
     throw error;
   }
 }
 
-function getKeypair(options: SignOptions): Keypair {
-  if (!options.wallet) {
-    throw new Error(`
-No wallet provided. The --wallet flag is required.
-
-Usage:
-  pnpm wallet-sign --unsigned-tx "BASE64_TX" --wallet ~/.config/solana/id.json
-  pnpm wallet-sign --unsigned-tx "BASE64_TX" --wallet /path/to/wallet.json
-
-To create a new wallet:
-  solana-keygen new -o ~/.config/solana/id.json
-
-SECURITY NOTE: Private keys cannot be passed via command line arguments
-to prevent exposure in shell history and process listings.
-`);
-  }
-
-  return loadKeypairFromJson(options.wallet);
-}
-
 async function signTransaction(options: SignOptions): Promise<void> {
-  // Load keypair
   let keypair: Keypair;
   try {
-    keypair = getKeypair(options);
+    keypair = loadKeypair(options.wallet);
   } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
-    fail("Unknown keypair loading error");
+    fail(error instanceof Error ? error.message : "Failed to load keypair");
   }
 
-  // Decode the unsigned transaction
   let transaction: VersionedTransaction;
   try {
-    const txBuffer = Buffer.from(options.unsignedTx, "base64");
-    transaction = VersionedTransaction.deserialize(txBuffer);
-  } catch (error) {
+    transaction = VersionedTransaction.deserialize(Buffer.from(options.unsignedTx, "base64"));
+  } catch {
     fail("Failed to deserialize transaction", [
       "Ensure the transaction is a valid base64-encoded VersionedTransaction.",
     ]);
@@ -109,45 +58,34 @@ async function signTransaction(options: SignOptions): Promise<void> {
   const feePayer = staticKeys[0];
   const programIds = transaction.message.compiledInstructions.map((ix) => staticKeys[ix.programIdIndex]);
 
-  // Sign the transaction
+  // Warn early if the wallet doesn't match the fee payer — the tx will fail on-chain otherwise
+  const signerPubkey = keypair.publicKey.toBase58();
+  if (feePayer && signerPubkey !== feePayer) {
+    console.error(`\n⚠ WARNING: Wallet pubkey (${signerPubkey}) does not match fee payer (${feePayer}).`);
+    console.error("  The signed transaction will likely fail on-chain.\n");
+  }
+
   try {
     transaction.sign([keypair]);
   } catch (error) {
-    if (error instanceof Error) {
-      fail("Failed to sign transaction", [error.message]);
-    }
-    fail("Failed to sign transaction");
+    fail("Failed to sign transaction", error instanceof Error ? [error.message] : []);
   }
 
-  // Serialize and output the signed transaction
-  const signedTxBuffer = transaction.serialize();
-  const signedTxBase64 = Buffer.from(signedTxBuffer).toString("base64");
+  console.log(Buffer.from(transaction.serialize()).toString("base64"));
 
-  // Output to stdout for piping
-  console.log(signedTxBase64);
-
-  // Log signer info to stderr (so it doesn't interfere with piped output)
-  console.error(`\nSigned by: ${keypair.publicKey.toBase58()}`);
+  console.error(`\nSigned by: ${signerPubkey}`);
   console.error(`Fee payer: ${feePayer}`);
   console.error(`Programs: ${[...new Set(programIds)].join(", ")}`);
 }
 
-// CLI setup
 const program = new Command();
 program.exitOverride();
 
 program
   .name("wallet-sign")
-  .description(
-    "Sign Solana transactions using a local wallet file.\n\n" +
-      "SECURITY: Private keys must be stored in wallet files, not passed via\n" +
-      "command line arguments (which appear in shell history and process listings)."
-  )
+  .description("Sign Solana transactions using a local wallet file")
   .requiredOption("-t, --unsigned-tx <base64>", "Base64-encoded unsigned transaction")
-  .requiredOption(
-    "-w, --wallet <path>",
-    "Path to Solana CLI JSON wallet file (array of 64 bytes). Supports ~ for home directory."
-  )
+  .requiredOption("-w, --wallet <path>", "Path to Solana CLI JSON wallet file (supports ~)")
   .action(signTransaction);
 
 program.parseAsync(process.argv).catch(handleCliError);

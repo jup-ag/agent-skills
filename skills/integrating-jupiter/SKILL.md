@@ -1,30 +1,10 @@
 ---
 name: integrating-jupiter
-description: Comprehensive guidance for integrating Jupiter APIs (Ultra Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets, Send, Studio, Lock, Routing). Use for endpoint selection, integration flows, error handling, and production hardening.
-license: MIT
-metadata:
-  author: jupiter
-  version: "1.0.0"
-tags:
-  - jupiter
-  - jup-ag
-  - ultra-swap
-  - jupiter-lend
-  - jupiter-perps
-  - jupiter-trigger
-  - jupiter-recurring
-  - jupiter-portfolio
-  - jupiter-prediction
-  - jupiter-send
-  - jupiter-studio
-  - jupiter-lock
-  - jupiter-routing
-  - jupiterz-rfq
-  - iris
-  - jupiter-price-api
-  - jupiter-tokens-api
-  - jupiter-portal
-  - jlp
+description: >
+  Use when integrating Jupiter APIs into an application — endpoint selection,
+  integration flows, error handling, and production hardening for Ultra Swap,
+  Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets,
+  Send, Studio, Lock, and Routing.
 ---
 
 # Jupiter API Integration
@@ -47,13 +27,21 @@ Do not use when:
 
 **Triggers**: `swap`, `quote`, `gasless`, `best route`, `lend`, `borrow`, `earn`, `liquidation`, `perps`, `leverage`, `long`, `short`, `position`, `limit order`, `trigger`, `price condition`, `dca`, `recurring`, `scheduled swaps`, `token metadata`, `token search`, `verification`, `shield`, `price`, `valuation`, `price feed`, `portfolio`, `positions`, `holdings`, `prediction markets`, `market odds`, `event market`, `invite transfer`, `send`, `clawback`, `create token`, `studio`, `claim fee`, `vesting`, `distribution lock`, `unlock schedule`, `dex integration`, `rfq integration`, `routing engine`
 
+## Skill routing rule
+
+- Use this skill for design-time work: endpoint choice, flow design, payload shape, and error handling.
+- If the task includes signing or submitting a real transaction, route to `executing-jupiter`.
+- For overlapping intents (`limit order`, `send`, `portfolio`, `price`): stay on this skill unless the user explicitly asks to execute on-chain.
+
 ## Developer Quickstart
 
 ```typescript
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 
-const API_KEY = process.env.JUPITER_API_KEY!;  // from portal.jup.ag
-if (!API_KEY) throw new Error('Missing JUPITER_API_KEY');
+const API_KEY = process.env.JUP_API_KEY;  // from portal.jup.ag
+if (!API_KEY) {
+  throw new Error('Missing JUP_API_KEY');
+}
 const BASE = 'https://api.jup.ag';
 const headers = { 'x-api-key': API_KEY };
 
@@ -366,3 +354,4 @@ Always fetch the freshest context from referenced docs/specs before executing a 
 - [Status page](https://status.jup.ag/) — Service health
 - [Documentation sitemap](https://dev.jup.ag/llms.txt) — Full docs index
 - [Tool Kits](https://dev.jup.ag/tool-kits/plugin/index.md) — Plugin, Wallet Kit, Referral Program
+- [Executing Jupiter skill](https://github.com/jup-ag/agent-skills/blob/main/skills/executing-jupiter/SKILL.md) — Runnable CLI scripts for signing, executing, and submitting Jupiter transactions

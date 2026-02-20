@@ -1,7 +1,3 @@
-/**
- * utils.ts - Shared utility functions for Jupiter API scripts
- */
-
 export class CliError extends Error {
   exitCode: number;
   details: string[];
@@ -28,70 +24,39 @@ export function handleCliError(error: unknown): never {
   }
 
   if (error && typeof error === "object" && "exitCode" in error) {
-    const commanderError = error as {
-      message?: string;
-      code?: string;
-      exitCode?: number;
-    };
-    if (commanderError.code === "commander.helpDisplayed") {
-      process.exit(0);
-    }
-    if (commanderError.message) {
-      console.error(commanderError.message);
-    }
-    process.exit(commanderError.exitCode ?? 1);
+    const e = error as { message?: string; code?: string; exitCode?: number };
+    if (e.code === "commander.helpDisplayed") process.exit(0);
+    if (e.message) console.error(e.message);
+    process.exit(e.exitCode ?? 1);
   }
 
   if (error instanceof Error) {
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+  } else {
+    console.error("Error: Unknown failure");
   }
-
-  console.error("Error: Unknown failure");
   process.exit(1);
 }
 
-function stringifyResponseData(data: unknown): string {
-  if (typeof data === "string") return data;
-  try {
-    return JSON.stringify(data, null, 2);
-  } catch {
-    return String(data);
-  }
-}
+export function formatRetryAfter(headers: Headers): string | null {
+  const raw = headers.get("Retry-After");
+  if (!raw) return null;
 
-function parseRetryAfterSeconds(raw: string): number | null {
   const asNumber = Number(raw);
-  if (!Number.isNaN(asNumber) && asNumber >= 0) {
-    return Math.ceil(asNumber);
-  }
+  if (!Number.isNaN(asNumber) && asNumber >= 0) return `${Math.ceil(asNumber)}s`;
 
   const asDateMs = Date.parse(raw);
-  if (Number.isNaN(asDateMs)) return null;
-
-  const diffMs = asDateMs - Date.now();
-  return diffMs > 0 ? Math.ceil(diffMs / 1000) : 0;
-}
-
-export function formatRetryAfter(headers: Headers): string | null {
-  const retryAfterRaw = headers.get("Retry-After");
-  if (!retryAfterRaw) return null;
-
-  const retryAfterSeconds = parseRetryAfterSeconds(retryAfterRaw);
-  if (retryAfterSeconds === null) {
-    return retryAfterRaw;
+  if (!Number.isNaN(asDateMs)) {
+    const diffMs = asDateMs - Date.now();
+    return `${diffMs > 0 ? Math.ceil(diffMs / 1000) : 0}s`;
   }
-  return `${retryAfterSeconds}s`;
+
+  return raw;
 }
 
-export async function parseJsonResponse(
-  response: Response,
-  operation: string
-): Promise<unknown> {
+export async function parseJsonResponse(response: Response, operation: string): Promise<unknown> {
   const bodyText = await response.text();
-  if (!bodyText) {
-    return null;
-  }
+  if (!bodyText) return null;
 
   try {
     return JSON.parse(bodyText);
@@ -112,29 +77,32 @@ export function assertHttpOk(params: {
   const { response, data, operation, rateLimitHint } = params;
   if (response.ok) return;
 
+  const body = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+
   if (response.status === 429) {
     const details: string[] = [];
     const retryAfter = formatRetryAfter(response.headers);
-    if (retryAfter) {
-      details.push(`Retry-After: ${retryAfter}`);
-    }
-    if (rateLimitHint) {
-      details.push(rateLimitHint);
-    }
-    details.push(`Response: ${stringifyResponseData(data)}`);
+    if (retryAfter) details.push(`Retry-After: ${retryAfter}`);
+    if (rateLimitHint) details.push(rateLimitHint);
+    details.push(`Response: ${body}`);
     fail(`Rate limited during ${operation}.`, details);
   }
 
-  fail(`API returned status ${response.status} during ${operation}.`, [
-    `Response: ${stringifyResponseData(data)}`,
-  ]);
+  fail(`API returned status ${response.status} during ${operation}.`, [`Response: ${body}`]);
+}
+
+export function getApiKey(providedKey?: string): string | null {
+  return providedKey || process.env.JUP_API_KEY || null;
 }
 
 /**
- * Gets the Jupiter API key from provided value or environment variable
+ * Standard timeout constants used across scripts.
+ * REQUEST_TIMEOUT_MS: 30s covers 95th-percentile Jupiter API response time.
+ * CONFIRMATION_TIMEOUT_MS: 60s allows for Solana slot confirmation under congestion.
+ * STATUS_POLL_INTERVAL_MS: 2s balances RPC load vs timely confirmation detection.
  */
-export function getApiKey(providedKey?: string): string | null {
-  if (providedKey) return providedKey;
-  if (process.env.JUP_API_KEY) return process.env.JUP_API_KEY;
-  return null;
-}
+export const TIMEOUT_DEFAULTS = {
+  REQUEST_TIMEOUT_MS: 30_000,
+  CONFIRMATION_TIMEOUT_MS: 60_000,
+  STATUS_POLL_INTERVAL_MS: 2_000,
+} as const;

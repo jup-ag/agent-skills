@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "check": "pnpm build && node dist/scripts/fetch-api.js --help >/dev/null && node dist/scripts/wallet-sign.js --help >/dev/null && node dist/scripts/send-transaction.js --help >/dev/null && node dist/scripts/execute-order.js --family ultra --help >/dev/null && node dist/scripts/execute-order.js --family trigger --help >/dev/null && node dist/scripts/execute-order.js --family recurring --help >/dev/null",
     "fetch-api": "tsx scripts/fetch-api.ts",
-    "execute-ultra": "tsx scripts/execute-ultra.ts",
-    "execute-trigger": "tsx scripts/execute-trigger.ts",
-    "execute-recurring": "tsx scripts/execute-recurring.ts",
+    "execute-order": "tsx scripts/execute-order.ts",
+    "execute-ultra": "tsx scripts/execute-order.ts",
+    "execute-trigger": "tsx scripts/execute-order.ts",
+    "execute-recurring": "tsx scripts/execute-order.ts",
     "wallet-sign": "tsx scripts/wallet-sign.ts",
     "send-transaction": "tsx scripts/send-transaction.ts"
   },

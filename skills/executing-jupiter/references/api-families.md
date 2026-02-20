@@ -3,7 +3,6 @@
 ## Table of contents
 
 - [Intent routing shortcuts](#intent-routing-shortcuts)
-- [Execute path specification](#execute-path-specification)
 - [Ultra (`/ultra/v1`)](#ultra-ultrav1)
 - [Lend (`/lend/v1`)](#lend-lendv1)
 - [Trigger (`/trigger/v1`)](#trigger-triggerv1)
@@ -27,15 +26,19 @@ Use this section first when the user asks in natural language.
 | "What are my open limit orders?" | `GET /trigger/v1/getTriggerOrders` | none | Requires maker address |
 | "What are my recurring orders?" | `GET /recurring/v1/getRecurringOrders` | none | Requires wallet/maker params based on API response shape |
 | "What are my lend positions?" | `GET /lend/v1/earn/positions` | `GET /lend/v1/earn/earnings` | Use both for principal + yield context |
-
-## Execute path specification
-
-See the [execute path specification table in SKILL.md](../SKILL.md#execute-path-specification) for the canonical routing table.
+| "What's the price of X?" | `GET /price/v3?ids={mints}` | none | Comma-separate mints, max 50 per request |
+| "Cancel my limit order" | `POST /trigger/v1/cancelOrder` | `POST /trigger/v1/cancelOrders` | `cancelOrders` batches up to 5 per tx |
+| "Cancel my DCA order" | `POST /recurring/v1/cancelOrder` | none | Need order public key from getRecurringOrders |
+| "Withdraw from lending" / "redeem lend position" | `POST /lend/v1/earn/withdraw` | `POST /lend/v1/earn/redeem` | `withdraw` removes principal, `redeem` converts receipt tokens back |
+| "Claim prediction market winnings" | `POST /prediction/v1/positions/{pubkey}/claim` | none | Check `position.claimable` first via GET /positions |
+| "Check my prediction bets" | `GET /prediction/v1/positions` | `GET /prediction/v1/history` | Requires owner address; geo-restricted (US/KR blocked) |
 
 ## Ultra (`/ultra/v1`)
 
 Script support:
 - Fully supported end-to-end with `fetch-api` + `wallet-sign` + `execute-ultra`.
+
+Gotchas: Signed transactions expire in ~2 min. Re-fetch `/order` if expired. `/execute` is idempotent — same `requestId` + `signedTransaction` won't double-execute within the TTL window.
 
 - `GET /ultra/v1/order`
 - `POST /ultra/v1/execute`
@@ -48,7 +51,10 @@ Script support:
 
 Script support:
 - `fetch-api` can call all listed endpoints.
-- For state-changing endpoints that return unsigned transactions, sign returned base64 with `wallet-sign` and submit through your Solana RPC client.
+- For state-changing endpoints that return unsigned transactions: `fetch-api` -> `wallet-sign` -> `send-transaction`.
+- Withdraw and redeem follow same path as deposit: `fetch-api` -> `wallet-sign` -> `send-transaction`.
+
+Gotchas: `deposit`, `withdraw`, `mint`, `redeem` all return unsigned transactions. Recompute account state before each action.
 
 - `POST /lend/v1/earn/deposit`
 - `POST /lend/v1/earn/withdraw`
@@ -65,6 +71,9 @@ Script support:
 Script support:
 - `fetch-api` can call all listed endpoints.
 - `execute-trigger` supports the `/execute` submission step.
+- Cancel uses the same execute path: `fetch-api` (`/cancelOrder`) -> `wallet-sign` -> `execute-trigger` (`/execute`).
+
+Gotchas: Frontend enforces $5 min; on-chain has no minimum. Validate target price before create. Token-2022 disabled. Default zero slippage ("Exact" mode); set `slippageBps` for "Ultra" mode with higher fill rate.
 
 - `POST /trigger/v1/createOrder`
 - `POST /trigger/v1/cancelOrder`
@@ -77,6 +86,9 @@ Script support:
 Script support:
 - `fetch-api` can call all listed endpoints.
 - `execute-recurring` supports the `/execute` submission step.
+- Cancel uses the same execute path: `fetch-api` (`/cancelOrder`) -> `wallet-sign` -> `execute-recurring` (`/execute`).
+
+Gotchas: Use `params.time` only (price-based is deprecated). Min $100 total, min 2 orders, min $50/order. 0.1% fee. Token-2022 NOT supported.
 
 - `POST /recurring/v1/createOrder`
 - `POST /recurring/v1/cancelOrder`
@@ -98,6 +110,8 @@ Script support:
 Script support:
 - Fully supported via `fetch-api` (read-only API).
 
+Gotchas: Max 50 mints per request. Tokens with unreliable pricing return `null` — fail closed on missing data.
+
 - `GET /price/v3?ids={mints}`
 
 ## Portfolio (`/portfolio/v1`)
@@ -114,7 +128,10 @@ Script support:
 
 Script support:
 - `fetch-api` supports listed `GET`, `POST`, and `DELETE` calls.
-- Some operations depend on account ownership and eligibility checks from API responses.
+- When endpoints return unsigned transaction payloads, use `wallet-sign` -> `send-transaction`.
+- Claim follows: `fetch-api` (`/positions/{pubkey}/claim`) -> `wallet-sign` -> `send-transaction`.
+
+Gotchas: **Geo-restricted**: US and South Korea IPs blocked. Price convention: 1,000,000 native units = $1.00 USD.
 
 - `GET /prediction/v1/events`
 - `GET /prediction/v1/events/search`
@@ -132,9 +149,11 @@ Script support:
 
 Script support:
 - `fetch-api` can call all listed endpoints.
-- Crafted transactions still require local signing and RPC submission.
-- RPC is required for submission: pass `--rpc-url` or set `SOLANA_RPC_URL`.
+- For `craft-*` endpoints: `fetch-api` -> `wallet-sign` -> `send-transaction`.
+- `send-transaction` requires `--rpc-url` or `SOLANA_RPC_URL`.
 - Invite claim flows are app-specific and may require Jupiter Mobile UX.
+
+Gotchas: **Dual-sign caveat**: `craft-send` may require sender + invite-derived keypair. `wallet-sign` supports one signer — use `@solana/web3.js` for dual-sign cases.
 
 - `POST /send/v1/craft-send`
 - `POST /send/v1/craft-clawback`
@@ -146,6 +165,9 @@ Script support:
 Script support:
 - JSON endpoints are callable with `fetch-api`.
 - `POST /studio/v1/dbc-pool/submit` uses multipart/form-data and is not directly supported by `fetch-api`; use `curl` or custom client code for file upload.
+- When signed transaction submission is needed, use `send-transaction`.
+
+Gotchas: Full flow: `create-tx` -> upload image to presigned URL -> upload metadata -> sign -> submit via `/dbc-pool/submit`. Submit requires multipart/form-data — use `curl`, not `fetch-api`.
 
 - `POST /studio/v1/dbc-pool/create-tx`
 - `POST /studio/v1/dbc-pool/submit` (multipart/form-data)
