@@ -16,6 +16,16 @@ Helps agents integrate with the whole Jupiter Suite of APIs.
 npx add-skill jup-ag/agents-skills --skill "integrating-jupiter"
 ```
 
+### executing-jupiter
+
+Helps agents execute Jupiter API operations using scripts for fetch, sign, and swap execution flows.
+
+#### Installation
+
+```bash
+npx add-skill jup-ag/agents-skills --skill "executing-jupiter"
+```
+
 
 
 ## Quick Install

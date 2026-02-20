@@ -1,0 +1,37 @@
+{
+  "name": "executing-jupiter",
+  "version": "1.0.0",
+  "description": "Jupiter API execution skill for agents - fetch, sign, and execute Solana transactions",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "fetch-api": "tsx scripts/fetch-api.ts",
+    "execute-ultra": "tsx scripts/execute-ultra.ts",
+    "execute-trigger": "tsx scripts/execute-trigger.ts",
+    "execute-recurring": "tsx scripts/execute-recurring.ts",
+    "wallet-sign": "tsx scripts/wallet-sign.ts",
+    "send-transaction": "tsx scripts/send-transaction.ts"
+  },
+  "keywords": [
+    "jupiter",
+    "solana",
+    "swap",
+    "defi",
+    "agents",
+    "skill"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
