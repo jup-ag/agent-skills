@@ -1,0 +1,16 @@
+{
+  "name": "get-token-price",
+  "version": "1.0.0",
+  "description": "Fetch real-time USD prices for Solana tokens using Jupiter Price API V3",
+  "license": "MIT",
+  "scripts": {
+    "start": "npx tsx get-token-price.ts"
+  },
+  "dependencies": {
+    "dotenv": "16.4.7"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2",
+    "typescript": "5.7.3"
+  }
+}
