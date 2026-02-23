@@ -10,10 +10,16 @@ Skills follow the [Agent Skills](https://agentskills.io/) format.
 
 Helps agents integrate with the whole Jupiter Suite of APIs. 
 
+### executing-jupiter
+
+Manual-only execution skill for real Jupiter actions (Ultra, Trigger, Recurring, Prediction) with confirmation and safety guardrails.
+
 #### Installation
 
 ```bash
 npx add-skill jup-ag/agents-skills --skill "integrating-jupiter"
+# or
+npx add-skill jup-ag/agents-skills --skill "executing-jupiter"
 ```
 
 
