@@ -37,7 +37,7 @@ and evaluates token safety — all from one API.
 Install dependencies:
 
 ```bash
-npm install dotenv
+npm install
 ```
 
 Create a `.env` file:

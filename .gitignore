@@ -4,3 +4,4 @@ AGENTS.md
 .claude/*
 .agents/*
 GAPS.md
+.node_modules/*
