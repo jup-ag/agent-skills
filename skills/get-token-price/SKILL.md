@@ -32,7 +32,7 @@ A script that fetches current USD prices for Solana tokens and handles missing/u
 Install dependencies:
 
 ```bash
-npm install dotenv
+npm install
 ```
 
 Create a `.env` file:
