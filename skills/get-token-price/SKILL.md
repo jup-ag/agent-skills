@@ -7,7 +7,7 @@ description: Fetch real-time USD prices for one or more Solana tokens using Jupi
 license: MIT
 metadata:
   author: jup-ag
-  version: "1.0"
+  version: "3.0"
 ---
 
 # Get Token Prices

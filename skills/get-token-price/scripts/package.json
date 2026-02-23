@@ -1,6 +1,6 @@
 {
   "name": "get-token-price",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Fetch real-time USD prices for Solana tokens using Jupiter Price API V3",
   "license": "MIT",
   "scripts": {
