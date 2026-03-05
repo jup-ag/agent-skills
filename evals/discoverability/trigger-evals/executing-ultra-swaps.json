@@ -1,0 +1,22 @@
+[
+  {"query": "Walk me through the Ultra Swap order-sign-execute flow for swapping SOL to USDC", "should_trigger": true},
+  {"query": "My Jupiter swap is failing with a negative error code after signing — how do I debug this?", "should_trigger": true},
+  {"query": "How do I handle re-quotes when the price moves between order and execute in Ultra?", "should_trigger": true},
+  {"query": "I need to implement gasless swap execution using Jupiter — what's the flow?", "should_trigger": true},
+  {"query": "What slippage settings should I use for volatile token pairs on Jupiter Ultra?", "should_trigger": true},
+  {"query": "How do I check if a token is safe to swap using Jupiter Shield before executing?", "should_trigger": true},
+  {"query": "My swap transaction isn't landing on-chain — the execute call returns but nothing shows up on Solscan", "should_trigger": true},
+  {"query": "help me swap some sol for usdc on jupiter, whats the best route?", "should_trigger": true},
+  {"query": "I want to convert BONK to SOL through Jupiter — can you write the code for the full swap flow?", "should_trigger": true},
+  {"query": "How do I implement retry logic when Jupiter Ultra swap execution fails with a timeout?", "should_trigger": true},
+  {"query": "How do I deposit USDC into Jupiter Lend to earn yield?", "should_trigger": false},
+  {"query": "What's the current APY for lending SOL on Jupiter?", "should_trigger": false},
+  {"query": "Help me set up a Jupiter perps position — I want to go 3x long on SOL", "should_trigger": false},
+  {"query": "I need to create a limit order on Jupiter that triggers when SOL hits $200", "should_trigger": false},
+  {"query": "How do I set up DCA to buy ETH weekly through Jupiter?", "should_trigger": false},
+  {"query": "I need to set up Jupiter token verification to check if a mint is safe before displaying it in my UI", "should_trigger": false},
+  {"query": "How do I get the best price quote from Jupiter without executing a swap?", "should_trigger": false},
+  {"query": "My Jupiter API calls are getting rate limited — how do I handle 429 errors across multiple endpoints?", "should_trigger": false},
+  {"query": "Help me build a price alert system that monitors Jupiter price feeds", "should_trigger": false},
+  {"query": "I want to create a token on Solana using Jupiter Studio — walk me through it", "should_trigger": false}
+]

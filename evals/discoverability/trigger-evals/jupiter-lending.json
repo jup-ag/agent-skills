@@ -1,0 +1,22 @@
+[
+  {"query": "How do I deposit USDC into Jupiter Lend Earn to start earning yield?", "should_trigger": true},
+  {"query": "Walk me through withdrawing my SOL from a Jupiter lending position", "should_trigger": true},
+  {"query": "What's the current APY for different tokens on Jupiter Lend?", "should_trigger": true},
+  {"query": "How do I monitor my lending position health factor to avoid liquidation on Jupiter?", "should_trigger": true},
+  {"query": "I need to mint receipt tokens after depositing into Jupiter Earn — what endpoint do I call?", "should_trigger": true},
+  {"query": "How do I redeem my Jupiter Earn receipt tokens back to the underlying asset?", "should_trigger": true},
+  {"query": "My Jupiter Lend withdrawal is only partially filling — is there a rate limit on withdrawals?", "should_trigger": true},
+  {"query": "i want to supply my sol to earn some yield on jupiter, how does that work?", "should_trigger": true},
+  {"query": "Help me build a dashboard that shows all my Jupiter Earn positions and accumulated earnings", "should_trigger": true},
+  {"query": "What happens when a lending position gets liquidated on Jupiter? How do I manage the risk?", "should_trigger": true},
+  {"query": "How do I swap SOL for USDC on Jupiter using the Ultra API?", "should_trigger": false},
+  {"query": "I need to set up a gasless token swap through Jupiter", "should_trigger": false},
+  {"query": "Help me open a 5x leveraged long position on SOL using Jupiter Perps", "should_trigger": false},
+  {"query": "I want to create a DCA strategy on Jupiter to buy SOL every day", "should_trigger": false},
+  {"query": "How do I integrate Jupiter prediction markets into my app?", "should_trigger": false},
+  {"query": "I want to earn yield on SOL — should I use Jupiter staking or the JLP pool?", "should_trigger": false},
+  {"query": "How do I check my Jupiter portfolio value including both lending positions and swap history?", "should_trigger": false},
+  {"query": "I need to supply liquidity to a Jupiter pool for trading fees — what's the flow?", "should_trigger": false},
+  {"query": "Help me build a limit order system using Jupiter Trigger orders", "should_trigger": false},
+  {"query": "I want to lock tokens with a vesting schedule using Jupiter Lock", "should_trigger": false}
+]

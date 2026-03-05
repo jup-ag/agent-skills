@@ -1,0 +1,22 @@
+[
+  {"query": "I need to integrate Jupiter's swap API into my Solana dApp — what endpoints should I use and how do I handle rate limits?", "should_trigger": true},
+  {"query": "How do I set up Jupiter API authentication with the portal key for my backend service?", "should_trigger": true},
+  {"query": "Can you help me build a flow that gets a swap quote, checks the price feed, and then places a limit order — all through Jupiter?", "should_trigger": true},
+  {"query": "What's the best way to integrate Jupiter perps for a leverage trading bot? I need long/short position management.", "should_trigger": true},
+  {"query": "I want to add DCA functionality to my app using Jupiter's recurring swap endpoints", "should_trigger": true},
+  {"query": "Help me build a portfolio tracker that uses Jupiter's portfolio and price APIs to show holdings and valuations", "should_trigger": true},
+  {"query": "How do I integrate Jupiter prediction markets into my frontend? I need to display odds and let users place bets.", "should_trigger": true},
+  {"query": "I'm building a token launch tool and need to use Jupiter Studio to create tokens and claim fees", "should_trigger": true},
+  {"query": "What Jupiter endpoints do I need for a vesting/lock distribution system? How does the unlock schedule work?", "should_trigger": true},
+  {"query": "I need to add Jupiter Send with clawback support to my wallet app — walk me through the integration", "should_trigger": true},
+  {"query": "I just need to execute a single SOL-to-USDC swap on Jupiter — give me the order/sign/execute code", "should_trigger": false},
+  {"query": "Walk me through depositing USDC into Jupiter Lend Earn for yield", "should_trigger": false},
+  {"query": "How do I set up a Jupiter DCA strategy to dollar-cost-average into SOL weekly?", "should_trigger": false},
+  {"query": "Help me write a Solana program that does an SPL token transfer between two wallets", "should_trigger": false},
+  {"query": "How do I use Jupiter's price API to build a real-time token price ticker without any swapping?", "should_trigger": false},
+  {"query": "My Jupiter Ultra swap is failing after the sign step — how do I handle re-quotes?", "should_trigger": false},
+  {"query": "How do I parse Solana transaction logs to extract swap events from any DEX?", "should_trigger": false},
+  {"query": "I need to check Jupiter token metadata and verify a mint address is legitimate before trading", "should_trigger": false},
+  {"query": "What's the APY on Jupiter Lend right now and how do I monitor my health factor?", "should_trigger": false},
+  {"query": "Help me set up a TypeScript project with Solana web3.js — just the basic scaffolding and connection setup", "should_trigger": false}
+]

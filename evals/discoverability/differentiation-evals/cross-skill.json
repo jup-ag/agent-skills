@@ -1,0 +1,92 @@
+[
+  {
+    "query": "I need to swap SOL for USDC on Jupiter — what's the best approach?",
+    "correct_skill": "executing-ultra-swaps",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Single swap task is best served by the focused swap skill which covers the full order/sign/execute flow, not the broad integration guide"
+  },
+  {
+    "query": "How do I deposit assets into Jupiter to earn yield?",
+    "correct_skill": "jupiter-lending",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Deposit-for-yield is a lending operation, best served by the focused lending skill"
+  },
+  {
+    "query": "I need to build a Jupiter integration that handles swaps, lending, and portfolio tracking",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["executing-ultra-swaps", "jupiter-lending"],
+    "reason": "Multi-API integration spanning swap + lending + portfolio requires the broad skill"
+  },
+  {
+    "query": "My Jupiter swap keeps failing — I get an error after the sign step",
+    "correct_skill": "executing-ultra-swaps",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Debugging the sign step of swap execution is squarely in the focused swap skill's domain (error recovery, negative codes)"
+  },
+  {
+    "query": "What Jupiter APIs do I need for a complete DeFi dashboard with swaps, lending rates, and portfolio?",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["executing-ultra-swaps", "jupiter-lending"],
+    "reason": "Endpoint selection across multiple APIs is what the broad integration skill is designed for"
+  },
+  {
+    "query": "How do I handle slippage and routing decisions for Jupiter swaps?",
+    "correct_skill": "executing-ultra-swaps",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Slippage and routing are swap execution details covered in depth by the focused swap skill"
+  },
+  {
+    "query": "I want to check my Jupiter Lend health factor and understand liquidation risk",
+    "correct_skill": "jupiter-lending",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Health factor and liquidation are lending risk management, deeply covered by the lending skill"
+  },
+  {
+    "query": "Help me integrate Jupiter into my Solana app — I need swap and price feed endpoints",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["executing-ultra-swaps"],
+    "reason": "Swap + price feed is multi-API; the broad skill covers endpoint selection across APIs"
+  },
+  {
+    "query": "How do I implement gasless token exchanges through Jupiter?",
+    "correct_skill": "executing-ultra-swaps",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Gasless execution is a specific Ultra Swap feature covered in the focused skill"
+  },
+  {
+    "query": "I need to withdraw from my Jupiter Earn position and swap the proceeds to SOL",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["jupiter-lending", "executing-ultra-swaps"],
+    "reason": "Withdraw + swap spans two APIs (lending and swap), requiring the broad integration skill"
+  },
+  {
+    "query": "What are the receipt token mechanics for Jupiter Lend deposits?",
+    "correct_skill": "jupiter-lending",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Receipt token mint/redeem is a lending-specific operation covered deeply by the lending skill"
+  },
+  {
+    "query": "I'm building a trading bot that needs Jupiter swap execution with retry logic",
+    "correct_skill": "executing-ultra-swaps",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Swap execution with retry/re-quote logic is the core focus of the Ultra Swap skill"
+  },
+  {
+    "query": "Help me set up Jupiter API authentication and choose which endpoints I need",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["executing-ultra-swaps", "jupiter-lending"],
+    "reason": "API auth setup and endpoint selection is the broad skill's primary use case"
+  },
+  {
+    "query": "How do I earn yield on my USDC through Jupiter?",
+    "correct_skill": "jupiter-lending",
+    "wrong_skills": ["integrating-jupiter"],
+    "reason": "Earning yield on assets is the core lending use case"
+  },
+  {
+    "query": "I need to add Jupiter perps, limit orders, and DCA to my trading platform",
+    "correct_skill": "integrating-jupiter",
+    "wrong_skills": ["executing-ultra-swaps"],
+    "reason": "Perps + trigger orders + DCA spans multiple non-swap APIs, requiring the broad skill"
+  }
+]
