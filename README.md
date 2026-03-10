@@ -18,6 +18,18 @@ npx skills add jup-ag/agent-skills --skill "integrating-jupiter"
 
 
 
+### jupiter-lend
+
+Helps agents integrate with Jupiter Lend protocol (powered by Fluid Protocol) — lending, borrowing, vaults, and jlTokens on Solana.
+
+#### Installation
+
+```bash
+npx skills add jup-ag/agent-skills --skill "jupiter-lend"
+```
+
+
+
 ## Quick Install
 
 ### Installation
