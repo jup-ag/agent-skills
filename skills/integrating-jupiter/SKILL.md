@@ -3,7 +3,7 @@ name: integrating-jupiter
 description: Comprehensive guidance for integrating Jupiter APIs (Ultra Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets, Send, Studio, Lock, Routing). Use for endpoint selection, integration flows, error handling, and production hardening.
 license: MIT
 metadata:
-  author: jupiter
+  author: jup-ag
   version: "1.0.0"
 tags:
   - jupiter
@@ -343,6 +343,294 @@ async function jupiterAction<T>(action: () => Promise<T>): Promise<JupiterResult
   }
 }
 ```
+
+
+## Complete Working Examples
+
+Production-ready code snippets for the most common Jupiter operations. Copy-paste ready with full error handling.
+
+### Ultra Swap: End-to-End
+
+Complete SOL → USDC swap with order, sign, execute, and confirmation:
+
+```typescript
+import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
+import bs58 from 'bs58';
+
+const API_KEY = process.env.JUPITER_API_KEY!;
+const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const connection = new Connection(RPC_URL);
+const wallet = Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY!));
+
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+async function swapSolToUsdc(amountLamports: number) {
+  // 1. Get order
+  const orderUrl = new URL('https://api.jup.ag/ultra/v1/order');
+  orderUrl.searchParams.set('inputMint', SOL_MINT);
+  orderUrl.searchParams.set('outputMint', USDC_MINT);
+  orderUrl.searchParams.set('amount', amountLamports.toString());
+  orderUrl.searchParams.set('taker', wallet.publicKey.toBase58());
+
+  const orderRes = await fetch(orderUrl.toString(), {
+    headers: { 'x-api-key': API_KEY },
+  });
+
+  if (!orderRes.ok) {
+    const err = await orderRes.text();
+    throw new Error(`Order failed (${orderRes.status}): ${err}`);
+  }
+
+  const order = await orderRes.json();
+
+  if (order.error) {
+    throw new Error(`Order error: ${order.error}`);
+  }
+
+  // 2. Sign the transaction
+  const txBuf = Buffer.from(order.transaction, 'base64');
+  const tx = VersionedTransaction.deserialize(txBuf);
+  tx.sign([wallet]);
+
+  const signedTx = Buffer.from(tx.serialize()).toString('base64');
+
+  // 3. Execute
+  const execRes = await fetch('https://api.jup.ag/ultra/v1/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+    },
+    body: JSON.stringify({
+      signedTransaction: signedTx,
+      requestId: order.requestId,
+    }),
+  });
+
+  if (!execRes.ok) {
+    const err = await execRes.text();
+    throw new Error(`Execute failed (${execRes.status}): ${err}`);
+  }
+
+  const result = await execRes.json();
+
+  // 4. Confirm
+  if (result.status === 'Success') {
+    return {
+      signature: result.signature,
+      inputAmount: result.inputAmount,
+      outputAmount: result.outputAmount,
+      explorerUrl: `https://solscan.io/tx/${result.signature}`,
+    };
+  }
+
+  throw new Error(`Swap failed: ${result.error || result.code || 'unknown'}`);
+}
+
+// Usage: swapSolToUsdc(1_000_000_000) → swaps 1 SOL
+```
+
+### Retry Helper with Exponential Backoff
+
+Use this wrapper for any Jupiter API call to handle rate limits and transient failures:
+
+```typescript
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  opts: { maxRetries?: number; baseDelay?: number; maxDelay?: number } = {}
+): Promise<T> {
+  const { maxRetries = 3, baseDelay = 1000, maxDelay = 10000 } = opts;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const code = err?.code ?? err?.status;
+      const isRetryable =
+        code === 429 ||
+        code === 'RATE_LIMITED' ||
+        code === 503 ||
+        (typeof code === 'number' && code < 0 && [-1, -1000, -1001, -1005, -1006, -2000, -2003, -2005].includes(code));
+
+      if (!isRetryable || attempt === maxRetries) throw err;
+
+      const jitter = Math.random() * 500;
+      const delay = Math.min(baseDelay * Math.pow(2, attempt) + jitter, maxDelay);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  throw new Error('Retry exhausted');
+}
+
+// Usage:
+// const order = await withRetry(() => fetchOrder(params));
+// const result = await withRetry(() => executeSwap(signedTx, requestId));
+```
+
+### Price Lookup: Multi-Token
+
+Fetch current prices for multiple tokens with confidence filtering:
+
+```typescript
+async function getPrices(mints: string[], confidenceLevel: 'low' | 'medium' | 'high' = 'medium') {
+  const url = new URL('https://api.jup.ag/price/v3');
+  url.searchParams.set('ids', mints.join(','));
+
+  const res = await fetch(url.toString(), {
+    headers: { 'x-api-key': API_KEY },
+  });
+
+  if (!res.ok) throw new Error(`Price API ${res.status}`);
+
+  const data = await res.json();
+  const prices: Record<string, { price: number; confidence: string } | null> = {};
+
+  for (const mint of mints) {
+    const entry = data.data?.[mint];
+    if (!entry || !entry.price) {
+      prices[mint] = null; // token not priced or unreliable
+      continue;
+    }
+
+    // Filter by confidence — fail closed on low-confidence data
+    const levels = ['low', 'medium', 'high'];
+    const entryLevel = entry.confidenceLevel || 'low';
+    if (levels.indexOf(entryLevel) < levels.indexOf(confidenceLevel)) {
+      prices[mint] = null;
+      continue;
+    }
+
+    prices[mint] = { price: parseFloat(entry.price), confidence: entryLevel };
+  }
+
+  return prices;
+}
+
+// Usage: getPrices([SOL_MINT, USDC_MINT, WBTC_MINT])
+```
+
+### Lend: USDC Deposit
+
+Deposit USDC into Jupiter Lend earn pool:
+
+```typescript
+async function depositToLend(amount: number, tokenMint: string) {
+  // 1. Get deposit transaction
+  const res = await fetch('https://api.jup.ag/lend/v1/earn/deposit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+    },
+    body: JSON.stringify({
+      owner: wallet.publicKey.toBase58(),
+      tokenMint,
+      amount: amount.toString(),
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Lend deposit failed (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+
+  // 2. Sign and send the returned transaction
+  const signature = await signAndSend(data.transaction, wallet, connection);
+
+  // 3. Confirm
+  const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+  if (confirmation.value.err) {
+    throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+  }
+
+  return { signature, explorerUrl: `https://solscan.io/tx/${signature}` };
+}
+
+// Usage: depositToLend(1000_000_000, USDC_MINT) → deposits 1000 USDC (6 decimals)
+```
+
+### Trigger: Limit Order
+
+Create a limit order to buy SOL when price drops:
+
+```typescript
+async function createLimitOrder(
+  inputMint: string,
+  outputMint: string,
+  makingAmount: string,
+  takingAmount: string
+) {
+  // 1. Create order
+  const res = await fetch('https://api.jup.ag/trigger/v1/createOrder', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+    },
+    body: JSON.stringify({
+      maker: wallet.publicKey.toBase58(),
+      payer: wallet.publicKey.toBase58(),
+      inputMint,
+      outputMint,
+      makingAmount,
+      takingAmount,
+      expiredAt: null, // no expiry
+      feeBps: 0,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Create order failed (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+
+  // 2. Sign and execute
+  const execRes = await fetch('https://api.jup.ag/trigger/v1/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+    },
+    body: JSON.stringify({
+      signedTransaction: await signTx(data.transaction),
+      requestId: data.requestId,
+    }),
+  });
+
+  const result = await execRes.json();
+  return result;
+}
+
+// Usage: createLimitOrder(USDC_MINT, SOL_MINT, '150000000', '1000000000')
+// → Buy 1 SOL when price hits 150 USDC
+```
+
+### Ultra Swap Error Codes Reference
+
+Common error codes returned by `/ultra/v1/execute` with recommended actions:
+
+| Code | Meaning | Retryable | Action |
+|------|---------|-----------|--------|
+| `-1` | Transaction expired | ✅ | Re-quote and retry |
+| `-1000` | Transaction failed (generic) | ✅ | Re-quote with adjusted params |
+| `-1001` | Slippage exceeded | ✅ | Increase `slippageBps` or re-quote |
+| `-1005` | Transaction not confirmed | ✅ | Wait and check status, then retry |
+| `-1006` | Transaction dropped | ✅ | Re-quote and retry |
+| `-2000` | Internal error | ✅ | Retry with backoff |
+| `-2003` | Service unavailable | ✅ | Retry with longer backoff |
+| `-2005` | Timeout | ✅ | Retry with backoff |
+| `6001` | Slippage tolerance exceeded (on-chain) | ❌ | Increase slippage or reduce amount |
+| `6003` | Insufficient funds | ❌ | Check wallet balance |
+| `429` | Rate limited | ✅ | Exponential backoff, wait 10s window |
+
+---
 
 ## Fresh Context Policy
 
