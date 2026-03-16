@@ -384,4 +384,4 @@ main().catch(console.error);
 
 - **JUP Token Mint**: `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
 - **Jupiter Docs**: [dev.jup.ag](https://dev.jup.ag)
-- **Jupiter Verification**: [verify.jup.ag](https://verify.jup.ag)
+- **Jupiter Verification**: [verified.jup.ag](https://verified.jup.ag)
