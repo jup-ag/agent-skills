@@ -13,7 +13,19 @@ Helps agents integrate with the whole Jupiter Suite of APIs.
 #### Installation
 
 ```bash
-npx add-skill jup-ag/agents-skills --skill "integrating-jupiter"
+npx skills add jup-ag/agent-skills --skill "integrating-jupiter"
+```
+
+
+
+### jupiter-lend
+
+Helps agents integrate with Jupiter Lend protocol (powered by Fluid Protocol) — lending, borrowing, vaults, and jlTokens on Solana.
+
+#### Installation
+
+```bash
+npx skills add jup-ag/agent-skills --skill "jupiter-lend"
 ```
 
 
@@ -23,7 +35,7 @@ npx add-skill jup-ag/agents-skills --skill "integrating-jupiter"
 ### Installation
 
 ```bash
-npx add-skill jup-ag/agents-skills
+npx skills add jup-ag/agent-skills
 ```
 
 ## License
