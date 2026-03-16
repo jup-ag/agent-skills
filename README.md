@@ -30,6 +30,18 @@ npx skills add jup-ag/agent-skills --skill "jupiter-lend"
 
 
 
+### jupiter-token-verification
+
+Helps agents guide users through the Jupiter Token Verification express flow — submit verification requests, pay with JUP tokens, and check verification status.
+
+#### Installation
+
+```bash
+npx skills add jup-ag/agent-skills --skill "jupiter-token-verification"
+```
+
+
+
 ## Quick Install
 
 ### Installation
