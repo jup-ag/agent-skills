@@ -414,12 +414,11 @@ When collecting user input, handle these common mistakes gracefully instead of r
 > Copy-paste-ready TypeScript showing the full premium express flow. Install: `npm install @solana/web3.js`
 
 ```typescript
-import { Connection, Keypair, Transaction } from "@solana/web3.js";
+import { Keypair, Transaction } from "@solana/web3.js";
 import fs from "fs";
 import path from "path";
 
 const BASE_URL = "http://localhost:8789";
-const RPC_URL = "https://api.mainnet-beta.solana.com";
 const KEYPAIR_PATH = "/path/to/your/keypair.json";
 
 // Token details
