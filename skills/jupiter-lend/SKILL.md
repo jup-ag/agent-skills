@@ -3,18 +3,21 @@ name: jupiter-lend
 description: Interact with Jupiter Lend Protocol. Read-only SDK (@jup-ag/lend-read) for querying liquidity pools, lending markets (jlTokens), and vaults. Write SDK (@jup-ag/lend) for lending (deposit/withdraw) and vault operations (deposit collateral, borrow, repay, manage positions). No API keys needed for on-chain interactions.
 license: MIT
 metadata:
-  author: jupiter
+  author: jup-ag
   version: "1.0.0"
 tags:
-  - jupiter-lend
+  - jupiter
   - jup-ag
+  - jupiter-lend
+  - jupiter-lend-read
+  - fluid-protocol
+  - jltoken
+  - jlp
+  - jupiter-vaults
+  - jupiter-liquidity
   - lend
   - borrow
   - earn
-  - fluid-protocol
-  - jltoken
-  - vaults
-  - liquidity
   - solana
   - defi
 ---
