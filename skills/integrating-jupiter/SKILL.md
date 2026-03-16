@@ -3,7 +3,7 @@ name: integrating-jupiter
 description: Comprehensive guidance for integrating Jupiter APIs (Ultra Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets, Send, Studio, Lock, Routing). Use for endpoint selection, integration flows, error handling, and production hardening.
 license: MIT
 metadata:
-  author: jupiter
+  author: jup-ag
   version: "1.0.0"
 tags:
   - jupiter
@@ -124,6 +124,22 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Endpoints**: `/order` (GET), `/execute` (POST), `/holdings/{account}` (GET), `/shield` (GET), `/search` (GET), `/routers` (GET)
 - **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed.
 - Refs: [Overview](https://dev.jup.ag/docs/ultra/index.md) | [Order](https://dev.jup.ag/docs/ultra/get-order.md) | [Execute](https://dev.jup.ag/docs/ultra/execute-order.md) | [Responses](https://dev.jup.ag/docs/ultra/response.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/ultra/ultra.yaml)
+
+Common error codes returned by `/ultra/v1/execute` with recommended actions:
+
+| Code | Meaning | Retryable | Action |
+|------|---------|-----------|--------|
+| `-1` | Transaction expired | Yes | Re-quote and retry |
+| `-1000` | Transaction failed (generic) | Yes | Re-quote with adjusted params |
+| `-1001` | Slippage exceeded | Yes | Increase `slippageBps` or re-quote |
+| `-1005` | Transaction not confirmed | Yes | Wait and check status, then retry |
+| `-1006` | Transaction dropped | Yes | Re-quote and retry |
+| `-2000` | Internal error | Yes | Retry with backoff |
+| `-2003` | Service unavailable | Yes | Retry with longer backoff |
+| `-2005` | Timeout | Yes | Retry with backoff |
+| `6001` | Slippage tolerance exceeded (on-chain) | No | Increase slippage or reduce amount |
+| `6003` | Insufficient funds | No | Check wallet balance |
+| `429` | Rate limited | Yes | Exponential backoff, wait 10s window |
 
 ---
 
@@ -342,7 +358,28 @@ async function jupiterAction<T>(action: () => Promise<T>): Promise<JupiterResult
     return { ok: false, error: { code, message: error?.message ?? 'UNKNOWN_ERROR', retryable: false } };
   }
 }
+
+async function withRetry<T>(action: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const result = await jupiterAction(action);
+    if (result.ok) return result.result!;
+    if (!result.error?.retryable || attempt === maxRetries) throw result.error;
+    const delay = Math.min(1000 * 2 ** attempt + Math.random() * 500, 10000);
+    await new Promise(r => setTimeout(r, delay));
+  }
+  throw new Error('Retry exhausted');
+}
 ```
+
+
+## Complete Working Examples
+
+Production-ready code snippets. Each example uses the `jupiterFetch`, `signAndSend`, and `withRetry` helpers from the sections above.
+
+- [Ultra Swap: End-to-End](./examples/ultra.md) — Order -> sign -> execute -> confirm flow
+- [Lend: USDC Deposit](./examples/lend.md) — Deposit into Jupiter Lend earn pool
+- [Trigger: Limit Order](./examples/trigger.md) — Create and execute a limit order
+- [Price: Multi-Token Lookup](./examples/price.md) — Fetch prices with confidence filtering
 
 ## Fresh Context Policy
 
