@@ -14,11 +14,71 @@ Some endpoints require an API key passed via the `x-api-key` header:
 | `GET /payments/express/craft-txn` | API key |
 | `POST /payments/express/execute` | API key |
 
-**Rate limit:** 2 requests/day per API key for submission endpoints.
-
 ```
 x-api-key: your-api-key-here
 ```
+
+### Generating an API Key
+
+> **Auth API Base URL**: `https://vrfd-auth-api-dev.jup.ag`
+
+1. Open `https://vrfd-auth-api-dev.jup.ag/api/keys/new` in the browser — this handles login and key generation in one flow
+2. Save the key immediately. It is shown **once** and cannot be retrieved again (only the prefix `vrfd_ak_xxxx...` is stored for display)
+
+Creating a new key automatically **revokes** any existing active key for your account.
+
+### Managing Keys
+
+These endpoints are on the **auth-api** (`https://vrfd-auth-api-dev.jup.ag`), not the token-verification service.
+
+| Endpoint               | Method   | Description                               |
+| ---------------------- | -------- | ----------------------------------------- |
+| `POST /api/keys`       | `POST`   | Generate a new API key (revokes existing) |
+| `GET /api/keys`        | `GET`    | List your keys (prefix only)              |
+| `DELETE /api/keys/:id` | `DELETE` | Revoke a specific key                     |
+
+### Rate Limits
+
+Endpoints protected by API key enforce a daily request limit per user (or IP if unauthenticated):
+
+| Tier       | Daily Limit                 |
+| ---------- | --------------------------- |
+| Public     | 2 requests/day per endpoint |
+| Enterprise | Unlimited                   |
+
+The combined flow endpoints (`craft-txn`, `execute`, `submit`) are all rate limited under the `combined` namespace.
+
+---
+
+## Eligibility Rules
+
+Before any submission (and before any payment in express), the system checks whether verification and metadata can proceed for the given token.
+
+| Verification | Metadata | Result                  |
+| ------------ | -------- | ----------------------- |
+| Can          | Can      | Allow both              |
+| Can          | Cannot   | Allow verification only |
+| Cannot       | Can      | Allow metadata only     |
+| Cannot       | Cannot   | Reject (409 Conflict)   |
+
+**Verification can proceed if:**
+
+- No existing verification exists for the token
+- An existing verification was **rejected** (resubmission allowed)
+- Upgrading from basic to premium tier
+
+**Verification cannot proceed if:**
+
+- A same-tier verification already exists (not rejected)
+- Attempting to downgrade from premium to basic (with < 3 evaluations)
+
+**Metadata can proceed if:**
+
+- No existing metadata request exists for the token
+
+**Metadata cannot proceed if:**
+
+- A metadata request already exists for the token
 
 ---
 
@@ -114,7 +174,7 @@ x-api-key: your-api-key-here
 | `twitterHandle`       | string  | No       | Token's Twitter — must be a valid `x.com` or `twitter.com` URL     |
 | `senderTwitterHandle` | string  | No       | Requester's Twitter — must be a valid `x.com` or `twitter.com` URL |
 | `description`         | string  | No       | Description of the token                                           |
-| `tokenMetadata`       | object  | No       | Optional token metadata to set alongside verification              |
+| `tokenMetadata`       | object  | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
 **Response:**
 
@@ -209,7 +269,7 @@ x-api-key: your-api-key-here
 | `twitterHandle`       | string | **Yes**  | Token's Twitter URL                        |
 | `senderTwitterHandle` | string | No       | Requester's Twitter URL                    |
 | `description`         | string | **Yes**  | Description of the token                   |
-| `tokenMetadata`       | object | No       | Optional token metadata to set alongside verification |
+| `tokenMetadata`       | object | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
 **Response:**
 
@@ -224,6 +284,34 @@ x-api-key: your-api-key-here
 ```
 
 On success, the server automatically creates a **express** verification request for the token. The `verificationCreated` and `metadataCreated` fields indicate what was created.
+
+---
+
+## tokenMetadata Object
+
+Optional object for setting token metadata alongside verification. Can be included in both `POST /basic/submit` and `POST /payments/express/execute`.
+
+| Field                   | Type     | Required | Description                           |
+| ----------------------- | -------- | -------- | ------------------------------------- |
+| `tokenId`               | string   | **Yes**  | The token mint address                |
+| `icon`                  | string?  | No       | Token icon URL                        |
+| `name`                  | string?  | No       | Token name                            |
+| `symbol`                | string?  | No       | Token symbol                          |
+| `website`               | string?  | No       | Website URL                           |
+| `telegram`              | string?  | No       | Telegram link                         |
+| `twitter`               | string?  | No       | Twitter link                          |
+| `twitterCommunity`      | string?  | No       | Twitter community link                |
+| `discord`               | string?  | No       | Discord link                          |
+| `instagram`             | string?  | No       | Instagram link                        |
+| `tiktok`                | string?  | No       | TikTok link                           |
+| `circulatingSupply`     | string?  | No       | Circulating supply value              |
+| `useCirculatingSupply`  | boolean? | No       | Whether to use circulating supply     |
+| `tokenDescription`      | string?  | No       | Token description                     |
+| `coingeckoCoinId`       | string?  | No       | CoinGecko coin ID                     |
+| `useCoingeckoCoinId`    | boolean? | No       | Whether to use CoinGecko coin ID      |
+| `circulatingSupplyUrl`  | string?  | No       | URL for circulating supply API        |
+| `useCirculatingSupplyUrl` | boolean? | No     | Whether to use circulating supply URL |
+| `otherUrl`              | string?  | No       | Other URL (truncated to 200 chars)    |
 
 ---
 

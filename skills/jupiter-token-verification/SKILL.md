@@ -57,7 +57,7 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 
 Load these on demand when you need implementation details:
 
-- **[API Reference](references/api-reference.md)** — Endpoint details, request/response schemas, data types. Load when making API calls or validating parameters.
+- **[API Reference](references/api-reference.md)** — Endpoint details, request/response schemas, data types, eligibility rules, API key generation and management, tokenMetadata schema. Load when making API calls or validating parameters.
 - **[Payment Execution](references/payment-execution.md)** — Express payment flow (steps 7a–7e), template script, config.json, error handling. Load when the user confirms an express verification.
 
 ---
@@ -130,10 +130,15 @@ For **"check-only" intent** (user just wants to know status), call both eligibil
 Before any authenticated call (`POST /basic/submit`, `GET /payments/express/craft-txn`, `POST /payments/express/execute`), resolve the API key:
 
 1. Check `.env` / `.env.local` for `JUPITER_API_KEY` or `JUP_API_KEY`
-2. If not found, tell the user they need an API key and direct them to request one at `/new` (e.g., `https://token-verification-dev-api.jup.ag/new`)
-3. Once the user has their key, ask them to store it in `.env` as `JUPITER_API_KEY=<key>`
+2. If not found, guide the user through generating a new API key:
+   - Direct them to open `https://vrfd-auth-api-dev.jup.ag/api/keys/new` in their browser — this handles login and key generation in one flow
+   - **Important:** The key is shown **once** and cannot be retrieved again (only the prefix `vrfd_ak_xxxx...` is stored for display). Tell the user to copy it immediately.
+   - Creating a new key automatically **revokes** any existing active key for their account
+3. Once the user has their key, ask them to store it in `.env` as `JUPITER_API_KEY=<key>` and ensure `.env` is in `.gitignore`
 
 The key is passed via the `x-api-key` header. Rate limit: 2 requests/day per key.
+
+For full API key management details (listing keys, revoking keys), see [API Reference — Managing Keys](references/api-reference.md#managing-keys).
 
 ### 6. Collect Remaining Parameters (one at a time)
 
