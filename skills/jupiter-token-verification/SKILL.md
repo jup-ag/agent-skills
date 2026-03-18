@@ -95,7 +95,12 @@ If the user only wanted to **check** status, stop here.
 
 ### 4. Choose Verification Tier
 
-Ask:
+**Auto-select when possible:** If the user's original message already indicates which tier they want, skip this question and use their choice directly:
+
+- Phrases like `express verification`, `premium verification`, `paid verification`, `express flow` → auto-select **premium**
+- Phrases like `basic verification`, `free verification` → auto-select **basic**
+
+**Only ask if unclear:**
 
 > Would you like **basic** (free) or **premium** (1 JUP) verification?
 >
@@ -127,17 +132,15 @@ Same validation as above.
 > Please provide a **short description** of the token.
 > Example: _"Community governance token for XYZ protocol"_ > _(Type "skip" to leave blank)_
 
-**d) Wallet Address** (required for premium, optional for basic)
-
-If **premium** was selected:
-
-> What is your **Solana wallet address**? This wallet will pay 1 JUP and must sign the transaction.
+**d) Wallet Address** (basic tier only — optional)
 
 If **basic** was selected:
 
 > What is your **Solana wallet address**? _(optional — type "skip" to leave blank)_
 
 Validate: same base58 format as token mint.
+
+If **premium** was selected: **skip this step**. The wallet address will be derived automatically from the user's private key during the [Premium Payment Execution](#premium-payment-execution) flow.
 
 ### 6. Confirm Before Submitting
 
@@ -160,12 +163,202 @@ If the user says no, ask which field to change.
 
 ### 7. Submit and Report
 
-- For **basic**: call `POST /verifications` and report the result.
-- For **premium**: proceed to the payment flow (Steps 3–4 in the Express Verification Flow below). Guide the user through signing.
+- For **basic**: call `POST /verifications` with all collected parameters and report the result. Done.
+- For **premium**: proceed to the [Premium Payment Execution](#premium-payment-execution) section below. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result.
+
+---
+
+# Premium Payment Execution
+
+When the user has confirmed a **premium** verification request, the agent executes the payment end-to-end. The wallet address is derived from the private key — it is not collected separately.
+
+## 7a. Resolve Private Key
+
+The agent resolves the user's private key using this priority order:
+
+1. **Check `.env` files** — Look for a `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY` variable in `.env`, `.env.local`, or similar files in the current project directory. If found, use it directly.
+2. **Ask the user** — If no `.env` key is found, ask the user to either:
+   - Set it in a `.env` file (e.g., `PRIVATE_KEY=<base58-key>`) and the agent will read it from there
+   - Provide the base58 private key directly in chat
+
+Once the private key is obtained, **derive the wallet address** from it (via `Keypair.fromSecretKey`) — no need to ask for the wallet address separately.
+
+> **Private Key Security Rules:**
+> - The private key MUST stay local. It is NEVER sent to any server, API, or external service.
+> - The key is used ONLY to sign the transaction on the user's machine. Only the **signed transaction** (not the key) is sent to the Jupiter API.
+> - The script runs entirely locally — it reads the key, signs, and sends only the signed output.
+> - Recommend the user use a dedicated wallet with minimal funds, not their main holdings wallet.
+> - If the key is in a `.env` file, remind the user to ensure `.env` is in `.gitignore`.
+
+## 7b. Set Up Execution Environment
+
+Create a temporary directory and install dependencies:
+
+```bash
+TMPDIR=$(mktemp -d /tmp/jup-verify-XXXXXX)
+cd "$TMPDIR" && npm init -y && npm install @solana/web3.js bs58
+```
+
+## 7c. Write the Payment Script
+
+Write a `pay.ts` file in the temp directory with placeholders filled from conversation parameters. The script must:
+
+1. Read the private key from an environment variable (`PRIVATE_KEY`) passed at runtime
+2. Derive the wallet address from the private key using `Keypair.fromSecretKey`
+3. Call `GET /payments/transfer/craft-txn?senderAddress={derived-wallet}` to get the unsigned transaction
+4. Deserialize, sign locally, and serialize the transaction
+5. Call `POST /payments/transfer/execute` with the signed transaction and all verification parameters
+6. Print `SUCCESS:<signature>` on success or `ERROR:<code>:<message>` on failure
+
+The script MUST include these security comments:
+
+```typescript
+// SECURITY: Private key is used ONLY for local signing.
+// Only the signed transaction is sent to the Jupiter API.
+// The private key NEVER leaves this machine.
+```
+
+**Template script:**
+
+```typescript
+// SECURITY: Private key is used ONLY for local signing.
+// Only the signed transaction is sent to the Jupiter API.
+// The private key NEVER leaves this machine.
+
+import { Keypair, Transaction } from "@solana/web3.js";
+import bs58 from "bs58";
+
+const BASE_URL = "https://token-verification-dev-api.jup.ag";
+
+// Parameters from conversation
+const TOKEN_ID = "{{tokenId}}";
+const TWITTER_HANDLE = "{{twitterHandle}}";
+const SENDER_TWITTER = "{{senderTwitterHandle}}";
+const DESCRIPTION = "{{description}}";
+
+// Read private key from environment variable — NEVER hardcoded in source
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+if (!PRIVATE_KEY) {
+  console.error("ERROR:NO_KEY:PRIVATE_KEY environment variable is not set");
+  process.exit(1);
+}
+
+async function main() {
+  // Derive wallet from private key — no need to ask for wallet address separately
+  const keypair = Keypair.fromSecretKey(bs58.decode(PRIVATE_KEY));
+  const senderAddress = keypair.publicKey.toBase58();
+  console.log(`Wallet: ${senderAddress}`);
+
+  // Step 1: Craft the unsigned payment transaction
+  const craftRes = await fetch(
+    `${BASE_URL}/payments/transfer/craft-txn?senderAddress=${senderAddress}`
+  );
+
+  if (!craftRes.ok) {
+    const err = await craftRes.text();
+    console.error(`ERROR:CRAFT_FAILED:${craftRes.status} ${err}`);
+    process.exit(1);
+  }
+
+  const craftData = await craftRes.json();
+  const { transaction: unsignedTxBase64, requestId } = craftData;
+  console.log(`Request ID: ${requestId}`);
+  console.log(`Payment: ${craftData.amount} base units of JUP`);
+
+  // Step 2: Sign the transaction locally
+  // SECURITY: Only the signed transaction leaves this machine, NOT the private key
+  const txBuffer = Buffer.from(unsignedTxBase64, "base64");
+  const transaction = Transaction.from(txBuffer);
+  transaction.partialSign(keypair);
+  const signedTxBase64 = Buffer.from(
+    transaction.serialize({ requireAllSignatures: false })
+  ).toString("base64");
+
+  // Step 3: Execute — server co-signs and broadcasts
+  const executeRes = await fetch(`${BASE_URL}/payments/transfer/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      transaction: signedTxBase64,
+      requestId,
+      senderAddress,
+      tokenId: TOKEN_ID,
+      twitterHandle: TWITTER_HANDLE,
+      senderTwitterHandle: SENDER_TWITTER,
+      description: DESCRIPTION,
+    }),
+  });
+
+  const executeData = await executeRes.json();
+
+  if (executeData.status === "Success") {
+    console.log(`SUCCESS:${executeData.signature}`);
+  } else {
+    console.error(`ERROR:EXECUTE_FAILED:${JSON.stringify(executeData)}`);
+    process.exit(1);
+  }
+}
+
+main().catch((err) => {
+  console.error(`ERROR:EXCEPTION:${err.message}`);
+  process.exit(1);
+});
+```
+
+Replace `{{tokenId}}`, `{{twitterHandle}}`, `{{senderTwitterHandle}}`, and `{{description}}` with the actual values collected during the conversation. If a value was skipped, use an empty string `""`.
+
+## 7d. Execute the Script
+
+Run the script, passing the private key via environment variable:
+
+```bash
+cd "$TMPDIR" && PRIVATE_KEY="<base58-key>" npx tsx pay.ts
+```
+
+Fallback if `tsx` is not available:
+
+```bash
+cd "$TMPDIR" && PRIVATE_KEY="<base58-key>" npx ts-node pay.ts
+```
+
+Parse the output:
+- `SUCCESS:<signature>` → payment succeeded
+- `ERROR:<code>:<message>` → payment failed, see error table in 7e
+
+## 7e. Report Result and Clean Up
+
+**On success:**
+
+> Premium verification payment submitted!
+>
+> | Detail          | Value                                                              |
+> | --------------- | ------------------------------------------------------------------ |
+> | **Signature**   | `{signature}`                                                      |
+> | **Explorer**    | `https://solana.fm/tx/{signature}`                                 |
+> | **Token**       | `{tokenId}`                                                        |
+> | **Status**      | Premium verification pending review                                |
+
+**On failure**, map error patterns to likely causes:
+
+| Error Pattern       | Likely Cause                                         | Suggestion                                              |
+| ------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| `NO_KEY`            | Private key not provided                             | Set `PRIVATE_KEY` env var or add to `.env`               |
+| `CRAFT_FAILED:400`  | Invalid wallet or insufficient JUP balance           | Check wallet has ≥1 JUP + small SOL for fees             |
+| `CRAFT_FAILED:429`  | Rate limited                                         | Wait a moment and retry                                  |
+| `EXECUTE_FAILED`    | Transaction expired, network error, or co-sign issue | Re-run the script (crafts a fresh transaction)           |
+| `EXCEPTION`         | Script crash (network, dependency issue)             | Check Node.js v18+, check network connectivity           |
+
+**Always clean up** — remove the temp directory to ensure no private key material remains on disk:
+
+```bash
+rm -rf "$TMPDIR"
+```
 
 ---
 
 # Express Verification Flow
+
+> **Note:** The express flow and the premium flow are the same thing. The [Premium Payment Execution](#premium-payment-execution) section above describes how the agent executes this flow end-to-end. This section serves as the API reference for each endpoint involved.
 
 The express flow has 4 steps: check status, submit request, craft payment transaction, sign and execute.
 
@@ -406,6 +599,9 @@ When collecting user input, handle these common mistakes gracefully instead of r
 8. **Admin endpoints are off-limits** — `POST /verifications/verify`, `POST /verifications/unverify`, and `POST /verifications/mass-unverify` all require admin authentication. Do not attempt to call them.
 9. **Basic verification = done at Step 2** — only premium verification requires the payment flow (Steps 3–4).
 10. **Premium upgrades via execute** — when you pay via the `execute` endpoint, the server automatically creates (or upgrades) the verification to premium tier. You do not need to call `POST /verifications` separately for premium.
+11. **Private keys MUST stay local** — The payment script signs transactions client-side. The private key is NEVER sent to any API, server, or external service. Only the signed transaction is transmitted. Agents must communicate this clearly to users and include security comments in generated scripts. Recommend `.env` files (with `.gitignore`) and dedicated payment wallets.
+12. **Serialize with `requireAllSignatures: false`** — The crafted transaction requires both the user's signature and the server's co-signature. Since the server signs after receiving the transaction, you must serialize with `transaction.serialize({ requireAllSignatures: false })`. Without this, `@solana/web3.js` throws `"Missing signature for public key"`.
+13. **Script execution requires Node.js v18+** — The payment script uses `fetch` (built-in from Node 18) and `@solana/web3.js`. If Node.js is too old, fall back to providing the script for manual execution or suggest the user upgrade Node.js.
 
 ---
 
@@ -414,6 +610,10 @@ When collecting user input, handle these common mistakes gracefully instead of r
 > Copy-paste-ready TypeScript showing the full premium express flow. Install: `npm install @solana/web3.js`
 
 ```typescript
+// SECURITY: Private key is used ONLY for local signing.
+// Only the signed transaction is sent to the Jupiter API.
+// The private key NEVER leaves this machine.
+
 import { Keypair, Transaction } from "@solana/web3.js";
 import fs from "fs";
 import path from "path";
@@ -434,6 +634,7 @@ function loadKeypair(keypairPath: string): Keypair {
 }
 
 async function main() {
+  // SECURITY: Wallet address is derived from the local keypair — no external lookup needed
   const wallet = loadKeypair(KEYPAIR_PATH);
   const senderAddress = wallet.publicKey.toBase58();
 
@@ -467,14 +668,15 @@ async function main() {
   console.log(`Payment: ${craftData.amount} base units of JUP`);
   console.log(`Request ID: ${requestId}`);
 
-  // ── Step 3: Sign the transaction ──
+  // ── Sign the transaction locally ──
+  // SECURITY: Only the signed transaction is sent to the server, NOT the private key
   const txBuffer = Buffer.from(unsignedTxBase64, "base64");
   const transaction = Transaction.from(txBuffer);
   transaction.partialSign(wallet);
 
-  const signedTxBase64 = Buffer.from(transaction.serialize()).toString(
-    "base64"
-  );
+  const signedTxBase64 = Buffer.from(
+    transaction.serialize({ requireAllSignatures: false })
+  ).toString("base64");
 
   // ── Step 4: Execute payment (server co-signs and broadcasts) ──
   const executeRes = await fetch(`${BASE_URL}/payments/transfer/execute`, {
