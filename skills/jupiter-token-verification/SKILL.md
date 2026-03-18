@@ -58,7 +58,6 @@ Load these on demand when you need implementation details:
 
 - **[API Reference](references/api-reference.md)** — Endpoint details, request/response schemas, data types. Load when making API calls or validating parameters.
 - **[Payment Execution](references/payment-execution.md)** — Express payment flow (steps 7a–7e), template script, config.json, error handling. Load when the user confirms an express verification.
-- **[Complete Working Example](references/example.md)** — End-to-end express flow with status checking. References the payment script in `payment-execution.md` (single source of truth for transaction logic). Load if the user asks for a standalone example.
 
 ---
 
