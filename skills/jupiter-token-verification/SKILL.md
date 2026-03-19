@@ -189,15 +189,22 @@ Same validation as above.
 > Please provide a **short description** of the token.
 > Example: _"Community governance token for XYZ protocol"_ > _(Type "skip" to leave blank)_
 
-**d) Wallet Address** (basic tier — required)
+**d) Wallet Address** (required for basic tier and metadata-only flows)
 
-If **basic** was selected:
+A wallet address is needed for `POST /basic/submit` (basic verification and metadata-only updates). For **express verification with payment**, the wallet is derived during the payment execution flow (Step 8) — skip this step in that case.
+
+**When this step applies:** basic tier, OR any metadata-only flow (regardless of tier — e.g., express tier where token is already verified and only metadata is being updated).
+
+Resolve the wallet address automatically before asking the user:
+
+1. Check `.env` / `.env.local` for `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY`
+2. Check for a Solana keypair file at `~/.config/solana/id.json`
+3. If a private key is found, derive the wallet address using `Keypair.fromSecretKey` and confirm with the user: _"I found a private key in your environment and derived the wallet address `{address}`. Should I use this?"_
+4. If no private key is found, ask directly:
 
 > What is your **Solana wallet address**?
 
 Validate: same base58 format as token mint.
-
-If **express** was selected: **skip this step**. The wallet address will be derived automatically from the user's private key during the payment execution flow.
 
 ### 6a. Collect Metadata Fields (when metadata is included)
 
