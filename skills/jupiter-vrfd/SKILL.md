@@ -215,7 +215,7 @@ Runs when the user opted in at Step 4a **or** in a metadata-only flow (`canVerif
 
 #### 6a-i. Fetch existing token data
 
-Fetch the current token data so existing values are preserved:
+Fetch the current token data so the user can see the current values and so you can reuse an existing value verbatim if they explicitly ask to keep that field:
 
 ```http
 GET {BASE_URL}/tokenMetadata/getFromRpcAndSearch/{tokenId}
@@ -274,6 +274,8 @@ Use `search[0]` as the primary source for token info, `description.description` 
 | `rpc.instagram` | `instagram` (not in search) |
 | `rpc.tiktok` | `tiktok` (not in search) |
 
+Treat the fetched metadata as **read-only reference data**. Do **not** automatically merge it back into the request. Only resend a fetched value if the user explicitly chose that field, and if you do, preserve the exact string returned by the API — do not normalize punctuation, quotes, or formatting.
+
 #### 6a-ii. Collect user updates
 
 Present the available fields:
@@ -288,9 +290,9 @@ Present the available fields:
 
 Ask which fields they want to update, then collect new values **only** for those fields.
 
-#### 6a-iii. Merge and build tokenMetadata
+#### 6a-iii. Build tokenMetadata
 
-Start with the existing data fetched in 6a-i, then override with the user's updates from 6a-ii. Send **all** fields in the `tokenMetadata` object so that unchanged fields retain their current values.
+Start with `{ tokenId }`, then add **only** the metadata fields the user explicitly asked to change in 6a-ii. Do **not** copy untouched fields from 6a-i into the request.
 
 **Field collection rules:**
 
@@ -299,23 +301,22 @@ Start with the existing data fetched in 6a-i, then override with the user's upda
 - When the user provides a value for `coingeckoCoinId`, auto-set `useCoingeckoCoinId: true`
 - When the user provides a value for `circulatingSupplyUrl`, auto-set `useCirculatingSupplyUrl: true`
 - URL fields (website, twitter, discord, etc.) should be validated as proper URLs
+- Never normalize or reformat untouched fetched values. A punctuation-only change still becomes a metadata update.
 - See [API Reference — tokenMetadata Object](references/api-reference.md#tokenmetadata-object) for the full schema
 
-**Example:** If the existing data has `name: "Old Name"`, `symbol: "OLD"`, `icon: "https://icon.png"`, `tokenDescription: "A great token"` and the user only wants to update `name` and `symbol`, the final `tokenMetadata` object must include all fields:
+**Example:** If the existing data has `name: "Old Name"`, `symbol: "OLD"`, `icon: "https://icon.png"`, `tokenDescription: "A great token"` and the user only wants to update `name` and `symbol`, the final `tokenMetadata` object should contain only the changed fields plus `tokenId`:
 
 ```json
 {
   "tokenId": "So11111111111111111111111111111111111111112",
   "name": "New Name",
-  "symbol": "NEW",
-  "icon": "https://icon.png",
-  "tokenDescription": "A great token"
+  "symbol": "NEW"
 }
 ```
 
-This ensures `icon` and `tokenDescription` are preserved. If you only sent `name` and `symbol`, the other fields would be cleared.
+Do not resend `icon` or `tokenDescription` unless the user explicitly chose to edit them. This avoids accidental metadata changes caused by formatting differences in unchanged fields.
 
-For **metadata-only** flow (when `canVerify: false, canMetadata: true`): this step is the primary collection step — verification params from Step 6 are skipped.
+For **metadata-only** flow (when `canVerify: false, canMetadata: true`): this step is the primary collection step — verification params from Step 6 are skipped in the user conversation. For **express** metadata-only submissions, the runtime request can still send `twitterHandle: ""` and `description: ""` to satisfy the current execute schema without asking the user for unnecessary values.
 
 ### 7. Confirm Before Submitting
 
@@ -347,12 +348,12 @@ If the user says no, ask which field to change.
 
 ### 8. Submit and Report
 
-**Important: When including `tokenMetadata`, always send all fields** — use existing data from `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` as the base, with the user's updates merged on top (see Step 6a). This ensures unchanged fields retain their current values.
+**Important: When including `tokenMetadata`, send only `tokenId` plus the fields the user explicitly chose to change.** Fetch existing data from `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` for display/reference, but do not blindly merge it back into the request. This avoids accidental edits from punctuation, quote, or formatting differences in untouched fields.
 
-- For **basic**: call `POST /basic/submit` with `submitVerification: true` and the collected parameters. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should contain all fields (existing + user updates). Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
-- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, they are included in the execute request body as `tokenMetadata` — include all fields (existing + user updates).
-- For **metadata-only with basic tier** (when `canVerify: false, canMetadata: true` and basic was selected in Step 2): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with all fields (existing + user updates). Do not include verification parameters. Report `metadataCreated` result.
-- For **metadata-only with express tier** (when `canVerify: false, canMetadata: true` and express was selected in Step 2): load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The payment flow still applies (1 JUP) — include `tokenMetadata` with all fields (existing + user updates). The execute endpoint will skip verification creation (since `canVerify: false`) but will create the metadata update. Report `metadataCreated` result.
+- For **basic**: call `POST /basic/submit` with `submitVerification: true` and the collected parameters. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should contain only `tokenId` plus the fields the user chose to update. Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
+- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, include only `tokenId` plus the changed metadata fields in `tokenMetadata`.
+- For **metadata-only with basic tier** (when `canVerify: false, canMetadata: true` and basic was selected in Step 2): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with only `tokenId` plus the changed fields. Do not include verification parameters. Report `metadataCreated` result.
+- For **metadata-only with express tier** (when `canVerify: false, canMetadata: true` and express was selected in Step 2): load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The payment flow still applies (1 JUP) — include `tokenMetadata` with only `tokenId` plus the changed fields. The current `POST /payments/express/execute` schema still requires `twitterHandle` and `description` strings even for metadata-only requests, so send `twitterHandle: ""` and `description: ""` unless the user explicitly provided values. The execute endpoint will skip verification creation (since `canVerify: false`) but will create the metadata update. Report `metadataCreated` result.
 
 ---
 

@@ -34,7 +34,7 @@ cd "$TMPDIR" && npm init -y && npm install @solana/web3.js @solana/spl-token bs5
 
 ## 7c. Write the Payment Script
 
-Write a `pay.ts` script and a separate `config.json` file in the temp directory. The config file contains all user-provided parameters. The script reads parameters from `config.json` at runtime — user input is NEVER interpolated into source code to prevent code injection. The script must:
+Write a `pay.ts` script and a separate `config.json` file in the temp directory. The config file contains all user-provided parameters. The script reads parameters from `config.json` at runtime — user input is NEVER interpolated into source code to prevent code injection. For metadata updates, `tokenMetadata` should include only `tokenId` plus the fields the user explicitly chose to change. The script must:
 
 1. Read the private key from an environment variable (`PRIVATE_KEY`) or keypair file path (`KEYPAIR_PATH`) passed at runtime
 2. Derive the wallet address from the private key using `Keypair.fromSecretKey`
@@ -44,6 +44,8 @@ Write a `pay.ts` script and a separate `config.json` file in the temp directory.
 6. Sign locally with `transaction.sign([keypair])` and serialize
 7. Call `POST /payments/express/execute` with `x-api-key` header, the signed transaction, and all verification parameters
 8. Print `SUCCESS:<signature>` on success or `ERROR:<code>:<message>` on failure
+
+**Current API quirk:** `POST /payments/express/execute` currently validates `twitterHandle` and `description` as required strings, even for metadata-only requests where no verification data is being submitted. If the user did not provide those fields, send `twitterHandle: ""` and `description: ""` instead of inventing values.
 
 The script MUST include these security comments:
 
@@ -75,12 +77,13 @@ const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
 );
 
 // Read parameters from config file — NEVER interpolate user input into source code
-// Only fields the user provided are included; missing fields are omitted from the request
+// Only metadata fields the user explicitly chose to change are included in tokenMetadata.
+// Untouched fields are omitted to avoid accidental formatting-only edits.
 const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 const TOKEN_ID: string = config.tokenId;
-const TWITTER_HANDLE: string | undefined = config.twitterHandle ?? undefined;
+const TWITTER_HANDLE: string = config.twitterHandle ?? "";
 const SENDER_TWITTER: string | undefined = config.senderTwitterHandle ?? undefined;
-const DESCRIPTION: string | undefined = config.description ?? undefined;
+const DESCRIPTION: string = config.description ?? "";
 const TOKEN_METADATA: Record<string, unknown> | undefined = config.tokenMetadata ?? undefined;
 
 // Read private key from environment variable or keypair file — NEVER hardcoded in source
@@ -228,16 +231,17 @@ async function main() {
   const signedTxBase64 = Buffer.from(transaction.serialize()).toString("base64");
 
   // Step 5: Execute — server co-signs and broadcasts
-  // Only include optional fields that the user actually provided to avoid overriding existing data
+  // `twitterHandle` and `description` are always sent because the current execute schema requires strings.
+  // tokenMetadata remains minimal: only changed fields plus tokenId.
   const executeBody: Record<string, unknown> = {
     transaction: signedTxBase64,
     requestId,
     senderAddress,
     tokenId: TOKEN_ID,
+    twitterHandle: TWITTER_HANDLE,
+    description: DESCRIPTION,
   };
-  if (TWITTER_HANDLE) executeBody.twitterHandle = TWITTER_HANDLE;
   if (SENDER_TWITTER) executeBody.senderTwitterHandle = SENDER_TWITTER;
-  if (DESCRIPTION) executeBody.description = DESCRIPTION;
   if (TOKEN_METADATA) executeBody.tokenMetadata = TOKEN_METADATA;
 
   const executeRes = await fetch(`${BASE_URL}/payments/express/execute`, {
