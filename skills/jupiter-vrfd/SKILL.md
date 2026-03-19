@@ -1,12 +1,12 @@
 ---
-name: jupiter-token-verification
+name: jupiter-vrfd
 description: Guide agents through the Jupiter Token Verification express flow — submit verification requests, pay with JUP tokens, update token metadata, and check verification status.
 license: MIT
 metadata:
   author: jupiter
   version: "1.0.0"
 tags:
-  - jupiter-token-verification
+  - jupiter-vrfd
   - jup-ag
   - token-verification
   - token-metadata
