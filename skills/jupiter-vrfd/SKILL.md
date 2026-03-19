@@ -196,18 +196,17 @@ For **basic** tier, the user may skip this — if skipped, omit the field entire
 
 **d) Wallet Address** (required for all flows)
 
-A wallet address is needed for both `POST /basic/submit` and the express payment flow. Collect it once here so it's available regardless of tier.
+A wallet address is needed for both `POST /basic/submit` and the express payment flow. Collect the **public wallet address** once here so it's available regardless of tier.
 
-Resolve the wallet address automatically before asking the user:
-
-1. Check `.env` / `.env.local` for `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY`
-2. Check for a Solana keypair file at `~/.config/solana/id.json`
-3. If a private key is found, derive the wallet address using `Keypair.fromSecretKey` and confirm with the user: _"I found a private key in your environment and derived the wallet address `{address}`. Should I use this?"_
-4. If no private key is found, ask directly:
+Ask directly:
 
 > What is your **Solana wallet address**?
 
-**Validation (user-provided addresses only):** Use `new PublicKey(address)` from `@solana/web3.js` to validate. If the constructor throws, the address is invalid — tell the user and ask again. Do not apply this validation when the address was derived from a private key (it is already guaranteed valid).
+Explain that this is the public address that will be associated with the request. For **express**, it should match the wallet that will sign the payment transaction later.
+
+**Validation:** Use `new PublicKey(address)` from `@solana/web3.js` to validate. If the constructor throws, the address is invalid — tell the user and ask again.
+
+Do **not** inspect `.env`, `.env.local`, or local keypair files at this step just to derive a wallet address. Private key resolution belongs only in the express payment phase; see [Payment Execution](references/payment-execution.md#7a-resolve-private-key). For **basic** submissions, never request or read a private key.
 
 ### 6a. Collect Metadata Fields (when metadata is included)
 
