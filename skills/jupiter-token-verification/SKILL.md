@@ -131,7 +131,7 @@ Use the result to determine which flow to follow:
 | `canMetadata` | Action                                                                                                                                                                                                                                                          |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `true`        | Offer metadata update: _"Would you like to **update the token metadata** (name, symbol, social links, etc.)?"_ If yes → proceed to Step 5 (API key) → Step 6a (metadata collection) → Step 7 (confirm) → Step 8 (metadata-only). The tier selected in Step 2 still applies — **express** metadata-only updates go through the payment flow, **basic** metadata-only updates use `POST /basic/submit`. If no → done. |
-| `false`       | Report: _"Metadata updates are also not available at this time ({metadataError})."_ Done.                                                                                                                                                                       |
+| `false`       | Report: _"Metadata updates are also not available at this time."_ Done.                                                                                                                                                                                         |
 
 **B) Token can be verified** — endpoint returned `canVerify: true`:
 
@@ -139,7 +139,7 @@ Proceed to **Step 4a** (Check Metadata Availability), then continue to Step 5.
 
 **C) Token cannot be verified** — `canVerify: false` with an error other than existing verification (e.g., token not found, not eligible for this tier):
 
-Report the `verificationError`. If `canMetadata: true`, offer a metadata-only update. Otherwise stop.
+Explain why the token is not eligible in plain language. If `canMetadata: true`, offer a metadata-only update. Otherwise stop.
 
 **For "check-only" intent** (user just wants to know status): report whether the token is eligible for the selected tier, whether metadata updates are available, and any errors. Done — do not proceed to submission.
 
@@ -150,7 +150,7 @@ After confirming the token can be verified, check the `canMetadata` result from 
 | `canMetadata` | Action                                                                                                                                                                     |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `true`        | Ask: _"Would you also like to **update token metadata** (name, symbol, social links, etc.)?"_ If yes → metadata fields will be collected in Step 6a. If no → skip Step 6a. |
-| `false`       | Inform: _"Metadata updates are not available for this token ({metadataError})."_ Skip Step 6a.                                                                             |
+| `false`       | Inform: _"Metadata updates are not available for this token."_ Skip Step 6a.                                                                                               |
 
 ### 5. Resolve API Key
 
@@ -159,7 +159,7 @@ Before any authenticated call (`POST /basic/submit`, `GET /payments/express/craf
 1. Check `.env` / `.env.local` for `JUPITER_API_KEY` or `JUP_API_KEY`
 2. If not found, guide the user through generating a new API key:
    - Direct them to open `https://vrfd-auth-api-dev.jup.ag/api/keys/new` in their browser — this handles login and key generation in one flow
-   - **Important:** The key is shown **once** and cannot be retrieved again (only the prefix `vrfd_ak_xxxx...` is stored for display). Tell the user to copy it immediately.
+   - **Important:** The key is shown **once** and cannot be retrieved again. Tell the user to copy it immediately.
    - Creating a new key automatically **revokes** any existing active key for their account
 3. Once the user has their key, ask them to store it in `.env` as `JUPITER_API_KEY=<key>` and ensure `.env` is in `.gitignore`
 
