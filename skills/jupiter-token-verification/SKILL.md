@@ -175,19 +175,21 @@ Collect these in order. For each, show what it is and why it matters:
 > What is the **token project's Twitter/X URL**?
 > Example: `https://x.com/jupiterexchange` > _(Type "skip" to leave blank)_
 
-Validate: must be a full URL starting with `https://x.com/` or `https://twitter.com/` followed by a valid username (1–15 chars, alphanumeric + underscore). If the user provides a bare handle like `@handle`, auto-convert it to `https://x.com/handle` and confirm with the user.
+Validate: must be a full URL starting with `https://x.com/` or `https://twitter.com/` followed by a valid username (1–15 chars, alphanumeric + underscore). If the user provides a bare handle like `@handle`, auto-convert it to `https://x.com/handle` and confirm with the user. **If skipped, omit this field entirely from the request — do not send an empty string.**
 
 **b) Requester's Twitter/X URL** (optional)
 
 > What is **your** Twitter/X URL? This identifies who submitted the request.
 > Example: `https://x.com/your_handle` > _(Type "skip" to leave blank)_
 
-Same validation as above.
+Same validation as above. **If skipped, omit this field entirely from the request — do not send an empty string.**
 
 **c) Description** (optional but recommended)
 
 > Please provide a **short description** of the token.
 > Example: _"Community governance token for XYZ protocol"_ > _(Type "skip" to leave blank)_
+
+**If skipped, omit this field entirely from the request — do not send an empty string.**
 
 **d) Wallet Address** (required for all flows)
 
@@ -223,6 +225,7 @@ Ask which fields they want to update, then collect values one at a time.
 **Field collection rules:**
 
 - `tokenId` is auto-filled from the token mint collected in Step 2 — do not ask for it
+- **Only include fields the user explicitly wants to update** in the `tokenMetadata` object. Do NOT send fields the user did not mention — omitting a field leaves the existing value unchanged, but sending an empty string or null would override it.
 - When the user provides a value for `circulatingSupply`, auto-set `useCirculatingSupply: true`
 - When the user provides a value for `coingeckoCoinId`, auto-set `useCoingeckoCoinId: true`
 - When the user provides a value for `circulatingSupplyUrl`, auto-set `useCirculatingSupplyUrl: true`
@@ -261,9 +264,11 @@ If the user says no, ask which field to change.
 
 ### 8. Submit and Report
 
-- For **basic**: call `POST /basic/submit` with `submitVerification: true` and all collected parameters. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a. Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
-- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, they are included in the execute request body as `tokenMetadata`.
-- For **metadata-only** (when `canVerify: false, canMetadata: true`): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with the collected fields. Do not include verification parameters. Report `metadataCreated` result.
+**Important: Only send fields the user provided.** Omit any optional field the user skipped — do not send empty strings or null values, as the API may interpret them as intentional overrides that clear existing data. Build the request body dynamically, including only `tokenId`, `walletAddress`, `submitVerification`, and whichever optional fields (`twitterHandle`, `senderTwitterHandle`, `description`, `tokenMetadata`) the user actually provided values for.
+
+- For **basic**: call `POST /basic/submit` with `submitVerification: true` and only the fields the user provided. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should only contain fields the user explicitly set. Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
+- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, they are included in the execute request body as `tokenMetadata` — only include fields the user explicitly set.
+- For **metadata-only** (when `canVerify: false, canMetadata: true`): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with only the fields the user explicitly set. Do not include verification parameters. Report `metadataCreated` result.
 
 ---
 
@@ -301,6 +306,7 @@ When collecting user input, handle these common mistakes gracefully instead of r
 16. **API key required for submission endpoints** — `POST /basic/submit`, `GET /payments/express/craft-txn`, and `POST /payments/express/execute` all require an `x-api-key` header. Eligibility check endpoints are unauthenticated.
 17. **Rate limit: 2 requests/day per API key** — The submission endpoints are rate-limited to 2 requests per day per API key. Warn users before submitting.
 18. **Metadata can be submitted with or without verification** — The combined endpoints support optional `tokenMetadata` for setting token metadata alongside verification. When `canVerify: false` but `canMetadata: true`, submit with `submitVerification: false` and only `tokenMetadata` to perform a metadata-only update. At least one of `submitVerification: true` or `tokenMetadata` must be provided.
+19. **Never send empty strings for omitted fields** — Only include fields the user explicitly provided in the request body. Sending an empty string for `twitterHandle`, `description`, or any `tokenMetadata` field may override existing data on the server. If a field was skipped, omit it entirely from the JSON payload.
 
 ---
 

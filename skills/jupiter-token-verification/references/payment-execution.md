@@ -75,12 +75,13 @@ const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
 );
 
 // Read parameters from config file — NEVER interpolate user input into source code
+// Only fields the user provided are included; missing fields are omitted from the request
 const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 const TOKEN_ID: string = config.tokenId;
-const TWITTER_HANDLE: string = config.twitterHandle;
-const SENDER_TWITTER: string = config.senderTwitterHandle;
-const DESCRIPTION: string = config.description;
-const TOKEN_METADATA: Record<string, unknown> | null = config.tokenMetadata ?? null;
+const TWITTER_HANDLE: string | undefined = config.twitterHandle ?? undefined;
+const SENDER_TWITTER: string | undefined = config.senderTwitterHandle ?? undefined;
+const DESCRIPTION: string | undefined = config.description ?? undefined;
+const TOKEN_METADATA: Record<string, unknown> | undefined = config.tokenMetadata ?? undefined;
 
 // Read private key from environment variable or keypair file — NEVER hardcoded in source
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
@@ -227,19 +228,22 @@ async function main() {
   const signedTxBase64 = Buffer.from(transaction.serialize()).toString("base64");
 
   // Step 5: Execute — server co-signs and broadcasts
+  // Only include optional fields that the user actually provided to avoid overriding existing data
+  const executeBody: Record<string, unknown> = {
+    transaction: signedTxBase64,
+    requestId,
+    senderAddress,
+    tokenId: TOKEN_ID,
+  };
+  if (TWITTER_HANDLE) executeBody.twitterHandle = TWITTER_HANDLE;
+  if (SENDER_TWITTER) executeBody.senderTwitterHandle = SENDER_TWITTER;
+  if (DESCRIPTION) executeBody.description = DESCRIPTION;
+  if (TOKEN_METADATA) executeBody.tokenMetadata = TOKEN_METADATA;
+
   const executeRes = await fetch(`${BASE_URL}/payments/express/execute`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
-    body: JSON.stringify({
-      transaction: signedTxBase64,
-      requestId,
-      senderAddress,
-      tokenId: TOKEN_ID,
-      twitterHandle: TWITTER_HANDLE,
-      senderTwitterHandle: SENDER_TWITTER,
-      description: DESCRIPTION,
-      ...(TOKEN_METADATA ? { tokenMetadata: TOKEN_METADATA } : {}),
-    }),
+    body: JSON.stringify(executeBody),
   });
 
   const executeData = await executeRes.json();
@@ -260,15 +264,24 @@ main().catch((err) => {
 });
 ```
 
-Write a `config.json` file in the same temp directory with the collected parameters:
+Write a `config.json` file in the same temp directory with **only the fields the user provided**. Omit any optional field the user skipped — do not include it as an empty string or null, as this could override existing data on the server:
 
 ```json
 {
   "tokenId": "<collected token mint>",
-  "twitterHandle": "<collected twitter URL or empty string>",
-  "senderTwitterHandle": "<collected sender twitter URL or empty string>",
-  "description": "<collected description or empty string>",
-  "tokenMetadata": null
+  "twitterHandle": "<collected twitter URL — OMIT THIS KEY if user skipped>",
+  "senderTwitterHandle": "<collected sender twitter URL — OMIT THIS KEY if user skipped>",
+  "description": "<collected description — OMIT THIS KEY if user skipped>",
+  "tokenMetadata": "<collected metadata object — OMIT THIS KEY if no metadata>"
+}
+```
+
+For example, if the user only provided a twitter handle and skipped description and sender twitter:
+
+```json
+{
+  "tokenId": "So11111111111111111111111111111111111111112",
+  "twitterHandle": "https://x.com/jupiterexchange"
 }
 ```
 

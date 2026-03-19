@@ -176,6 +176,8 @@ x-api-key: your-api-key-here
 | `description`         | string  | No       | Description of the token                                           |
 | `tokenMetadata`       | object  | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
+> **Important:** Only include optional fields the user explicitly provided. Omit any field the user did not set — do not send empty strings, as the API may interpret them as intentional overrides that clear existing data. The `tokenMetadata` object should likewise only contain fields being updated.
+
 **Response:**
 
 ```json
@@ -267,7 +269,6 @@ x-api-key: your-api-key-here
   "senderAddress": "8xDr...",
   "tokenId": "So11111111111111111111111111111111111111112",
   "twitterHandle": "https://x.com/jupiterexchange",
-  "senderTwitterHandle": "https://x.com/sender_handle",
   "description": "Official wrapped SOL token",
   "tokenMetadata": {
     "name": "Jupiter Exchange",
@@ -276,16 +277,20 @@ x-api-key: your-api-key-here
 }
 ```
 
+> Only include `twitterHandle`, `senderTwitterHandle`, `description`, and `tokenMetadata` if the user provided values. Omit any of these fields entirely if not provided — do not send empty strings.
+
 | Field                 | Type   | Required | Notes                                      |
 | --------------------- | ------ | -------- | ------------------------------------------ |
 | `transaction`         | string | **Yes**  | Base64 user-signed transaction from craft   |
 | `requestId`           | string | **Yes**  | From `craft-txn` response                   |
 | `senderAddress`       | string | **Yes**  | Wallet that signed the transaction         |
 | `tokenId`             | string | **Yes**  | Token mint being verified                  |
-| `twitterHandle`       | string | **Yes**  | Token's Twitter URL                        |
+| `twitterHandle`       | string | No       | Token's Twitter URL                        |
 | `senderTwitterHandle` | string | No       | Requester's Twitter URL                    |
-| `description`         | string | **Yes**  | Description of the token                   |
+| `description`         | string | No       | Description of the token                   |
 | `tokenMetadata`       | object | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
+
+> **Important:** Only include optional fields the user explicitly provided. Omit any field the user did not set — do not send empty strings, as the API may interpret them as intentional overrides that clear existing data. The `tokenMetadata` object should likewise only contain fields being updated.
 
 **Response:**
 
