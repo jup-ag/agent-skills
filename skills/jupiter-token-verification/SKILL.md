@@ -146,10 +146,10 @@ Report the `verificationError`. If `canMetadata: true`, offer a metadata-only up
 
 After confirming the token can be verified, check the `canMetadata` result from the eligibility response retrieved in Step 4:
 
-| `canMetadata` | Action                                                                                                                                                                                                         |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `true`        | Ask: _"Would you also like to **update token metadata** (name, symbol, social links, etc.) alongside your verification request?"_ If yes → metadata fields will be collected in Step 6a. If no → skip Step 6a. |
-| `false`       | Inform: _"Metadata updates are not available for this token ({metadataError})."_ Skip Step 6a.                                                                                                                 |
+| `canMetadata` | Action                                                                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`        | Ask: _"Would you also like to **update token metadata** (name, symbol, social links, etc.)?"_ If yes → metadata fields will be collected in Step 6a. If no → skip Step 6a. |
+| `false`       | Inform: _"Metadata updates are not available for this token ({metadataError})."_ Skip Step 6a.                                                                             |
 
 ### 5. Resolve API Key
 
