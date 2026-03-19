@@ -341,30 +341,6 @@ When collecting user input, handle these common mistakes gracefully instead of r
 
 ---
 
-# Gotchas
-
-1. **Twitter handles must be full URLs** — `https://x.com/handle` or `https://twitter.com/handle`. Bare handles like `@handle` are rejected by the API.
-2. **`craft-txn` returns an unsigned transaction** — the user MUST sign it with their wallet before calling `execute`. Do not submit unsigned transactions.
-3. **The execute endpoint co-signs server-side** — do NOT broadcast the transaction to the Solana RPC yourself. The server adds its own signature and submits it.
-4. **Payment is 1 JUP token** (1,000,000 base units with 6 decimals) — confirm the user has enough JUP balance before starting the payment flow.
-5. **Check eligibility before submitting** — call `GET /combined/express/check-eligibility?tokenId=…` or `GET /combined/basic/check-eligibility?tokenId=…` first. Submitting a duplicate returns an error.
-6. **Already-verified tokens cannot be resubmitted** — if the token is already verified, the eligibility endpoint returns `canVerify: false` with `verificationError`.
-7. **Token must exist** — the token must be indexed by Jupiter's data API. Unknown tokens return an error.
-8. **Admin endpoints are off-limits** — `POST /verifications/verify`, `POST /verifications/unverify`, and `POST /verifications/mass-unverify` all require admin authentication. Do not attempt to call them.
-9. **Basic verification = done at Step 8** — only express verification requires the payment flow (steps 7a–7e).
-10. **Express upgrades via execute** — when you pay via the `execute` endpoint, the server automatically creates (or upgrades) the verification to express tier. Response includes `verificationCreated` and `metadataCreated` booleans. You do not need to call `POST /basic/submit` separately for express.
-11. **Private keys MUST stay local** — The payment script signs transactions client-side. The private key is NEVER sent to any API, server, or external service. Only the signed transaction is transmitted. Agents must communicate this clearly to users and include security comments in generated scripts. Recommend `.env` files (with `.gitignore`) and dedicated payment wallets. **Never accept a raw private key directly in chat** — only support `.env` files and keypair file paths.
-12. **Use `VersionedTransaction`, not legacy `Transaction`** — The API returns a versioned transaction. Deserialize with `VersionedTransaction.deserialize(buffer)`, sign with `transaction.sign([keypair])`, and serialize with `Buffer.from(transaction.serialize()).toString('base64')`. Do not use legacy `Transaction.from()` or `partialSign()`.
-13. **Script execution requires Node.js v18+** — The payment script uses `fetch` (built-in from Node 18) and `@solana/web3.js`. If Node.js is too old, fall back to providing the script for manual execution or suggest the user upgrade Node.js.
-14. **Always verify transaction contents before signing** — Never blindly sign a server-provided transaction. Decode the instructions, verify the program is SPL Token, verify the amount matches expectations and does not exceed 1 JUP (1,000,000 base units), and verify the destination matches the expected receiver ATA. Reject if any unexpected instructions are present (compute budget instructions are allowed).
-15. **Never interpolate user input into source code** — User-provided values (description, Twitter handles, etc.) must be written to a separate `config.json` file and read at runtime. Embedding user input directly in TypeScript string literals enables code injection attacks.
-16. **API key required for submission endpoints** — `POST /basic/submit`, `GET /payments/express/craft-txn`, and `POST /payments/express/execute` all require an `x-api-key` header. Eligibility check endpoints are unauthenticated.
-17. **Rate limit: 2 requests/day per API key** — The submission endpoints are rate-limited to 2 requests per day per API key. Warn users before submitting.
-18. **Metadata can be submitted with or without verification** — The combined endpoints support optional `tokenMetadata` for setting token metadata alongside verification. When `canVerify: false` but `canMetadata: true`, submit with `submitVerification: false` and only `tokenMetadata` to perform a metadata-only update. At least one of `submitVerification: true` or `tokenMetadata` must be provided.
-19. **Always fetch existing data before metadata updates** — Before building the `tokenMetadata` object, call `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` to get current values. Use the existing data as the base, merge the user's updates on top, and send all fields. This prevents clearing fields the user didn't intend to change.
-
----
-
 # Resources
 
 - **JUP Token Mint**: `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
