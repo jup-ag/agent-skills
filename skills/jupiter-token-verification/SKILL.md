@@ -47,13 +47,14 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 
 ## Intent Router
 
-| User intent                       | Endpoint                                        | Method | Auth    |
-| --------------------------------- | ----------------------------------------------- | ------ | ------- |
-| Check express eligibility         | `/combined/express/check-eligibility?tokenId=…` | `GET`  | None    |
-| Check basic eligibility           | `/combined/basic/check-eligibility?tokenId=…`   | `GET`  | None    |
-| Submit basic verification         | `/basic/submit`                                 | `POST` | API key |
-| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`   | `GET`  | API key |
-| Sign and execute express payment  | `/payments/express/execute`                     | `POST` | API key |
+| User intent                       | Endpoint                                              | Method | Auth    |
+| --------------------------------- | ----------------------------------------------------- | ------ | ------- |
+| Check express eligibility         | `/combined/express/check-eligibility?tokenId=…`       | `GET`  | None    |
+| Check basic eligibility           | `/combined/basic/check-eligibility?tokenId=…`         | `GET`  | None    |
+| Fetch existing token data         | `/tokenMetadata/getFromRpcAndSearch/{tokenId}`        | `GET`  | None    |
+| Submit basic verification         | `/basic/submit`                                       | `POST` | API key |
+| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`         | `GET`  | API key |
+| Sign and execute express payment  | `/payments/express/execute`                           | `POST` | API key |
 
 ## References
 
@@ -129,7 +130,7 @@ Use the result to determine which flow to follow:
 
 | `canMetadata` | Action                                                                                                                                                                                                                                                          |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `true`        | Offer metadata update: _"Would you like to **update the token metadata** (name, symbol, social links, etc.)?"_ If yes → proceed to Step 5 (API key) → Step 6a (metadata collection) → Step 7 (confirm) → Step 8 with `submitVerification: false`. If no → done. |
+| `true`        | Offer metadata update: _"Would you like to **update the token metadata** (name, symbol, social links, etc.)?"_ If yes → proceed to Step 5 (API key) → Step 6a (metadata collection) → Step 7 (confirm) → Step 8 (metadata-only). The tier selected in Step 2 still applies — **express** metadata-only updates go through the payment flow, **basic** metadata-only updates use `POST /basic/submit`. If no → done. |
 | `false`       | Report: _"Metadata updates are also not available at this time ({metadataError})."_ Done.                                                                                                                                                                       |
 
 **B) Token can be verified** — endpoint returned `canVerify: true`:
@@ -210,6 +211,42 @@ Resolve the wallet address automatically before asking the user:
 
 Runs when the user opted in at Step 4a **or** in a metadata-only flow (`canVerify: false, canMetadata: true`).
 
+#### 6a-i. Fetch existing token data
+
+Before collecting user input, fetch the current token data so existing values are preserved:
+
+```http
+GET {BASE_URL}/tokenMetadata/getFromRpcAndSearch/{tokenId}
+```
+
+This endpoint is unauthenticated. It returns:
+
+```json
+{
+  "rpc": {
+    "assetId": "...",
+    "icon": "https://...",
+    "name": "Current Name",
+    "symbol": "CUR",
+    "website": "https://...",
+    "telegram": "...",
+    "twitter": "...",
+    "twitterCommunity": null,
+    "discord": "...",
+    "instagram": "...",
+    "tiktok": "..."
+  },
+  "search": [...],
+  "description": {
+    "description": "Current token description text"
+  }
+}
+```
+
+Use the `rpc` object as the base for the `tokenMetadata` payload. Map `rpc.assetId` → `tokenId`. Use `description.description` as the value for `tokenDescription`.
+
+#### 6a-ii. Collect user updates
+
 Present the available fields:
 
 > Here are the metadata fields you can update:
@@ -220,17 +257,34 @@ Present the available fields:
 >
 > Which fields would you like to update?
 
-Ask which fields they want to update, then collect values one at a time.
+Ask which fields they want to update, then collect new values **only** for those fields.
+
+#### 6a-iii. Merge and build tokenMetadata
+
+Start with the existing data fetched in 6a-i, then override with the user's updates from 6a-ii. Send **all** fields in the `tokenMetadata` object so that unchanged fields retain their current values.
 
 **Field collection rules:**
 
-- `tokenId` is auto-filled from the token mint collected in Step 2 — do not ask for it
-- **Only include fields the user explicitly wants to update** in the `tokenMetadata` object. Do NOT send fields the user did not mention — omitting a field leaves the existing value unchanged, but sending an empty string or null would override it.
+- `tokenId` is auto-filled from the token mint collected in Step 3 — do not ask for it
 - When the user provides a value for `circulatingSupply`, auto-set `useCirculatingSupply: true`
 - When the user provides a value for `coingeckoCoinId`, auto-set `useCoingeckoCoinId: true`
 - When the user provides a value for `circulatingSupplyUrl`, auto-set `useCirculatingSupplyUrl: true`
 - URL fields (website, twitter, discord, etc.) should be validated as proper URLs
 - See [API Reference — tokenMetadata Object](references/api-reference.md#tokenmetadata-object) for the full schema
+
+**Example:** If the existing data has `name: "Old Name"`, `symbol: "OLD"`, `icon: "https://icon.png"`, `tokenDescription: "A great token"` and the user only wants to update `name` and `symbol`, the final `tokenMetadata` object must include all fields:
+
+```json
+{
+  "tokenId": "So11111111111111111111111111111111111111112",
+  "name": "New Name",
+  "symbol": "NEW",
+  "icon": "https://icon.png",
+  "tokenDescription": "A great token"
+}
+```
+
+This ensures `icon` and `tokenDescription` are preserved. If you only sent `name` and `symbol`, the other fields would be cleared.
 
 For **metadata-only** flow (when `canVerify: false, canMetadata: true`): this step is the primary collection step — verification params from Step 6 are skipped.
 
@@ -264,11 +318,12 @@ If the user says no, ask which field to change.
 
 ### 8. Submit and Report
 
-**Important: Only send fields the user provided.** Omit any optional field the user skipped — do not send empty strings or null values, as the API may interpret them as intentional overrides that clear existing data. Build the request body dynamically, including only `tokenId`, `walletAddress`, `submitVerification`, and whichever optional fields (`twitterHandle`, `senderTwitterHandle`, `description`, `tokenMetadata`) the user actually provided values for.
+**Important: When including `tokenMetadata`, always send all fields** — use existing data from `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` as the base, with the user's updates merged on top (see Step 6a). This ensures unchanged fields retain their current values.
 
-- For **basic**: call `POST /basic/submit` with `submitVerification: true` and only the fields the user provided. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should only contain fields the user explicitly set. Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
-- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, they are included in the execute request body as `tokenMetadata` — only include fields the user explicitly set.
-- For **metadata-only** (when `canVerify: false, canMetadata: true`): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with only the fields the user explicitly set. Do not include verification parameters. Report `metadataCreated` result.
+- For **basic**: call `POST /basic/submit` with `submitVerification: true` and the collected parameters. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should contain all fields (existing + user updates). Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
+- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will resolve the user's private key, write a payment script, execute it locally, and report the result. When metadata fields were collected, they are included in the execute request body as `tokenMetadata` — include all fields (existing + user updates).
+- For **metadata-only with basic tier** (when `canVerify: false, canMetadata: true` and basic was selected in Step 2): call `POST /basic/submit` with `submitVerification: false` and include `tokenMetadata` with all fields (existing + user updates). Do not include verification parameters. Report `metadataCreated` result.
+- For **metadata-only with express tier** (when `canVerify: false, canMetadata: true` and express was selected in Step 2): load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The payment flow still applies (1 JUP) — include `tokenMetadata` with all fields (existing + user updates). The execute endpoint will skip verification creation (since `canVerify: false`) but will create the metadata update. Report `metadataCreated` result.
 
 ---
 
@@ -306,7 +361,7 @@ When collecting user input, handle these common mistakes gracefully instead of r
 16. **API key required for submission endpoints** — `POST /basic/submit`, `GET /payments/express/craft-txn`, and `POST /payments/express/execute` all require an `x-api-key` header. Eligibility check endpoints are unauthenticated.
 17. **Rate limit: 2 requests/day per API key** — The submission endpoints are rate-limited to 2 requests per day per API key. Warn users before submitting.
 18. **Metadata can be submitted with or without verification** — The combined endpoints support optional `tokenMetadata` for setting token metadata alongside verification. When `canVerify: false` but `canMetadata: true`, submit with `submitVerification: false` and only `tokenMetadata` to perform a metadata-only update. At least one of `submitVerification: true` or `tokenMetadata` must be provided.
-19. **Never send empty strings for omitted fields** — Only include fields the user explicitly provided in the request body. Sending an empty string for `twitterHandle`, `description`, or any `tokenMetadata` field may override existing data on the server. If a field was skipped, omit it entirely from the JSON payload.
+19. **Always fetch existing data before metadata updates** — Before building the `tokenMetadata` object, call `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` to get current values. Use the existing data as the base, merge the user's updates on top, and send all fields. This prevents clearing fields the user didn't intend to change.
 
 ---
 

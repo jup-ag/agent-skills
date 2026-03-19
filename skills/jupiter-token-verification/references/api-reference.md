@@ -82,6 +82,62 @@ Before any submission (and before any payment in express), the system checks whe
 
 ---
 
+## Get Existing Token Data
+
+**`GET /tokenMetadata/getFromRpcAndSearch/:tokenId`**
+
+Fetches the token's current metadata from RPC, search, and description APIs. **Call this before any metadata update** to get existing values that must be preserved.
+
+```
+GET https://token-verification-dev-api.jup.ag/tokenMetadata/getFromRpcAndSearch/{tokenId}
+```
+
+| Param     | Type   | Required | Notes                    |
+| --------- | ------ | -------- | ------------------------ |
+| `tokenId` | string | **Yes**  | Solana token mint address (path param) |
+
+No authentication required.
+
+**Response:**
+
+```json
+{
+  "rpc": {
+    "assetId": "So11111111111111111111111111111111111111112",
+    "icon": "https://example.com/icon.png",
+    "name": "Token Name",
+    "symbol": "TKN",
+    "website": "https://example.com",
+    "telegram": null,
+    "twitter": "https://x.com/token",
+    "twitterCommunity": null,
+    "discord": null,
+    "instagram": null,
+    "tiktok": null
+  },
+  "search": [...],
+  "description": {
+    "description": "Token description text"
+  }
+}
+```
+
+**Field mapping to `tokenMetadata`:**
+- `rpc.assetId` → `tokenId`
+- `rpc.icon` → `icon`
+- `rpc.name` → `name`
+- `rpc.symbol` → `symbol`
+- `rpc.website` → `website`
+- `rpc.telegram` → `telegram`
+- `rpc.twitter` → `twitter`
+- `rpc.twitterCommunity` → `twitterCommunity`
+- `rpc.discord` → `discord`
+- `rpc.instagram` → `instagram`
+- `rpc.tiktok` → `tiktok`
+- `description.description` → `tokenDescription`
+
+---
+
 ## Check Express Eligibility
 
 **`GET /combined/express/check-eligibility`**
@@ -176,7 +232,7 @@ x-api-key: your-api-key-here
 | `description`         | string  | No       | Description of the token                                           |
 | `tokenMetadata`       | object  | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
-> **Important:** Only include optional fields the user explicitly provided. Omit any field the user did not set — do not send empty strings, as the API may interpret them as intentional overrides that clear existing data. The `tokenMetadata` object should likewise only contain fields being updated.
+> **Important:** When including `tokenMetadata`, first fetch existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge the user's updates on top, and send all fields. This preserves values the user did not change.
 
 **Response:**
 
@@ -290,7 +346,7 @@ x-api-key: your-api-key-here
 | `description`         | string | No       | Description of the token                   |
 | `tokenMetadata`       | object | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
-> **Important:** Only include optional fields the user explicitly provided. Omit any field the user did not set — do not send empty strings, as the API may interpret them as intentional overrides that clear existing data. The `tokenMetadata` object should likewise only contain fields being updated.
+> **Important:** When including `tokenMetadata`, first fetch existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge the user's updates on top, and send all fields. This preserves values the user did not change.
 
 **Response:**
 
@@ -312,7 +368,7 @@ On success, the server automatically creates a **express** verification request 
 
 Optional object for setting token metadata alongside verification. Can be included in both `POST /basic/submit` and `POST /payments/express/execute`.
 
-> **Important:** Only include fields the user explicitly wants to update. Omit any field not being updated — do not send empty strings or null values. Sending an empty value for a field like `tokenDescription`, `twitter`, or `website` may clear the existing value on the server.
+> **Important:** Before building this object, fetch the token's existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` (see [Get Existing Token Data](#get-existing-token-data)). Use the existing values as the base, merge the user's updates on top, and send **all** fields. This ensures fields the user did not update retain their current values — any field sent as empty string or null will override and clear the existing value.
 
 | Field                   | Type     | Required | Description                           |
 | ----------------------- | -------- | -------- | ------------------------------------- |

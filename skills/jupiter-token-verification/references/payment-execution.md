@@ -264,7 +264,7 @@ main().catch((err) => {
 });
 ```
 
-Write a `config.json` file in the same temp directory with **only the fields the user provided**. Omit any optional field the user skipped — do not include it as an empty string or null, as this could override existing data on the server:
+Write a `config.json` file in the same temp directory with the collected parameters. For `tokenMetadata`, include the **full merged object** (existing data from `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` with user updates applied on top) so unchanged fields are preserved:
 
 ```json
 {
@@ -272,16 +272,16 @@ Write a `config.json` file in the same temp directory with **only the fields the
   "twitterHandle": "<collected twitter URL — OMIT THIS KEY if user skipped>",
   "senderTwitterHandle": "<collected sender twitter URL — OMIT THIS KEY if user skipped>",
   "description": "<collected description — OMIT THIS KEY if user skipped>",
-  "tokenMetadata": "<collected metadata object — OMIT THIS KEY if no metadata>"
-}
-```
-
-For example, if the user only provided a twitter handle and skipped description and sender twitter:
-
-```json
-{
-  "tokenId": "So11111111111111111111111111111111111111112",
-  "twitterHandle": "https://x.com/jupiterexchange"
+  "tokenMetadata": {
+    "tokenId": "<collected token mint>",
+    "name": "<existing or updated value>",
+    "symbol": "<existing or updated value>",
+    "icon": "<existing or updated value>",
+    "tokenDescription": "<existing or updated value>",
+    "website": "<existing or updated value>",
+    "twitter": "<existing or updated value>",
+    "...all other fields from existing data with user updates merged in"
+  }
 }
 ```
 
