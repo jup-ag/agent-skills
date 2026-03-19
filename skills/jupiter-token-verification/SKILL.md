@@ -171,12 +171,14 @@ For full API key management details (listing keys, revoking keys), see [API Refe
 
 Collect these in order. For each, show what it is and why it matters:
 
-**a) Token's Twitter/X URL** (optional but recommended)
+**a) Token's Twitter/X URL** (required for express, optional for basic)
 
 > What is the **token project's Twitter/X URL**?
-> Example: `https://x.com/jupiterexchange` > _(Type "skip" to leave blank)_
+> Example: `https://x.com/jupiterexchange`
 
-Validate: must be a full URL starting with `https://x.com/` or `https://twitter.com/` followed by a valid username (1–15 chars, alphanumeric + underscore). If the user provides a bare handle like `@handle`, auto-convert it to `https://x.com/handle` and confirm with the user. **If skipped, omit this field entirely from the request — do not send an empty string.**
+For **basic** tier, the user may skip this — if skipped, omit the field entirely from the request (do not send an empty string).
+
+Validate: must be a full URL starting with `https://x.com/` or `https://twitter.com/` followed by a valid username (1–15 chars, alphanumeric + underscore). If the user provides a bare handle like `@handle`, auto-convert it to `https://x.com/handle` and confirm with the user.
 
 **b) Requester's Twitter/X URL** (optional)
 
@@ -185,12 +187,12 @@ Validate: must be a full URL starting with `https://x.com/` or `https://twitter.
 
 Same validation as above. **If skipped, omit this field entirely from the request — do not send an empty string.**
 
-**c) Description** (optional but recommended)
+**c) Description** (required for express, optional for basic)
 
 > Please provide a **short description** of the token.
-> Example: _"Community governance token for XYZ protocol"_ > _(Type "skip" to leave blank)_
+> Example: _"Community governance token for XYZ protocol"_
 
-**If skipped, omit this field entirely from the request — do not send an empty string.**
+For **basic** tier, the user may skip this — if skipped, omit the field entirely from the request (do not send an empty string).
 
 **d) Wallet Address** (required for all flows)
 
