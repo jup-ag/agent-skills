@@ -215,7 +215,7 @@ Runs when the user opted in at Step 4a **or** in a metadata-only flow (`canVerif
 
 #### 6a-i. Fetch existing token data
 
-Before collecting user input, fetch the current token data so existing values are preserved:
+Fetch the current token data so existing values are preserved:
 
 ```http
 GET {BASE_URL}/tokenMetadata/getFromRpcAndSearch/{tokenId}
