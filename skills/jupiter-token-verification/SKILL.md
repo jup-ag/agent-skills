@@ -122,7 +122,7 @@ Logic — use both `canVerify` and `canMetadata` to determine what to offer:
 
 | `canVerify` | `canMetadata` | Action |
 |---|---|---|
-| `true` | `true` | Proceed with verification. After collecting verification params in Step 6, ask if they also want to update metadata (Step 6a). |
+| `true` | `true` | Proceed to **Step 4a** — ask if user also wants to update metadata. |
 | `true` | `false` | Proceed with verification only. Inform user: _"Metadata updates are not available for this token ({metadataError})."_ Skip Step 6a. |
 | `false` | `true` | Verification not available — report `verificationError`. Offer to proceed with a **metadata-only** update: _"Verification isn't available ({verificationError}), but you can still update token metadata. Would you like to proceed with a metadata update?"_ If yes, skip to Step 5 → Step 6a (metadata collection only) → Step 7 → Step 8 with `submitVerification: false`. |
 | `false` | `false` | Report both `verificationError` and `metadataError` to user. Stop. |
@@ -132,6 +132,17 @@ For **"check-only" intent** (user just wants to know status), call both eligibil
 - Report whether metadata updates are available
 - If not eligible, show the `verificationError` and/or `metadataError` for each tier
 - Done — do not proceed to submission.
+
+### 4a. Ask About Metadata Update
+
+Only when eligibility returned `canVerify: true` **and** `canMetadata: true`.
+
+Ask:
+
+> Would you also like to **update token metadata** (name, symbol, social links, etc.) alongside your verification request?
+
+- If user says **yes** → metadata fields will be collected later in Step 6a
+- If user says **no** → skip Step 6a entirely, verification-only flow
 
 ### 5. Resolve API Key
 
@@ -181,22 +192,21 @@ Validate: same base58 format as token mint.
 
 If **express** was selected: **skip this step**. The wallet address will be derived automatically from the user's private key during the payment execution flow.
 
-### 6a. Collect Metadata Fields (when `canMetadata: true`)
+### 6a. Collect Metadata Fields (when metadata is included)
 
-Only runs when the eligibility check returned `canMetadata: true`.
+Runs when the user opted in at Step 4a **or** in a metadata-only flow (`canVerify: false, canMetadata: true`).
 
-Ask:
+Present the available fields:
 
-> Would you also like to **update token metadata**? Here are the fields you can change:
+> Here are the metadata fields you can update:
 >
 > **Identity:** name, symbol, icon, tokenDescription
 > **Links:** website, twitter, twitterCommunity, telegram, discord, instagram, tiktok, otherUrl
 > **Supply & Market Data:** circulatingSupply, circulatingSupplyUrl, coingeckoCoinId
 >
-> Would you like to update any of these? (yes/no)
+> Which fields would you like to update?
 
-- If user says **no** → skip, proceed to Step 7 with verification only
-- If user says **yes** → ask which fields they want to update, then collect values one at a time
+Ask which fields they want to update, then collect values one at a time.
 
 **Field collection rules:**
 
