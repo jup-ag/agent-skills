@@ -1,20 +1,6 @@
 ---
 name: jupiter-vrfd
-description: Guide agents through the Jupiter Token Verification express flow — submit verification requests, pay with JUP tokens, update token metadata, and check verification status.
-license: MIT
-metadata:
-  author: jupiter
-  version: "1.0.0"
-tags:
-  - jupiter-vrfd
-  - jup-ag
-  - token-verification
-  - token-metadata
-  - update-metadata
-  - vrfd
-  - verified
-  - solana
-  - verification
+description: Use when submitting Jupiter token verification requests, checking verification eligibility, paying for express verification, or updating token metadata through the token verification flow.
 ---
 
 # Jupiter Token Verification
