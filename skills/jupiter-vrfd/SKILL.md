@@ -47,14 +47,14 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 
 ## Intent Router
 
-| User intent                       | Endpoint                                              | Method | Auth    |
-| --------------------------------- | ----------------------------------------------------- | ------ | ------- |
-| Check express eligibility         | `/combined/express/check-eligibility?tokenId=…`       | `GET`  | None    |
-| Check basic eligibility           | `/combined/basic/check-eligibility?tokenId=…`         | `GET`  | None    |
-| Fetch existing token data         | `/tokenMetadata/getFromRpcAndSearch/{tokenId}`        | `GET`  | None    |
-| Submit basic verification         | `/basic/submit`                                       | `POST` | API key |
-| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`         | `GET`  | API key |
-| Sign and execute express payment  | `/payments/express/execute`                           | `POST` | API key |
+| User intent                       | Endpoint                                        | Method | Auth    |
+| --------------------------------- | ----------------------------------------------- | ------ | ------- |
+| Check express eligibility         | `/combined/express/check-eligibility?tokenId=…` | `GET`  | None    |
+| Check basic eligibility           | `/combined/basic/check-eligibility?tokenId=…`   | `GET`  | None    |
+| Fetch existing token data         | `/tokenMetadata/getFromRpcAndSearch/{tokenId}`  | `GET`  | None    |
+| Submit basic verification         | `/basic/submit`                                 | `POST` | API key |
+| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`   | `GET`  | API key |
+| Sign and execute express payment  | `/payments/express/execute`                     | `POST` | API key |
 
 ## References
 
@@ -75,15 +75,15 @@ When a user triggers this skill, extract as much as possible from the user's ini
 
 Before asking any questions, scan the user's initial message for parameters already provided:
 
-| Parameter | Look for |
-| --- | --- |
-| Intent | "verify", "check status", "update metadata" |
-| Tier | "express"/"paid" → express, "basic"/"free" → basic |
-| Token mint | Base58 string, 32–44 characters |
-| Token Twitter | `x.com/…` or `twitter.com/…` URL, or `@handle` |
+| Parameter         | Look for                                           |
+| ----------------- | -------------------------------------------------- |
+| Intent            | "verify", "check status", "update metadata"        |
+| Tier              | "express"/"paid" → express, "basic"/"free" → basic |
+| Token mint        | Base58 string, 32–44 characters                    |
+| Token Twitter     | `x.com/…` or `twitter.com/…` URL, or `@handle`     |
 | Requester Twitter | Mentioned as "my twitter" / "my handle" or similar |
-| Description | Quoted text or explicit description |
-| Wallet address | Base58 string identified as wallet/address |
+| Description       | Quoted text or explicit description                |
+| Wallet address    | Base58 string identified as wallet/address         |
 
 Track which parameters are already known. For all subsequent steps, **skip any question whose answer was already extracted or auto-resolved.** If enough information is provided upfront, jump directly to the eligibility check or even to confirmation.
 
@@ -144,10 +144,10 @@ Use the result to determine which flow to follow:
 
 > This token is **already verified** on Jupiter.
 
-| `canMetadata` | Action                                                                                                                                                                                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canMetadata` | Action                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `true`        | Offer metadata update: _"Would you like to **update the token metadata** (name, symbol, social links, etc.)?"_ If yes → proceed to Step 5 (API key) → Step 6a (metadata collection) → Step 7 (confirm) → Step 8 (metadata-only). The tier selected in Step 2 still applies — **express** metadata-only updates go through the payment flow, **basic** metadata-only updates use `POST /basic/submit`. If no → done. |
-| `false`       | Report: _"Metadata updates are also not available at this time."_ Done.                                                                                                                                                                                         |
+| `false`       | Report: _"Metadata updates are also not available at this time."_ Done.                                                                                                                                                                                                                                                                                                                                             |
 
 **B) Token can be verified** — endpoint returned `canVerify: true`:
 
@@ -205,12 +205,12 @@ Collect all missing required fields in a **single prompt**. Only ask for fields 
 
 **Field requirements:**
 
-| Field | Express | Basic | Notes |
-| --- | --- | --- | --- |
-| Token Twitter URL | Required | Optional | `https://x.com/…` or `https://twitter.com/…` |
-| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string |
-| Description | Required | Optional | Short description of the token |
-| Wallet address | Required | Required | Valid Solana public key; for express, the local payment script must derive the signer and abort if it does not match this address |
+| Field                 | Express  | Basic    | Notes                                                                                                                             |
+| --------------------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Token Twitter URL     | Required | Optional | `https://x.com/…` or `https://twitter.com/…`                                                                                      |
+| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string                                                                                        |
+| Description           | Required | Optional | Short description of the token                                                                                                    |
+| Wallet address        | Required | Required | Valid Solana public key; for express, the local payment script must derive the signer and abort if it does not match this address |
 
 Build the prompt dynamically — include **only** fields still needed. Example for express when a private key source was found but the wallet address is still needed:
 
@@ -290,20 +290,20 @@ Use `search[0]` as the primary source for token info, `description.description` 
 
 **Field mapping:**
 
-| Source | Field |
-| --- | --- |
-| `search[0].id` | `tokenId` |
-| `search[0].name` | `name` |
-| `search[0].symbol` | `symbol` |
-| `search[0].icon` | `icon` |
-| `search[0].website` | `website` |
-| `search[0].twitter` | `twitter` |
-| `search[0].telegram` | `telegram` |
-| `description.description` | `tokenDescription` |
-| `rpc.twitterCommunity` | `twitterCommunity` (not in search) |
-| `rpc.discord` | `discord` (not in search) |
-| `rpc.instagram` | `instagram` (not in search) |
-| `rpc.tiktok` | `tiktok` (not in search) |
+| Source                    | Field                              |
+| ------------------------- | ---------------------------------- |
+| `search[0].id`            | `tokenId`                          |
+| `search[0].name`          | `name`                             |
+| `search[0].symbol`        | `symbol`                           |
+| `search[0].icon`          | `icon`                             |
+| `search[0].website`       | `website`                          |
+| `search[0].twitter`       | `twitter`                          |
+| `search[0].telegram`      | `telegram`                         |
+| `description.description` | `tokenDescription`                 |
+| `rpc.twitterCommunity`    | `twitterCommunity` (not in search) |
+| `rpc.discord`             | `discord` (not in search)          |
+| `rpc.instagram`           | `instagram` (not in search)        |
+| `rpc.tiktok`              | `tiktok` (not in search)           |
 
 Treat the fetched metadata as the **base object** for the eventual `tokenMetadata` request. Build the final request by starting from the fetched values, then applying the user's edits on top. Preserve the exact strings returned by the API for untouched fields — do not normalize punctuation, quotes, or formatting. If a field is missing, `null`, or empty in the fetched data, omit it from the merged object unless the user explicitly wants to set or clear that field.
 
@@ -360,19 +360,19 @@ Present a summary of all collected parameters and ask for confirmation:
 
 > Here's a summary of your verification request:
 >
-> | Field             | Value                       |
-> | ----------------- | --------------------------- |
-> | **Token Mint**    | `{tokenId}`                 |
-> | **Tier**          | {basic/express}             |
-> | **Token Twitter** | {url or _not provided_}     |
-> | **Your Twitter**  | {url or _not provided_}     |
-> | **Description**   | {text or _not provided_}    |
-> | **Wallet**        | {address or _not provided_} |
+> | Field             | Value                                    |
+> | ----------------- | ---------------------------------------- |
+> | **Token Mint**    | `{tokenId}`                              |
+> | **Tier**          | {basic/express}                          |
+> | **Token Twitter** | {url or _not provided_}                  |
+> | **Your Twitter**  | {url or _not provided_}                  |
+> | **Description**   | {text or _not provided_}                 |
+> | **Wallet**        | {address or _not provided_}              |
 > | **Cost**          | {`1 JUP` for express / `Free` for basic} |
 
 For **express** tier, include a balance warning after the summary table:
 
-> **Make sure your wallet has at least 1 JUP and a small amount of SOL for transaction fees before proceeding.**
+> **Make sure your wallet has at least 1 JUP before proceeding.**
 
 If metadata fields were collected in Step 6a, add them to the summary:
 
