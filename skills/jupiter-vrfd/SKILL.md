@@ -24,8 +24,9 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 - **Base URL**: `https://token-verification-dev-api.jup.ag`
 - **Auth**: API key required for submission endpoints (`x-api-key` header). Eligibility checks are unauthenticated.
 - **Payment currency**: JUP (1 JUP per express verification)
-- **Naming**: "Express" and "premium" refer to the same paid tier. The user-facing name is **express**, but the API uses `"premium"` as the `verificationTier` value.
+- **Naming**: "Express" and "premium" refer to the same paid tier. User-facing name is **express**; the API uses `"premium"` as the `verificationTier` value.
 - **Agent behavior**: Guide users efficiently — extract parameters from context, auto-resolve safe environment values where possible, batch-collect remaining inputs, and confirm before submitting. See [Agent Conversation Flow](#agent-conversation-flow).
+- **Metadata merge rule** (applies to all requests with `tokenMetadata`): Fetch existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge user's updates on top, and send the full merged object. Preserve exact strings for untouched fields. Do not send empty strings or `null` for fields the user did not ask to clear. Omit fields absent in both fetched data and user input.
 
 ## Use / Do Not Use
 
@@ -67,348 +68,137 @@ Load these on demand when you need implementation details:
 
 # Agent Conversation Flow
 
-When a user triggers this skill, extract as much as possible from the user's initial message, auto-resolve safe environment values where possible (API key presence and private key source location, but not the wallet address), then batch-collect any remaining required fields in as few prompts as possible. Validate all inputs and confirm before making API calls.
+Extract as much as possible from the user's initial message, auto-resolve safe environment values (API key presence and private key source location, but not wallet address), then batch-collect remaining required fields in as few prompts as possible. Validate all inputs and confirm before making API calls.
 
-## Step-by-Step Parameter Collection
+## Step 0. Extract Upfront Parameters
 
-### 0. Extract Upfront Parameters
+Before asking questions, scan the user's message for: intent ("verify", "check status", "update metadata"), tier ("express"/"paid" → express, "basic"/"free" → basic), token mint (base58, 32–44 chars), token Twitter URL or handle, requester Twitter, description, wallet address.
 
-Before asking any questions, scan the user's initial message for parameters already provided:
+Track what's known. For all subsequent steps, **skip any question whose answer was already extracted or auto-resolved.** If enough info is provided upfront, jump directly to eligibility or confirmation.
 
-| Parameter         | Look for                                           |
-| ----------------- | -------------------------------------------------- |
-| Intent            | "verify", "check status", "update metadata"        |
-| Tier              | "express"/"paid" → express, "basic"/"free" → basic |
-| Token mint        | Base58 string, 32–44 characters                    |
-| Token Twitter     | `x.com/…` or `twitter.com/…` URL, or `@handle`     |
-| Requester Twitter | Mentioned as "my twitter" / "my handle" or similar |
-| Description       | Quoted text or explicit description                |
-| Wallet address    | Base58 string identified as wallet/address         |
+## Step 1. Determine Intent
 
-Track which parameters are already known. For all subsequent steps, **skip any question whose answer was already extracted or auto-resolved.** If enough information is provided upfront, jump directly to the eligibility check or even to confirmation.
+If not clear from context, ask whether they want to: (1) check eligibility, (2) submit verification, or (3) update metadata.
 
-### 1. Determine Intent
+For **update metadata** intent: proceed to Step 2 → 3 → 4 (eligibility endpoint must match the tier from Step 2).
 
-Ask the user what they want to do:
+## Step 2. Choose Verification Tier
 
-> What would you like to do?
->
-> 1. **Check** if a token is eligible for verification
-> 2. **Submit** a token for verification
-> 3. **Update metadata** for a token (e.g., name, symbol, social links)
+Auto-select if the user's message indicates a preference (e.g., "express verification" → express, "basic verification" → basic). Otherwise ask: **basic** (free) or **express** (1 JUP). Default to express if unsure.
 
-If the user's message already makes their intent clear, skip this question.
+## Step 3. Collect Token Mint Address
 
-For **"update metadata" intent**: proceed to Step 2 (tier selection) → Step 3 (collect mint) → Step 4 (check eligibility). The eligibility endpoint must match the tier selected in Step 2.
+Always required. Validate: must be a valid base58 string, typically 32–44 characters. If invalid, explain the expected format and ask again.
 
-### 2. Choose Verification Tier
+## Step 4. Check Token Eligibility
 
-Before collecting the mint address, determine which tier the user wants. This ensures only one eligibility endpoint is called later.
-
-**Auto-select from user intent:** If the user's original message already indicates which tier they want, use their choice directly:
-
-- Phrases like `express verification`, `paid verification`, `express flow` → auto-select **express**
-- Phrases like `basic verification`, `free verification` → auto-select **basic**
-
-**Otherwise, ask:**
-
-> Would you like **basic** (free) or **express** (1 JUP) verification?
->
-> - **Basic** — free, standard review process
-> - **Express** — costs 1 JUP, paid from your wallet
-
-Default to `express` if the user is unsure, approvals are faster.
-
-### 3. Collect Token Mint Address (always required)
-
-Ask:
-
-> What is the **Solana token mint address** you'd like to verify?
-
-**Validate before proceeding:**
-
-- Must be a valid base58 string
-- Typically 32–44 characters
-- If invalid, say: _"That doesn't look like a valid Solana mint address. It should be a base58 string like `So11111111111111111111111111111111111111112`. Please try again."_
-
-### 4. Check Token Eligibility (single tier)
-
-After collecting the mint, check eligibility for **only** the tier selected in Step 2 — do NOT call both endpoints:
+Check eligibility for **only** the tier selected in Step 2 — do NOT call both endpoints:
 
 - **Basic**: `GET /combined/basic/check-eligibility?tokenId={tokenId}`
 - **Express**: `GET /combined/express/check-eligibility?tokenId={tokenId}`
 
-Use the result to determine which flow to follow:
+Handle the result:
 
-**A) Token is already verified** — endpoint returns `canVerify: false` and the `verificationError` message indicates an existing (non-rejected) verification:
+**A) Already verified** (`canVerify: false`, error indicates existing non-rejected verification): Tell the user. If `canMetadata: true`, offer metadata update — the tier from Step 2 still applies (express metadata-only goes through payment flow, basic uses `POST /basic/submit`). If `canMetadata: false`, done.
 
-> This token is **already verified** on Jupiter.
+**B) Can be verified** (`canVerify: true`): Report eligibility. If `canMetadata: true`, ask if they also want to update metadata. If `canMetadata: false`, note that metadata updates are unavailable. Continue to Step 5.
 
-| `canMetadata` | Action                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `true`        | Offer metadata update: _"Would you like to **update the token metadata** (name, symbol, social links, etc.)?"_ If yes → proceed to Step 5 (API key) → Step 6a (metadata collection) → Step 7 (confirm) → Step 8 (metadata-only). The tier selected in Step 2 still applies — **express** metadata-only updates go through the payment flow, **basic** metadata-only updates use `POST /basic/submit`. If no → done. |
-| `false`       | Report: _"Metadata updates are also not available at this time."_ Done.                                                                                                                                                                                                                                                                                                                                             |
+**C) Cannot be verified** (other error): Explain why in plain language. If `canMetadata: true`, offer metadata-only update. Otherwise stop.
 
-**B) Token can be verified** — endpoint returned `canVerify: true`:
+**For check-only intent**: Report eligibility status and stop — do not proceed to submission.
 
-Report eligibility and metadata availability in a **single response**:
+## Step 5. Auto-Resolve Environment Values
 
-- If `canMetadata: true`: _"This token is eligible for {tier} verification. Would you also like to **update token metadata** (name, symbol, social links, etc.)?"_
-- If `canMetadata: false`: _"This token is eligible for {tier} verification. (Metadata updates are not available for this token.)"_
+Do this silently after the eligibility check — no user interaction needed unless values are missing.
 
-Continue to Step 5.
+**a) API Key:** Check that `.env` / `.env.local` contains `JUPITER_API_KEY` or `JUP_API_KEY`. Only check that the variable **exists** — do NOT read its value. Note the file path and variable name silently. If not found, address in Step 6. See [API Reference — Managing Keys](references/api-reference.md#managing-keys).
 
-**C) Token cannot be verified** — `canVerify: false` with an error other than existing verification (e.g., token not found, not eligible for this tier):
+**b) Private Key Source (express only):**
 
-Explain why the token is not eligible in plain language. If `canMetadata: true`, offer a metadata-only update. Otherwise stop.
+1. Check `.env` / `.env.local` for `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY` — only check existence, do NOT read the value
+2. If not found, check for `~/.config/solana/id.json`
+3. Note the file path and variable name for [Payment Execution — Step 7a](references/payment-execution.md#7a-locate-private-key-source)
 
-**For "check-only" intent** (user just wants to know status): report whether the token is eligible for the selected tier, whether metadata updates are available, and any errors. Done — do not proceed to submission.
+If found, inform the user (e.g., _"Found `PRIVATE_KEY` in your .env — the payment script will use it directly after verifying it matches your wallet address"_). Wallet address still needs collecting in Step 6 unless already provided.
 
-### 5. Auto-Resolve Environment Values
+> **SECURITY:** Never read contents of `.env` or keypair files. Never derive wallet address from a private key. The user provides `walletAddress` separately; the payment script verifies it matches the signing key.
 
-Silently check the environment before prompting the user. Do this immediately after the eligibility check — no user interaction needed unless values are missing.
+For **basic** submissions, skip private key checks.
 
-**a) API Key**
+## Step 6. Batch-Collect Remaining Parameters
 
-Check that `.env` / `.env.local` contains a `JUPITER_API_KEY` or `JUP_API_KEY` variable. Only check that the variable **exists** — do NOT read or extract its value. The payment script loads it directly at runtime. If found, note the file path and variable name silently. If not found, it will be addressed in Step 6.
+Collect all missing fields in a **single prompt**. Skip fields already extracted (Step 0) or auto-resolved (Step 5).
 
-The key is passed via the `x-api-key` header. For full API key management details, see [API Reference — Managing Keys](references/api-reference.md#managing-keys).
-
-**b) Private Key Source (express tier only)**
-
-For **express** submissions, check for a private key source before collecting the remaining submission fields. The wallet address must still come from the user unless it was already provided in Step 0.
-
-1. Check that `.env` / `.env.local` contains a `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY` variable — only check that the variable **exists**, do NOT read the value
-2. If not found, check for a keypair file at `~/.config/solana/id.json`
-3. If found, note the **file path and variable name** for later use in the payment phase ([Payment Execution — Step 7a](references/payment-execution.md#7a-locate-private-key-source))
-
-> **SECURITY:** The agent must NEVER read the contents of `.env` files or keypair files containing private keys. Only confirm the file exists and which variable name holds the key. The payment script loads secrets directly at runtime.
->
-> **SECURITY:** The agent must NEVER derive the wallet address from a private key or keypair file. The user provides `walletAddress`, and the local payment script verifies that it matches the signing key before signing.
-
-If the private key source is found, the wallet address still needs to be collected in Step 6 unless it was already provided in Step 0. Inform the user that a private key source was found (e.g., _"Found `PRIVATE_KEY` in your .env — the payment script will use it directly after verifying it matches your wallet address"_).
-
-If not found, the wallet address will be collected in Step 6, and the private key source will be resolved later during payment execution.
-
-For **basic** submissions, do not check for private keys — only a wallet address is needed, collected in Step 6.
-
-### 6. Batch-Collect Remaining Parameters
-
-Collect all missing required fields in a **single prompt**. Only ask for fields not already provided in Step 0 (upfront extraction) or auto-resolved in Step 5 (environment).
-
-**If the API key was not found in Step 5a**, guide the user through generating one before collecting other fields:
-
-- Direct them to open `https://vrfd-auth-api-dev.jup.ag/api/keys/new` in their browser — this handles login and key generation in one flow
-- **Important:** The key is shown **once** and cannot be retrieved again. Tell the user to copy it immediately
-- Creating a new key automatically **revokes** any existing active key for their account
-- Ask them to store it in `.env` as `JUPITER_API_KEY=<key>` and ensure `.env` is in `.gitignore`
+**If API key was not found in Step 5a**: Direct the user to `https://vrfd-auth-api-dev.jup.ag/api/keys/new` (handles login + key generation). Warn: key shown once, cannot be retrieved. Creating a new key revokes any existing key. Store in `.env` as `JUPITER_API_KEY=<key>`, ensure `.env` is in `.gitignore`.
 
 **Field requirements:**
 
-| Field                 | Express  | Basic    | Notes                                                                                                                             |
-| --------------------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Token Twitter URL     | Required | Optional | `https://x.com/…` or `https://twitter.com/…`                                                                                      |
-| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string                                                                                        |
-| Description           | Required | Optional | Short description of the token                                                                                                    |
-| Wallet address        | Required | Required | Valid Solana public key; for express, the local payment script must derive the signer and abort if it does not match this address |
+| Field                 | Express  | Basic    | Notes                                                              |
+| --------------------- | -------- | -------- | ------------------------------------------------------------------ |
+| Token Twitter URL     | Required | Optional | `https://x.com/…` or `https://twitter.com/…`                       |
+| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string                         |
+| Description           | Required | Optional | Short description of the token                                     |
+| Wallet address        | Required | Required | Valid Solana public key; for express, payment script must verify match |
 
-Build the prompt dynamically — include **only** fields still needed. Example for express when a private key source was found but the wallet address is still needed:
+**Validation:** Twitter URLs must start with `https://x.com/` or `https://twitter.com/` + valid username (1–15 chars, alphanumeric + underscore). Auto-convert bare handles (e.g., `@handle` → `https://x.com/handle`) with user confirmation. Validate wallet with `new PublicKey(address)` from `@solana/web3.js`. Omit skipped optional fields entirely — do not send empty strings.
 
-> Please provide the following:
->
-> 1. **Token Twitter URL** (required): e.g. `https://x.com/jupiterexchange`
-> 2. **Your Twitter URL** (optional, "skip" to omit): e.g. `https://x.com/your_handle`
-> 3. **Token description** (required): e.g. _"Community governance token for XYZ protocol"_
-> 4. **Wallet address** (required): your Solana public key
+## Step 6a. Collect Metadata Fields (when metadata is included)
 
-Example for basic with no auto-resolved values:
-
-> Please provide the following (optional fields can be skipped):
->
-> 1. **Token Twitter URL** (optional): e.g. `https://x.com/jupiterexchange`
-> 2. **Your Twitter URL** (optional): e.g. `https://x.com/your_handle`
-> 3. **Token description** (optional): short description
-> 4. **Wallet address** (required): your Solana public key
-
-**If only one field is missing**, ask for just that field directly — no numbered list needed.
-
-**If all parameters are already known**, skip this step entirely and go straight to Step 7 (confirmation).
-
-**Validation rules** (apply regardless of how values were collected):
-
-- **Twitter URLs**: Must start with `https://x.com/` or `https://twitter.com/` followed by a valid username (1–15 chars, alphanumeric + underscore). Auto-convert bare handles like `@handle` to `https://x.com/handle` and confirm with the user.
-- **Wallet address**: Validate with `new PublicKey(address)` from `@solana/web3.js`. For **express**, the agent must not derive the wallet itself. The local payment script derives the signer wallet at execution time and MUST abort if it does not match the user-provided address.
-- **Skipped optional fields**: Omit entirely from the request — do not send empty strings.
-
-### 6a. Collect Metadata Fields (when metadata is included)
-
-Runs when the user opted in at Step 4 (metadata question) **or** in a metadata-only flow (`canVerify: false, canMetadata: true`).
+Runs when the user opted into metadata at Step 4, or in a metadata-only flow (`canVerify: false, canMetadata: true`).
 
 #### 6a-i. Fetch existing token data
-
-Fetch the current token data so the user can see the current values and so you can reuse an existing value verbatim if they explicitly ask to keep that field:
 
 ```http
 GET {BASE_URL}/tokenMetadata/getFromRpcAndSearch/{tokenId}
 ```
 
-This endpoint is unauthenticated. It returns:
-
-```json
-{
-  "rpc": {
-    "assetId": "...",
-    "icon": "https://...",
-    "name": "Current Name",
-    "symbol": "CUR",
-    "website": "https://...",
-    "telegram": "...",
-    "twitter": "...",
-    "twitterCommunity": null,
-    "discord": "...",
-    "instagram": "...",
-    "tiktok": "..."
-  },
-  "search": [
-    {
-      "id": "...",
-      "name": "Current Name",
-      "symbol": "CUR",
-      "icon": "https://...",
-      "website": "https://...",
-      "twitter": "...",
-      "telegram": "..."
-    }
-  ],
-  "description": {
-    "description": "Current token description text"
-  }
-}
-```
-
-Use `search[0]` as the primary source for token info, `description.description` for `tokenDescription`, and `rpc` only for fields not available in `search` or when overriding on-chain metadata.
-
-**Field mapping:**
-
-| Source                    | Field                              |
-| ------------------------- | ---------------------------------- |
-| `search[0].id`            | `tokenId`                          |
-| `search[0].name`          | `name`                             |
-| `search[0].symbol`        | `symbol`                           |
-| `search[0].icon`          | `icon`                             |
-| `search[0].website`       | `website`                          |
-| `search[0].twitter`       | `twitter`                          |
-| `search[0].telegram`      | `telegram`                         |
-| `description.description` | `tokenDescription`                 |
-| `rpc.twitterCommunity`    | `twitterCommunity` (not in search) |
-| `rpc.discord`             | `discord` (not in search)          |
-| `rpc.instagram`           | `instagram` (not in search)        |
-| `rpc.tiktok`              | `tiktok` (not in search)           |
-
-Treat the fetched metadata as the **base object** for the eventual `tokenMetadata` request. Build the final request by starting from the fetched values, then applying the user's edits on top. Preserve the exact strings returned by the API for untouched fields — do not normalize punctuation, quotes, or formatting. If a field is missing, `null`, or empty in the fetched data, omit it from the merged object unless the user explicitly wants to set or clear that field.
+Unauthenticated. See [API Reference — Get Existing Token Data](references/api-reference.md#get-existing-token-data) for the response schema and field mapping. Use `search[0]` as primary source, `description.description` for `tokenDescription`, and `rpc` for fields not in `search` (twitterCommunity, discord, instagram, tiktok).
 
 #### 6a-ii. Collect user updates
 
-Present the available fields:
+Present available metadata fields in groups:
+- **Identity:** name, symbol, icon, tokenDescription
+- **Links:** website, twitter, twitterCommunity, telegram, discord, instagram, tiktok, otherUrl
+- **Supply & Market:** circulatingSupply, circulatingSupplyUrl, coingeckoCoinId
 
-> Here are the metadata fields you can update:
->
-> **Identity:** name, symbol, icon, tokenDescription
-> **Links:** website, twitter, twitterCommunity, telegram, discord, instagram, tiktok, otherUrl
-> **Supply & Market Data:** circulatingSupply, circulatingSupplyUrl, coingeckoCoinId
->
-> Which fields would you like to update?
-
-Ask which fields they want to update, then collect new values **only** for those fields.
+Ask which fields to update, then collect new values only for those fields.
 
 #### 6a-iii. Build tokenMetadata
 
-Start with the fetched metadata from 6a-i as the base, add `tokenId`, then apply the user's requested changes from 6a-ii on top. The final `tokenMetadata` object should include the existing token info plus the updated fields so unchanged values are preserved. Do **not** send empty strings or `null` for untouched fields — only send a blank or `null` value if the user explicitly wants to clear that field.
+Start from fetched data (6a-i), add `tokenId` (from Step 3), apply user changes (6a-ii). Follow the **metadata merge rule** from the top of this document. See [API Reference — tokenMetadata Object](references/api-reference.md#tokenmetadata-object) for the full schema.
 
-**Field collection rules:**
+**Auto-set rules:** When user provides `circulatingSupply` → set `useCirculatingSupply: true`. Same for `coingeckoCoinId` → `useCoingeckoCoinId: true`, `circulatingSupplyUrl` → `useCirculatingSupplyUrl: true`.
 
-- `tokenId` is auto-filled from the token mint collected in Step 3 — do not ask for it
-- When the user provides a value for `circulatingSupply`, auto-set `useCirculatingSupply: true`
-- When the user provides a value for `coingeckoCoinId`, auto-set `useCoingeckoCoinId: true`
-- When the user provides a value for `circulatingSupplyUrl`, auto-set `useCirculatingSupplyUrl: true`
-- URL fields (website, twitter, discord, etc.) should be validated as proper URLs
-- Never normalize or reformat untouched fetched values. Carry them forward exactly as returned by the API.
-- Omit fetched fields that are absent, `null`, or empty unless the user explicitly asks to set or clear them.
-- See [API Reference — tokenMetadata Object](references/api-reference.md#tokenmetadata-object) for the full schema
+> **Express metadata-only exception:** `POST /payments/express/execute` requires `twitterHandle` and `description` as strings even for metadata-only requests. Send `twitterHandle: ""` and `description: ""` to satisfy the schema — do not ask the user. This applies **only** to express metadata-only; for normal express verification, these fields are required from the user.
 
-**Example:** If the existing data has `name: "Old Name"`, `symbol: "OLD"`, `icon: "https://icon.png"`, `tokenDescription: "A great token"` and the user only wants to update `name` and `symbol`, the final `tokenMetadata` object should contain the full merged metadata so unchanged values are preserved:
+## Step 7. Confirm Before Submitting
 
-```json
-{
-  "tokenId": "So11111111111111111111111111111111111111112",
-  "name": "New Name",
-  "symbol": "NEW",
-  "icon": "https://icon.png",
-  "tokenDescription": "A great token"
-}
-```
+Present a summary table with: token mint, tier, token Twitter, requester Twitter, description, wallet, cost (1 JUP for express / Free for basic). If metadata fields were collected in Step 6a, include them. For **express**, add a balance warning: _"Make sure your wallet has at least 1 JUP before proceeding."_
 
-Do resend untouched existing fields from the fetched metadata so they are preserved server-side. Do not invent values for missing fields, and do not send blank values unless the user explicitly requested a clear.
+For **metadata-only** flow, adjust the heading to "metadata update request" and omit verification-only fields (tier, token twitter, requester twitter, description).
 
-For **metadata-only** flow (when `canVerify: false, canMetadata: true`): this step is the primary collection step — verification params from Step 6 are skipped in the user conversation.
+Ask for confirmation. If the user says no, ask which field to change.
 
-> **Express metadata-only exception:** The `POST /payments/express/execute` endpoint requires `twitterHandle` and `description` as strings even for metadata-only requests. Since these fields are not relevant in a metadata-only flow, send `twitterHandle: ""` and `description: ""` to satisfy the schema — do not ask the user for them. This exception applies **only** to express metadata-only requests; for normal express verification, `twitterHandle` and `description` are required from the user.
+## Step 8. Submit and Report
 
-### 7. Confirm Before Submitting
+| Flow | Action |
+| ---- | ------ |
+| **Basic** | `POST /basic/submit` with `submitVerification: true` and collected params. Include merged `tokenMetadata` if metadata was collected. Report `verificationCreated` / `metadataCreated`. |
+| **Express** | Load [Payment Execution](references/payment-execution.md), follow steps 7a–7e. Include merged `tokenMetadata` if metadata was collected. |
+| **Basic metadata-only** | `POST /basic/submit` with `submitVerification: false` and merged `tokenMetadata` only. Report `metadataCreated`. |
+| **Express metadata-only** | Load [Payment Execution](references/payment-execution.md), follow steps 7a–7e. Payment still applies (1 JUP). Send `twitterHandle: ""` and `description: ""` per the exception in Step 6a-iii. Report `metadataCreated`. |
 
-Present a summary of all collected parameters and ask for confirmation:
-
-> Here's a summary of your verification request:
->
-> | Field             | Value                                    |
-> | ----------------- | ---------------------------------------- |
-> | **Token Mint**    | `{tokenId}`                              |
-> | **Tier**          | {basic/express}                          |
-> | **Token Twitter** | {url or _not provided_}                  |
-> | **Your Twitter**  | {url or _not provided_}                  |
-> | **Description**   | {text or _not provided_}                 |
-> | **Wallet**        | {address or _not provided_}              |
-> | **Cost**          | {`1 JUP` for express / `Free` for basic} |
-
-For **express** tier, include a balance warning after the summary table:
-
-> **Make sure your wallet has at least 1 JUP before proceeding.**
-
-If metadata fields were collected in Step 6a, add them to the summary:
-
-> | **Metadata** | |
-> | **— Name** | {value or _not provided_} |
-> | **— Symbol** | {value or _not provided_} |
-> | _(etc. for each collected field)_ | |
-
-For **metadata-only** flow, adjust the heading: _"Here's a summary of your metadata update request:"_ and omit verification-only fields (tier, token twitter, your twitter, description).
-
-> Does this look correct? (yes/no)
-
-If the user says no, ask which field to change.
-
-### 8. Submit and Report
-
-**Important: When including `tokenMetadata`, fetch the existing data from `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge the user's changes on top, and send the full merged object.** This preserves untouched metadata fields. Do not send empty strings or `null` for fields the user did not ask to clear.
-
-- For **basic**: call `POST /basic/submit` with `submitVerification: true` and the collected parameters. Include `tokenMetadata` in the request body when metadata fields were collected in Step 6a — the `tokenMetadata` object should be the full merged metadata from the fetched token info plus the user's edits. Report the result — response includes `verificationCreated` and `metadataCreated` booleans. Done. (See [API Reference](references/api-reference.md) for request/response details.)
-- For **express**: load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The agent will locate the user's private key source, write a payment script, execute it locally, and report the result. The script must derive the signer wallet locally and abort if it does not match the user-provided `walletAddress`. When metadata fields were collected, send the full merged `tokenMetadata` object so unchanged fields are preserved.
-- For **metadata-only with basic tier** (when `canVerify: false, canMetadata: true` and basic was selected in Step 2): call `POST /basic/submit` with `submitVerification: false` and include the full merged `tokenMetadata` object. Do not include verification parameters. Report `metadataCreated` result.
-- For **metadata-only with express tier** (when `canVerify: false, canMetadata: true` and express was selected in Step 2): load [Payment Execution](references/payment-execution.md) and follow steps 7a–7e. The payment flow still applies (1 JUP) — include the full merged `tokenMetadata` object. The current `POST /payments/express/execute` schema still requires `twitterHandle` and `description` strings even for metadata-only requests, so send `twitterHandle: ""` and `description: ""` unless the user explicitly provided values. The execute endpoint will skip verification creation (since `canVerify: false`) but will create the metadata update. Report `metadataCreated` result.
+See [API Reference](references/api-reference.md) for request/response details.
 
 ---
 
 # Input Auto-Correction
 
-When collecting user input, handle these common mistakes gracefully instead of rejecting outright:
-
-| User provides                           | Auto-correct to                 | Confirm with user?                                                               |
-| --------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------- |
-| `@jupiterexchange`                      | `https://x.com/jupiterexchange` | Yes — _"I'll format that as `https://x.com/jupiterexchange` — is that correct?"_ |
-| `jupiterexchange` (bare handle)         | `https://x.com/jupiterexchange` | Yes                                                                              |
-| `twitter.com/handle` (no https)         | `https://twitter.com/handle`    | Yes                                                                              |
-| `x.com/handle` (no https)               | `https://x.com/handle`          | Yes                                                                              |
-| Token mint with leading/trailing spaces | Trimmed string                  | No                                                                               |
+| User provides                           | Auto-correct to                 | Confirm? |
+| --------------------------------------- | ------------------------------- | -------- |
+| `@handle` or bare handle                | `https://x.com/{handle}`       | Yes      |
+| `twitter.com/handle` or `x.com/handle`  | Add `https://` prefix           | Yes      |
+| Token mint with leading/trailing spaces | Trimmed string                  | No       |
 
 ---
 
