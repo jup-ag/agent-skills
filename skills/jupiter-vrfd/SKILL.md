@@ -38,7 +38,7 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 
 **Do not use when:**
 
-- Performing admin operations (verify, reject, unverify) — these require admin auth
+- Performing internal or admin operations — this skill only covers the public verification flow
 - Swapping, lending, or trading — use `integrating-jupiter` skill instead
 
 ## Triggers
