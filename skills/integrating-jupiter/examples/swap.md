@@ -1,4 +1,4 @@
-# Ultra Swap: End-to-End Example
+# Swap: End-to-End Example
 
 > **Prerequisites:** This example uses the `jupiterFetch` helper defined in the
 > **Developer Quickstart** section of the main `SKILL.md`. That helper prepends
@@ -6,9 +6,11 @@
 > automatically, so you never need to build full URLs or pass the API key
 > manually.
 >
-> Note: Unlike the standard swap flow, Ultra does **not** require a `Connection`
-> object. Jupiter's `/ultra/v1/execute` endpoint handles transaction submission
-> on your behalf.
+> Note: The Swap API does **not** require a `Connection` object. Jupiter's
+> `/swap/v2/execute` endpoint handles transaction submission on your behalf.
+>
+> **Production use:** Wrap the execute call in `withRetry` (defined in SKILL.md)
+> to handle all retryable error codes per the error table in SKILL.md.
 
 ```typescript
 import { Keypair, VersionedTransaction } from '@solana/web3.js';
@@ -34,8 +36,13 @@ async function swapSolToUsdc(amountLamports: number) {
   const order = await jupiterFetch<{
     transaction: string;
     requestId: string;
+    outAmount?: string;
+    router?: string;
+    mode?: string;
+    feeBps?: number;
+    feeMint?: string;
     error?: string;
-  }>(`/ultra/v1/order?${params}`);
+  }>(`/swap/v2/order?${params}`);
 
   if (order.error) {
     throw new Error(`Order error: ${order.error}`);
@@ -52,11 +59,11 @@ async function swapSolToUsdc(amountLamports: number) {
   const result = await jupiterFetch<{
     status: string;
     signature?: string;
-    inputAmount?: string;
-    outputAmount?: string;
+    code?: number;
+    inputAmountResult?: string;
+    outputAmountResult?: string;
     error?: string;
-    code?: string;
-  }>('/ultra/v1/execute', {
+  }>('/swap/v2/execute', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -69,8 +76,8 @@ async function swapSolToUsdc(amountLamports: number) {
   if (result.status === 'Success') {
     return {
       signature: result.signature,
-      inputAmount: result.inputAmount,
-      outputAmount: result.outputAmount,
+      inputAmount: result.inputAmountResult,
+      outputAmount: result.outputAmountResult,
       explorerUrl: `https://solscan.io/tx/${result.signature}`,
     };
   }

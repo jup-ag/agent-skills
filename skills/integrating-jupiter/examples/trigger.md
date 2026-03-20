@@ -9,7 +9,10 @@
 > You also need `Keypair` and `VersionedTransaction` from `@solana/web3.js`.
 > Note: Unlike lend, the Trigger flow does **not** use `signAndSend` or a
 > `Connection` object. Jupiter's `/trigger/v1/execute` endpoint handles
-> transaction submission on your behalf (similar to Ultra).
+> transaction submission on your behalf (similar to Swap).
+>
+> **Production use:** Wrap the execute call in `withRetry` (defined in SKILL.md)
+> to handle transient failures.
 
 ```typescript
 import { Keypair, VersionedTransaction } from '@solana/web3.js';

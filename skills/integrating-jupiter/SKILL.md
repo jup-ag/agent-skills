@@ -1,6 +1,6 @@
 ---
 name: integrating-jupiter
-description: Comprehensive guidance for integrating Jupiter APIs (Ultra Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets, Send, Studio, Lock, Routing). Use for endpoint selection, integration flows, error handling, and production hardening.
+description: Comprehensive guidance for integrating Jupiter APIs (Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, Prediction Markets, Send, Studio, Lock, Routing). Use for endpoint selection, integration flows, error handling, and production hardening.
 license: MIT
 metadata:
   author: jup-ag
@@ -8,7 +8,14 @@ metadata:
 tags:
   - jupiter
   - jup-ag
-  - ultra-swap
+  - solana
+  - defi
+  - swap-v2
+  - token-swap
+  - dex-aggregator
+  - gasless
+  - limit-order
+  - dca
   - jupiter-lend
   - jupiter-perps
   - jupiter-trigger
@@ -44,8 +51,9 @@ Use when:
 Do not use when:
 - The task is generic Solana setup with no Jupiter API usage.
 - The task is UI-only with no API behavior decisions.
+- The agent context is not DeFi/crypto (generic triggers like `buy`, `sell`, `trade` assume a DeFi domain).
 
-**Triggers**: `swap`, `quote`, `gasless`, `best route`, `lend`, `borrow`, `earn`, `liquidation`, `perps`, `leverage`, `long`, `short`, `position`, `limit order`, `trigger`, `price condition`, `dca`, `recurring`, `scheduled swaps`, `token metadata`, `token search`, `verification`, `shield`, `price`, `valuation`, `price feed`, `portfolio`, `positions`, `holdings`, `prediction markets`, `market odds`, `event market`, `invite transfer`, `send`, `clawback`, `create token`, `studio`, `claim fee`, `vesting`, `distribution lock`, `unlock schedule`, `dex integration`, `rfq integration`, `routing engine`
+**Triggers**: `swap`, `quote`, `gasless`, `best route`, `buy`, `sell`, `trade`, `convert`, `token exchange`, `jupiter api`, `jup.ag`, `lend`, `borrow`, `earn`, `yield`, `apy`, `deposit`, `liquidation`, `perps`, `leverage`, `long`, `short`, `position`, `futures`, `margin trading`, `limit order`, `trigger`, `price condition`, `dca`, `recurring`, `scheduled swaps`, `token metadata`, `token search`, `verification`, `shield`, `price`, `valuation`, `price feed`, `portfolio`, `positions`, `holdings`, `prediction markets`, `market odds`, `event market`, `invite transfer`, `send`, `clawback`, `create token`, `studio`, `claim fee`, `vesting`, `distribution lock`, `unlock schedule`, `dex integration`, `rfq integration`, `routing engine`
 
 ## Developer Quickstart
 
@@ -62,7 +70,7 @@ async function jupiterFetch<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { ...headers, ...init?.headers },
   });
-  if (res.status === 429) throw { code: 'RATE_LIMITED', retryAfter: 10 };
+  if (res.status === 429) throw { code: 'RATE_LIMITED', retryAfter: Number(res.headers.get('Retry-After')) || 10 };
   if (!res.ok) {
     const raw = await res.text();
     let body: any = { message: raw || `HTTP_${res.status}` };
@@ -97,7 +105,7 @@ async function signAndSend(
 
 | User intent | API family | First action |
 |---|---|---|
-| Swap/quote | [Ultra Swap](#ultra-swap) | `GET /ultra/v1/order` -> sign -> `POST /ultra/v1/execute` |
+| Swap/quote | [Swap](#swap) | `GET /swap/v2/order` -> sign -> `POST /swap/v2/execute` |
 | Lend/borrow/yield | [Lend](#lend) | `POST /lend/v1/earn/deposit` or `/withdraw` |
 | Leverage/perps | [Perps](#perps) | On-chain via Anchor IDL (no REST API yet) |
 | Limit orders | [Trigger](#trigger-limit-orders) | `POST /trigger/v1/createOrder` -> sign -> `POST /trigger/v1/execute` |
@@ -115,31 +123,40 @@ async function signAndSend(
 
 Use each block as a minimal execution contract. Fetch the linked refs for full request/response shapes, TypeScript interfaces, and parameter details.
 
-### Ultra Swap
+### Swap
 
-- **Base URL**: `https://api.jup.ag/ultra/v1`
+- **Base URL**: `https://api.jup.ag/swap/v2`
 - **Triggers**: `swap`, `quote`, `gasless`, `best route`
-- **Fee**: 5-10 bps (standard) or 20% of integrator fees when custom fees configured
+- **Fee**: Variable by pair — 0 bps (Jupiter tokens/pegged), 2 bps (SOL-Stable), 5 bps (LST-Stable), 10 bps (most pairs), 50 bps (tokens < 24h). Referral fees: 50-255 bps (Jupiter retains 20%).
 - **Rate Limit**: 50 req/10s base, scales with 24h execute volume (see [Rate Limits](#rate-limits))
-- **Endpoints**: `/order` (GET), `/execute` (POST), `/holdings/{account}` (GET), `/shield` (GET), `/search` (GET), `/routers` (GET)
-- **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed.
-- Refs: [Overview](https://dev.jup.ag/docs/ultra/index.md) | [Order](https://dev.jup.ag/docs/ultra/get-order.md) | [Execute](https://dev.jup.ag/docs/ultra/execute-order.md) | [Responses](https://dev.jup.ag/docs/ultra/response.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/ultra/ultra.yaml)
+- **Endpoints**: `/order` (GET), `/execute` (POST), `/build` (GET, Metis-only raw instructions)
+- **Routing**: 4 routers compete — Metis, JupiterZ, Dflow, OKX. Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
+- **Gasless**: Three paths — (1) **Automatic**: taker SOL < 0.01, trade > ~$10, and NO optional params (`referralAccount`, `referralFee`, `payer`, `slippageBps`, `priorityFeeLamports`, `excludeRouters` all disqualify). Jupiter deducts gas cost from output; covers all gas types. (2) **JupiterZ**: when a MM wins the route with default params, the MM covers signature + priority fees only — taker must still hold SOL for any new ATA rent. (3) **Integrator payer**: use `payer` param but routing restricted to Metis only; covers all gas types.
+- **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed. `referralAccount`/`referralFee`/`receiver` disable JupiterZ only (Metis/Dflow/OKX remain). `payer` reduces routing to Metis only (per gasless docs; routing docs group all four as disabling JupiterZ but do not itemize the additional Dflow/OKX restriction). `/build` transactions cannot use `/execute` — self-manage via RPC.
+- **Migrating from v1/Ultra?** Use the `jupiter-swap-migration` skill instead.
+- Refs: [Overview](https://dev.jup.ag/docs/swap/index.md) | [Order & Execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) | [Build](https://dev.jup.ag/docs/swap/v2/build/index.md) | [Fees](https://dev.jup.ag/docs/swap/v2/fees.md) | [Routing](https://dev.jup.ag/docs/swap/v2/routing.md) | [Gasless](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) | [Migration](https://dev.jup.ag/docs/swap/v2/migration.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/swap/v2/swap.yaml)
 
-Common error codes returned by `/ultra/v1/execute` with recommended actions:
+Common error codes returned by `/swap/v2/execute` with recommended actions:
 
-| Code | Meaning | Retryable | Action |
-|------|---------|-----------|--------|
-| `-1` | Transaction expired | Yes | Re-quote and retry |
-| `-1000` | Transaction failed (generic) | Yes | Re-quote with adjusted params |
-| `-1001` | Slippage exceeded | Yes | Increase `slippageBps` or re-quote |
-| `-1005` | Transaction not confirmed | Yes | Wait and check status, then retry |
-| `-1006` | Transaction dropped | Yes | Re-quote and retry |
-| `-2000` | Internal error | Yes | Retry with backoff |
-| `-2003` | Service unavailable | Yes | Retry with longer backoff |
-| `-2005` | Timeout | Yes | Retry with backoff |
-| `6001` | Slippage tolerance exceeded (on-chain) | No | Increase slippage or reduce amount |
-| `6003` | Insufficient funds | No | Check wallet balance |
-| `429` | Rate limited | Yes | Exponential backoff, wait 10s window |
+| Code | Category | Meaning | Retryable | Action |
+|------|----------|---------|-----------|--------|
+| `0` | Success | Transaction confirmed | — | — |
+| `-1` | Execute | Missing/expired cached order | Yes | Re-quote and retry |
+| `-2` | Execute | Invalid signed transaction | No | Fix transaction signing |
+| `-3` | Execute | Invalid message bytes | No | Fix serialization |
+| `-1000` | Aggregator | Failed landing attempt | Yes | Re-quote with adjusted params |
+| `-1001` | Aggregator | Unknown error | Yes | Retry with backoff |
+| `-1002` | Aggregator | Invalid transaction | No | Fix transaction construction |
+| `-1003` | Aggregator | Transaction not fully signed | No | Ensure all required signers |
+| `-1004` | Aggregator | Invalid block height | Yes | Re-quote (stale blockhash) |
+| `-2000` | RFQ | Failed landing | Yes | Re-quote and retry |
+| `-2001` | RFQ | Unknown error | Yes | Retry with backoff |
+| `-2002` | RFQ | Invalid payload | No | Fix request payload |
+| `-2003` | RFQ | Quote expired | Yes | Re-quote and retry |
+| `-2004` | RFQ | Swap rejected | Yes | Re-quote, possibly different route |
+| `429` | Rate limit | Rate limited | Yes | Exponential backoff, wait 10s window |
+
+> **Note**: RFQ subcodes (`-2000` to `-2004`) meanings are inferred from the official error code grouping; verify against live responses if behavior differs from the descriptions above.
 
 ---
 
@@ -151,6 +168,7 @@ Common error codes returned by `/ultra/v1/execute` with recommended actions:
 - **SDK**: `@jup-ag/lend` (TypeScript)
 - **Endpoints**: `/earn/deposit` (POST), `/earn/withdraw` (POST), `/earn/mint` (POST), `/earn/redeem` (POST), `/earn/deposit-instructions` (POST), `/earn/withdraw-instructions` (POST), `/earn/tokens` (GET), `/earn/positions` (GET), `/earn/earnings` (GET)
 - **Gotchas**: Recompute account state before each state-changing action. Encode risk checks (health factors, liquidation boundaries) as preconditions. All deposit/withdraw/mint/redeem return base64 unsigned `VersionedTransaction`.
+- **For SDK-level integration** with `@jup-ag/lend` and `@jup-ag/lend-read`, use the `jupiter-lend` skill.
 - Refs: [Overview](https://dev.jup.ag/docs/lend/index.md) | [Earn](https://dev.jup.ag/docs/lend/earn.md) | [SDK](https://dev.jup.ag/docs/lend/sdk.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/lend/lend.yaml)
 
 ---
@@ -172,7 +190,7 @@ Common error codes returned by `/ultra/v1/execute` with recommended actions:
 - **Fee**: 0.1% (non-stable), 0.03% (stable pairs)
 - **Pagination**: 10 orders per page
 - **Endpoints**: `/createOrder` (POST), `/cancelOrder` (POST), `/cancelOrders` (POST, max 5 per tx), `/execute` (POST), `/getTriggerOrders` (GET)
-- **Gotchas**: Frontend enforces 5 USD min; on-chain has no minimum. Program does NOT validate if rates are favorable — validate target price before create. Token-2022 disabled. Default zero slippage ("Exact" mode); set `slippageBps` for "Ultra" mode with higher fill rate.
+- **Gotchas**: Frontend enforces 5 USD min; on-chain has no minimum. Program does NOT validate if rates are favorable — validate target price before create. Token-2022 disabled. Default zero slippage ("Exact" mode); set `slippageBps` for flexible fill with higher fill rate (auto slippage via RTSE).
 - Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create](https://dev.jup.ag/docs/trigger/create-order.md) | [Get orders](https://dev.jup.ag/docs/trigger/get-trigger-orders.md) | [Best Practices](https://dev.jup.ag/docs/trigger-api/best-practices) | [OpenAPI](https://dev.jup.ag/openapi-spec/trigger/trigger.yaml)
 
 ---
@@ -276,7 +294,7 @@ Common error codes returned by `/ultra/v1/execute` with recommended actions:
 ### Routing
 
 - **Triggers**: `dex integration`, `rfq integration`, `routing engine`
-- **Engines**: Juno (meta-aggregator), Iris (multi-hop DEX routing, powers Ultra), JupiterZ (RFQ market maker quotes)
+- **Engines**: Juno (meta-aggregator), Iris (multi-hop DEX routing, powers Swap API), JupiterZ (RFQ market maker quotes)
 - **DEX Integration** (into Iris): Free, no fees. Prereqs: code health, security audit, market traction. Implement `jupiter-amm-interface` crate. **Critical**: No network calls in implementation (accounts are pre-batched and cached). Ref impl: [github.com/jup-ag/rust-amm-implementation](https://github.com/jup-ag/rust-amm-implementation)
 - **RFQ Integration** (JupiterZ): Market makers host webhook at `/jupiter/rfq/quote` (POST, 250ms), `/jupiter/rfq/swap` (POST), `/jupiter/rfq/tokens` (GET). Reqs: 95% fill rate, 250ms response, 55s expiry. SDK: [github.com/jup-ag/rfq-webhook-toolkit](https://github.com/jup-ag/rfq-webhook-toolkit)
 - **Market Listing**: Instant routing for tokens < 30 days old. Normal routing (checked every 30 min) requires < 30% loss on $500 round-trip OR < 20% price impact comparing $1k vs $500.
@@ -286,7 +304,7 @@ Common error codes returned by `/ultra/v1/execute` with recommended actions:
 
 ## Rate Limits
 
-**Ultra Swap** (dynamic, volume-based):
+**Swap API** (dynamic, volume-based):
 
 | 24h Execute Volume | Requests per 10s window |
 |--------------------|-------------------------|
@@ -295,7 +313,7 @@ Common error codes returned by `/ultra/v1/execute` with recommended actions:
 | $100,000 | 61 |
 | $1,000,000 | 165 |
 
-Quotas recalculate every 10 minutes. Pro plan does NOT increase Ultra limits.
+Quotas recalculate every 10 minutes. Pro plan does NOT increase Swap API limits.
 
 **Other APIs**: Managed at portal level. Check [portal rate limits](https://dev.jup.ag/portal/rate-limit.md).
 
@@ -306,7 +324,7 @@ Quotas recalculate every 10 minutes. Pro plan does NOT increase Ultra limits.
 1. **Auth**: Fail fast if `x-api-key` is missing or invalid.
 2. **Timeouts**: 5s for quotes, 30s for executions, plus total operation timeout.
 3. **Retries**: Only transient/network/rate-limit failures with exponential backoff + jitter.
-4. **Idempotency**: Ultra `/execute` accepts same `signedTransaction` + `requestId` for up to 2 min without duplicate execution.
+4. **Idempotency**: Swap `/execute` accepts same `signedTransaction` + `requestId` for up to 2 min without duplicate execution.
 5. **Validation**: Validate mint addresses, amount precision, and wallet ownership before calls.
 6. **Safety**: Enforce slippage and max-amount guardrails from app config.
 7. **Observability**: Log `requestId`, API family, endpoint, latency, status, and error code.
@@ -320,7 +338,7 @@ Quotas recalculate every 10 minutes. Pro plan does NOT increase Ultra limits.
 2. Enforce auth as a hard precondition for every request. Ref: [Portal setup](https://dev.jup.ag/portal/setup.md)
 3. Design retry logic around documented rate-limit behavior, not fixed assumptions. Ref: [Rate limits](https://dev.jup.ag/portal/rate-limit.md)
 4. Map all non-success responses to typed app errors using documented response semantics. Ref: [API responses](https://dev.jup.ag/portal/responses.md)
-5. For order-based products (Ultra/Trigger/Recurring), separate create/execute/retrieve phases in code and logs.
+5. For order-based products (Swap/Trigger/Recurring), separate create/execute/retrieve phases in code and logs.
 6. Treat network/service health as part of runtime behavior (degrade gracefully). Ref: [Status page](https://status.jup.ag/)
 
 ## Cross-Cutting Error Pattern
@@ -344,9 +362,9 @@ async function jupiterAction<T>(action: () => Promise<T>): Promise<JupiterResult
       return { ok: false, error: { code: 'RATE_LIMITED', message: 'Rate limited', retryable: true } };
     }
 
-    // Ultra execute errors (negative codes)
+    // Swap execute errors (negative codes)
     if (typeof code === 'number' && code < 0) {
-      const retryable = [-1, -1000, -1001, -1005, -1006, -2000, -2003, -2005].includes(code);
+      const retryable = [-1, -1000, -1001, -1004, -2000, -2001, -2003, -2004].includes(code);
       return { ok: false, error: { code, message: error?.error ?? 'Execute failed', retryable } };
     }
 
@@ -376,7 +394,7 @@ async function withRetry<T>(action: () => Promise<T>, maxRetries = 3): Promise<T
 
 Production-ready code snippets. Each example uses the `jupiterFetch`, `signAndSend`, and `withRetry` helpers from the sections above.
 
-- [Ultra Swap: End-to-End](./examples/ultra.md) — Order -> sign -> execute -> confirm flow
+- [Swap: End-to-End](./examples/swap.md) — Order -> sign -> execute -> confirm flow
 - [Lend: USDC Deposit](./examples/lend.md) — Deposit into Jupiter Lend earn pool
 - [Trigger: Limit Order](./examples/trigger.md) — Create and execute a limit order
 - [Price: Multi-Token Lookup](./examples/price.md) — Fetch prices with confidence filtering
@@ -397,9 +415,9 @@ Always fetch the freshest context from referenced docs/specs before executing a 
 
 - [Portal setup](https://dev.jup.ag/portal/setup.md) — API key configuration
 - [Rate limits](https://dev.jup.ag/portal/rate-limit.md) — Global rate limit policy
-- [Ultra rate limits](https://dev.jup.ag/docs/ultra/rate-limit.md) — Dynamic volume-based limits
+- [Swap routing](https://dev.jup.ag/docs/swap/v2/routing.md) — Router competition and parameter impact
 - [API responses](https://dev.jup.ag/portal/responses.md) — Response format standards
-- [Ultra responses](https://dev.jup.ag/docs/ultra/response.md) — Detailed error codes
+- [Swap order & execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) — Detailed error codes and response format
 - [Status page](https://status.jup.ag/) — Service health
 - [Documentation sitemap](https://dev.jup.ag/llms.txt) — Full docs index
 - [Tool Kits](https://dev.jup.ag/tool-kits/plugin/index.md) — Plugin, Wallet Kit, Referral Program
