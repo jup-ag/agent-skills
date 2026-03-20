@@ -32,7 +32,7 @@ Do not use when:
 - Building a new Jupiter integration from scratch (use `integrating-jupiter` skill instead).
 - Working with non-swap Jupiter APIs (Lend, Trigger, Recurring, etc.).
 
-**Triggers**: `migrate swap`, `ultra migration`, `metis migration`, `swap v1 to v2`, `v1 to v2`, `upgrade jupiter`, `swap-instructions deprecated`, `deprecated swap`, `old jupiter api`, `swap upgrade`, `update swap api`, `quote endpoint deprecated`
+**Triggers**: `migrate swap`, `ultra migration`, `metis migration`, `swap v1 to v2`, `v1 to v2`, `upgrade jupiter`, `swap-instructions deprecated`, `deprecated swap`, `old jupiter api`, `swap upgrade`, `update swap api`, `quote endpoint deprecated`, `swap stopped working`, `api changed`, `breaking change`, `swap broken`, `old method`, `old way`, `previous api`, `was using`, `endpoint not found`, `ExactOut removed`, `swapMode removed`, `userPublicKey`, `parameter rename`, `addressLookupTable`, `response format changed`
 
 ---
 
