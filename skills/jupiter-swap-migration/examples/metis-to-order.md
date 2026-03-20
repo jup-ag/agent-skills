@@ -48,6 +48,8 @@ const result = await fetch("https://api.jup.ag/swap/v2/execute", {
   headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
   body: JSON.stringify({ signedTransaction, requestId: order.requestId }),
 }).then(r => r.json());
+
+// For complete transaction assembly and error handling, see integrating-jupiter/examples/swap.md
 ```
 
 ## Trade-offs

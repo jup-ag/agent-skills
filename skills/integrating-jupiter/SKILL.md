@@ -130,8 +130,8 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Fee**: Variable by pair — 0 bps (Jupiter tokens/pegged), 2 bps (SOL-Stable), 5 bps (LST-Stable), 10 bps (most pairs), 50 bps (tokens < 24h). Referral fees: 50-255 bps (Jupiter retains 20%).
 - **Rate Limit**: 50 req/10s base, scales with 24h execute volume (see [Rate Limits](#rate-limits))
 - **Endpoints**: `/order` (GET), `/execute` (POST), `/build` (GET, Metis-only raw instructions)
-- **Routing**: 4 routers compete — Metis, JupiterZ, Dflow, OKX. Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
-- **Gasless**: Three paths — (1) **Automatic**: taker SOL < 0.01, trade > ~$10, and NO optional params (`referralAccount`, `referralFee`, `payer`, `slippageBps`, `priorityFeeLamports`, `excludeRouters` all disqualify). Jupiter deducts gas cost from output; covers all gas types. (2) **JupiterZ**: when a MM wins the route with default params, the MM covers signature + priority fees only — taker must still hold SOL for any new ATA rent. (3) **Integrator payer**: use `payer` param but routing restricted to Metis only; covers all gas types.
+- **Routing**: 4 routers compete — Metis (API value: `iris`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
+- **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) for current thresholds and disqualifying params.
 - **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed. `referralAccount`/`referralFee`/`receiver` disable JupiterZ only (Metis/Dflow/OKX remain). `payer` reduces routing to Metis only (per gasless docs; routing docs group all four as disabling JupiterZ but do not itemize the additional Dflow/OKX restriction). `/build` transactions cannot use `/execute` — self-manage via RPC.
 - **Migrating from v1/Ultra?** Use the `jupiter-swap-migration` skill instead.
 - Refs: [Overview](https://dev.jup.ag/docs/swap/index.md) | [Order & Execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) | [Build](https://dev.jup.ag/docs/swap/v2/build/index.md) | [Fees](https://dev.jup.ag/docs/swap/v2/fees.md) | [Routing](https://dev.jup.ag/docs/swap/v2/routing.md) | [Gasless](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) | [Migration](https://dev.jup.ag/docs/swap/v2/migration.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/swap/v2/swap.yaml)
@@ -156,7 +156,6 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 | `-2004` | RFQ | Swap rejected | Yes | Re-quote, possibly different route |
 | `429` | Rate limit | Rate limited | Yes | Exponential backoff, wait 10s window |
 
-> **Note**: RFQ subcodes (`-2000` to `-2004`) meanings are inferred from the official error code grouping; verify against live responses if behavior differs from the descriptions above.
 
 ---
 

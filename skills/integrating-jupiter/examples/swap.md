@@ -34,9 +34,8 @@ async function swapSolToUsdc(amountLamports: number) {
   });
 
   const order = await jupiterFetch<{
-    transaction: string;
+    transaction: string | null;
     requestId: string;
-    outAmount?: string;
     router?: string;
     mode?: string;
     feeBps?: number;
@@ -44,8 +43,8 @@ async function swapSolToUsdc(amountLamports: number) {
     error?: string;
   }>(`/swap/v2/order?${params}`);
 
-  if (order.error) {
-    throw new Error(`Order error: ${order.error}`);
+  if (order.error || !order.transaction) {
+    throw new Error(`Order error: ${order.error ?? 'no transaction returned (is taker set?)'}`);
   }
 
   // 2. Sign the transaction
@@ -58,8 +57,8 @@ async function swapSolToUsdc(amountLamports: number) {
   // 3. Execute — Jupiter submits the transaction; no Connection needed
   const result = await jupiterFetch<{
     status: string;
-    signature?: string;
-    code?: number;
+    signature: string;
+    code: number;
     inputAmountResult?: string;
     outputAmountResult?: string;
     error?: string;
@@ -82,7 +81,10 @@ async function swapSolToUsdc(amountLamports: number) {
     };
   }
 
-  throw new Error(`Swap failed: ${result.error || result.code || 'unknown'}`);
+  // Throw with structured context so withRetry can identify retryable errors
+  const err: any = new Error(`Swap failed: ${result.error || 'unknown'}`);
+  err.code = result.code;
+  throw err;
 }
 
 // Usage: swapSolToUsdc(1_000_000_000) → swaps 1 SOL

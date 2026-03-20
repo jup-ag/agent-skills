@@ -101,6 +101,7 @@ const build = await fetch(
 // Build transaction from instructions...
 // ALTs are already resolved in build.addressesByLookupTableAddress — no extra RPC call
 // Blockhash is in build.blockhashWithMetadata — no extra RPC call
+// For complete transaction assembly, see integrating-jupiter/examples/swap.md
 ```
 
 ## Benefits

@@ -1,6 +1,6 @@
 # Path 1: Ultra → Swap v2 `/order`
 
-**Effort**: Minimal — only the base URL changes. Parameters and response format are identical.
+**Effort**: Minimal — only the base URL changes. Parameters are identical; `/execute` response fields are renamed (see below).
 
 | Element | Before | After |
 |---------|--------|-------|
@@ -58,4 +58,4 @@ The v2 `/order` response now also includes:
 - `feeBps` — fee basis points applied
 - `feeMint` — mint of the fee token
 
-The v2 `/execute` response uses `inputAmountResult` and `outputAmountResult` as confirmed in the official docs. If your Ultra code used different field names (e.g. `inputAmount`/`outputAmount`), update them. Verify against your live responses if you see unexpected nulls.
+**Breaking change**: V2 `/execute` renames `inputAmount` → `inputAmountResult` and `outputAmount` → `outputAmountResult`. Update all callers that read these fields.

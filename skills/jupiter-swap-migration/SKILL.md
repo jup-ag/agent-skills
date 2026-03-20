@@ -32,7 +32,7 @@ Do not use when:
 - Building a new Jupiter integration from scratch (use `integrating-jupiter` skill instead).
 - Working with non-swap Jupiter APIs (Lend, Trigger, Recurring, etc.).
 
-**Triggers**: `migrate swap`, `ultra migration`, `metis migration`, `swap v1 to v2`, `v1 to v2`, `upgrade jupiter`, `swap-instructions deprecated`, `deprecated swap`, `old jupiter api`, `swap upgrade`, `update swap api`, `quote endpoint deprecated`, `swap stopped working`, `api changed`, `breaking change`, `swap broken`, `old method`, `old way`, `previous api`, `was using`, `endpoint not found`, `ExactOut removed`, `swapMode removed`, `userPublicKey`, `parameter rename`, `addressLookupTable`, `response format changed`
+**Triggers**: `migrate swap`, `ultra migration`, `metis migration`, `swap v1 to v2`, `v1 to v2`, `upgrade jupiter`, `swap-instructions deprecated`, `deprecated swap`, `old jupiter api`, `swap upgrade`, `update swap api`, `quote endpoint deprecated`, `swap stopped working`, `swap broken`, `ExactOut removed`, `swapMode removed`, `userPublicKey`, `parameter rename`, `addressLookupTable`, `response format changed`
 
 ---
 
@@ -59,7 +59,7 @@ Each path has a dedicated example with before/after code, parameter mappings, an
 1. **URL audit**: Search codebase for `ultra-api.jup.ag`, `/ultra/v1/`, `/swap/v1/quote`, `/swap/v1/swap-instructions` — all should be replaced
 2. **Parameter rename**: `userPublicKey` → `taker` (for `/build` path)
 3. **`swapMode` removal**: V2 only supports `ExactIn`. If using `ExactOut`, redesign the flow — this mode is no longer available
-4. **`slippageBps` default**: V2 defaults to 50 bps if omitted. Verify your integration handles this correctly if you previously relied on a different default
+4. **`slippageBps` default**: `/build` defaults to 50 bps if omitted. For `/order`, verify the default if your integration relies on a specific value
 5. **Response field names**: Verify your code uses `inputAmountResult`/`outputAmountResult` for the `/execute` response (the canonical v2 field names)
 6. **ALT handling**: If using `/build`, switch from `addressLookupTableAddresses` (array) to `addressesByLookupTableAddress` (object) — remove RPC ALT resolution code
 7. **Fee event parsing**: V2 instructions don't emit fee events — update any transaction parser that depends on them
@@ -70,6 +70,8 @@ Each path has a dedicated example with before/after code, parameter mappings, an
 ## Sunset
 
 Remove this skill once Jupiter decommissions the v1 (`/swap/v1`) endpoints and the Ultra (`ultra-api.jup.ag`) domain. At that point all integrations will already be on v2.
+
+**Review by**: 2026-09-01 — check if v1/Ultra endpoints have been decommissioned.
 
 ## References
 
