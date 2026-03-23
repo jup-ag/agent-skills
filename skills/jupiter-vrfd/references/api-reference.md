@@ -6,14 +6,14 @@
 
 Some endpoints require an API key passed via the `x-api-key` header:
 
-| Endpoint | Auth Required |
-| -------- | ------------- |
-| `GET /combined/express/check-eligibility` | None |
-| `GET /combined/basic/check-eligibility` | None |
-| `GET /tokenMetadata/getFromRpcAndSearch/:tokenId` | None |
-| `POST /basic/submit` | API key |
-| `GET /payments/express/craft-txn` | API key |
-| `POST /payments/express/execute` | API key |
+| Endpoint                                          | Auth Required |
+| ------------------------------------------------- | ------------- |
+| `GET /express/check-eligibility`                  | None          |
+| `GET /basic/check-eligibility`                    | None          |
+| `GET /tokenMetadata/getFromRpcAndSearch/:tokenId` | None          |
+| `POST /basic/submit`                              | API key       |
+| `GET /payments/express/craft-txn`                 | API key       |
+| `POST /payments/express/execute`                  | API key       |
 
 ```
 x-api-key: your-api-key-here
@@ -86,8 +86,8 @@ Fetches the token's current metadata from RPC, search, and description APIs. **C
 GET https://token-verification-dev-api.jup.ag/tokenMetadata/getFromRpcAndSearch/{tokenId}
 ```
 
-| Param     | Type   | Required | Notes                    |
-| --------- | ------ | -------- | ------------------------ |
+| Param     | Type   | Required | Notes                                  |
+| --------- | ------ | -------- | -------------------------------------- |
 | `tokenId` | string | **Yes**  | Solana token mint address (path param) |
 
 No authentication required.
@@ -147,14 +147,14 @@ Use `search[0]` as the primary source for token info, `description.description` 
 
 ## Check Express Eligibility
 
-**`GET /combined/express/check-eligibility`**
+**`GET /express/check-eligibility`**
 
 ```
-GET https://token-verification-dev-api.jup.ag/combined/express/check-eligibility?tokenId={tokenId}
+GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId={tokenId}
 ```
 
-| Param     | Type   | Required | Notes                    |
-| --------- | ------ | -------- | ------------------------ |
+| Param     | Type   | Required | Notes                     |
+| --------- | ------ | -------- | ------------------------- |
 | `tokenId` | string | **Yes**  | Solana token mint address |
 
 **Response:**
@@ -177,14 +177,14 @@ GET https://token-verification-dev-api.jup.ag/combined/express/check-eligibility
 
 ## Check Basic Eligibility
 
-**`GET /combined/basic/check-eligibility`**
+**`GET /basic/check-eligibility`**
 
 ```
-GET https://token-verification-dev-api.jup.ag/combined/basic/check-eligibility?tokenId={tokenId}
+GET https://token-verification-dev-api.jup.ag/basic/check-eligibility?tokenId={tokenId}
 ```
 
-| Param     | Type   | Required | Notes                    |
-| --------- | ------ | -------- | ------------------------ |
+| Param     | Type   | Required | Notes                     |
+| --------- | ------ | -------- | ------------------------- |
 | `tokenId` | string | **Yes**  | Solana token mint address |
 
 **Response:**
@@ -229,14 +229,14 @@ x-api-key: your-api-key-here
 }
 ```
 
-| Field                 | Type    | Required | Notes                                                              |
-| --------------------- | ------- | -------- | ------------------------------------------------------------------ |
-| `tokenId`             | string  | **Yes**  | Solana token mint address                                          |
-| `walletAddress`       | string  | **Yes**  | Requester's wallet address (valid Solana address)                  |
-| `submitVerification`  | boolean | No       | Set to `true` to submit verification request                       |
-| `twitterHandle`       | string  | No       | Token's Twitter — must be a valid `x.com` or `twitter.com` URL     |
-| `senderTwitterHandle` | string  | No       | Requester's Twitter — must be a valid `x.com` or `twitter.com` URL |
-| `description`         | string  | No       | Description of the token                                           |
+| Field                 | Type    | Required | Notes                                                                                                     |
+| --------------------- | ------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `tokenId`             | string  | **Yes**  | Solana token mint address                                                                                 |
+| `walletAddress`       | string  | **Yes**  | Requester's wallet address (valid Solana address)                                                         |
+| `submitVerification`  | boolean | No       | Set to `true` to submit verification request                                                              |
+| `twitterHandle`       | string  | No       | Token's Twitter — must be a valid `x.com` or `twitter.com` URL                                            |
+| `senderTwitterHandle` | string  | No       | Requester's Twitter — must be a valid `x.com` or `twitter.com` URL                                        |
+| `description`         | string  | No       | Description of the token                                                                                  |
 | `tokenMetadata`       | object  | No       | Optional token metadata to set alongside verification (see [tokenMetadata schema](#tokenmetadata-object)) |
 
 > **Important:** When including `tokenMetadata`, first fetch existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge the user's updates on top, and send all fields. This preserves values the user did not change.
@@ -282,8 +282,8 @@ GET https://token-verification-dev-api.jup.ag/payments/express/craft-txn?senderA
 x-api-key: your-api-key-here
 ```
 
-| Param           | Type   | Required | Notes                        |
-| --------------- | ------ | -------- | ---------------------------- |
+| Param           | Type   | Required | Notes                      |
+| --------------- | ------ | -------- | -------------------------- |
 | `senderAddress` | string | **Yes**  | Wallet that will pay 1 JUP |
 
 **Response:**
@@ -340,15 +340,15 @@ x-api-key: your-api-key-here
 }
 ```
 
-| Field                 | Type   | Required | Notes                                      |
-| --------------------- | ------ | -------- | ------------------------------------------ |
-| `transaction`         | string | **Yes**  | Base64 user-signed transaction from craft   |
-| `requestId`           | string | **Yes**  | From `craft-txn` response                   |
-| `senderAddress`       | string | **Yes**  | Wallet that signed the transaction         |
-| `tokenId`             | string | **Yes**  | Token mint being verified                  |
-| `twitterHandle`       | string | **Yes**  | Token's Twitter URL (required for express — send `""` only for metadata-only requests) |
-| `senderTwitterHandle` | string | No       | Requester's Twitter URL — omit entirely if not provided |
-| `description`         | string | **Yes**  | Description of the token (required for express — send `""` only for metadata-only requests) |
+| Field                 | Type   | Required | Notes                                                                                                       |
+| --------------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `transaction`         | string | **Yes**  | Base64 user-signed transaction from craft                                                                   |
+| `requestId`           | string | **Yes**  | From `craft-txn` response                                                                                   |
+| `senderAddress`       | string | **Yes**  | Wallet that signed the transaction                                                                          |
+| `tokenId`             | string | **Yes**  | Token mint being verified                                                                                   |
+| `twitterHandle`       | string | **Yes**  | Token's Twitter URL (required for express — send `""` only for metadata-only requests)                      |
+| `senderTwitterHandle` | string | No       | Requester's Twitter URL — omit entirely if not provided                                                     |
+| `description`         | string | **Yes**  | Description of the token (required for express — send `""` only for metadata-only requests)                 |
 | `tokenMetadata`       | object | No       | Optional token metadata (see [tokenMetadata schema](#tokenmetadata-object)) — omit entirely if not provided |
 
 > **Important:** When including `tokenMetadata`, first fetch existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}`, merge the user's updates on top, and send all fields. This preserves values the user did not change.
@@ -375,27 +375,27 @@ Optional object for setting token metadata alongside verification. Can be includ
 
 > **Important:** Before building this object, fetch the token's existing data via `GET /tokenMetadata/getFromRpcAndSearch/{tokenId}` (see [Get Existing Token Data](#get-existing-token-data)). Use the existing values as the base, merge the user's updates on top, and send **all** fields. This ensures fields the user did not update retain their current values — any field sent as empty string or null will override and clear the existing value.
 
-| Field                   | Type     | Required | Description                           |
-| ----------------------- | -------- | -------- | ------------------------------------- |
-| `tokenId`               | string   | **Yes**  | The token mint address                |
-| `icon`                  | string?  | No       | Token icon URL                        |
-| `name`                  | string?  | No       | Token name                            |
-| `symbol`                | string?  | No       | Token symbol                          |
-| `website`               | string?  | No       | Website URL                           |
-| `telegram`              | string?  | No       | Telegram link                         |
-| `twitter`               | string?  | No       | Twitter link                          |
-| `twitterCommunity`      | string?  | No       | Twitter community link                |
-| `discord`               | string?  | No       | Discord link                          |
-| `instagram`             | string?  | No       | Instagram link                        |
-| `tiktok`                | string?  | No       | TikTok link                           |
-| `circulatingSupply`     | string?  | No       | Circulating supply value              |
-| `useCirculatingSupply`  | boolean? | No       | Whether to use circulating supply     |
-| `tokenDescription`      | string?  | No       | Token description                     |
-| `coingeckoCoinId`       | string?  | No       | CoinGecko coin ID                     |
-| `useCoingeckoCoinId`    | boolean? | No       | Whether to use CoinGecko coin ID      |
-| `circulatingSupplyUrl`  | string?  | No       | URL for circulating supply API        |
-| `useCirculatingSupplyUrl` | boolean? | No     | Whether to use circulating supply URL |
-| `otherUrl`              | string?  | No       | Other URL (truncated to 200 chars)    |
+| Field                     | Type     | Required | Description                           |
+| ------------------------- | -------- | -------- | ------------------------------------- |
+| `tokenId`                 | string   | **Yes**  | The token mint address                |
+| `icon`                    | string?  | No       | Token icon URL                        |
+| `name`                    | string?  | No       | Token name                            |
+| `symbol`                  | string?  | No       | Token symbol                          |
+| `website`                 | string?  | No       | Website URL                           |
+| `telegram`                | string?  | No       | Telegram link                         |
+| `twitter`                 | string?  | No       | Twitter link                          |
+| `twitterCommunity`        | string?  | No       | Twitter community link                |
+| `discord`                 | string?  | No       | Discord link                          |
+| `instagram`               | string?  | No       | Instagram link                        |
+| `tiktok`                  | string?  | No       | TikTok link                           |
+| `circulatingSupply`       | string?  | No       | Circulating supply value              |
+| `useCirculatingSupply`    | boolean? | No       | Whether to use circulating supply     |
+| `tokenDescription`        | string?  | No       | Token description                     |
+| `coingeckoCoinId`         | string?  | No       | CoinGecko coin ID                     |
+| `useCoingeckoCoinId`      | boolean? | No       | Whether to use CoinGecko coin ID      |
+| `circulatingSupplyUrl`    | string?  | No       | URL for circulating supply API        |
+| `useCirculatingSupplyUrl` | boolean? | No       | Whether to use circulating supply URL |
+| `otherUrl`                | string?  | No       | Other URL (truncated to 200 chars)    |
 
 ---
 
@@ -403,9 +403,9 @@ Optional object for setting token metadata alongside verification. Can be includ
 
 ### Verification Tiers
 
-| Tier      | Cost    | Description                                                           |
-| --------- | ------- | --------------------------------------------------------------------- |
-| `basic`   | Free    | Standard verification — submit via `POST /basic/submit`               |
+| Tier      | Cost  | Description                                                                                   |
+| --------- | ----- | --------------------------------------------------------------------------------------------- |
+| `basic`   | Free  | Standard verification — submit via `POST /basic/submit`                                       |
 | `express` | 1 JUP | Paid verification — requires payment via `craft-txn` + `execute` flow. API value: `"premium"` |
 
 ### Verification Statuses

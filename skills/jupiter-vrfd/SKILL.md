@@ -34,14 +34,14 @@ Submit and pay for token verification on Jupiter via a simple REST API.
 
 ## Intent Router
 
-| User intent                       | Endpoint                                        | Method | Auth    |
-| --------------------------------- | ----------------------------------------------- | ------ | ------- |
-| Check express eligibility         | `/combined/express/check-eligibility?tokenId=…` | `GET`  | None    |
-| Check basic eligibility           | `/combined/basic/check-eligibility?tokenId=…`   | `GET`  | None    |
-| Fetch existing token data         | `/tokenMetadata/getFromRpcAndSearch/{tokenId}`  | `GET`  | None    |
-| Submit basic verification         | `/basic/submit`                                 | `POST` | API key |
-| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`   | `GET`  | API key |
-| Sign and execute express payment  | `/payments/express/execute`                     | `POST` | API key |
+| User intent                       | Endpoint                                       | Method | Auth    |
+| --------------------------------- | ---------------------------------------------- | ------ | ------- |
+| Check express eligibility         | `/express/check-eligibility?tokenId=…`         | `GET`  | None    |
+| Check basic eligibility           | `/basic/check-eligibility?tokenId=…`           | `GET`  | None    |
+| Fetch existing token data         | `/tokenMetadata/getFromRpcAndSearch/{tokenId}` | `GET`  | None    |
+| Submit basic verification         | `/basic/submit`                                | `POST` | API key |
+| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=…`  | `GET`  | API key |
+| Sign and execute express payment  | `/payments/express/execute`                    | `POST` | API key |
 
 ## References
 
@@ -80,8 +80,8 @@ Always required. Validate: must be a valid base58 string, typically 32–44 char
 
 Check eligibility for **only** the tier selected in Step 2 — do NOT call both endpoints:
 
-- **Basic**: `GET /combined/basic/check-eligibility?tokenId={tokenId}`
-- **Express**: `GET /combined/express/check-eligibility?tokenId={tokenId}`
+- **Basic**: `GET /basic/check-eligibility?tokenId={tokenId}`
+- **Express**: `GET /express/check-eligibility?tokenId={tokenId}`
 
 Handle the result:
 
@@ -119,11 +119,11 @@ Collect all missing fields in a **single prompt**. Skip fields already extracted
 
 **Field requirements:**
 
-| Field                 | Express  | Basic    | Notes                                                              |
-| --------------------- | -------- | -------- | ------------------------------------------------------------------ |
-| Token Twitter URL     | Required | Optional | `https://x.com/…` or `https://twitter.com/…`                       |
-| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string                         |
-| Description           | Required | Optional | Short description of the token                                     |
+| Field                 | Express  | Basic    | Notes                                                                  |
+| --------------------- | -------- | -------- | ---------------------------------------------------------------------- |
+| Token Twitter URL     | Required | Optional | `https://x.com/…` or `https://twitter.com/…`                           |
+| Requester Twitter URL | Optional | Optional | Omit if skipped — do not send empty string                             |
+| Description           | Required | Optional | Short description of the token                                         |
 | Wallet address        | Required | Required | Valid Solana public key; for express, payment script must verify match |
 
 **Validation:** Twitter URLs must start with `https://x.com/` or `https://twitter.com/` + valid username (1–15 chars, alphanumeric + underscore). Auto-convert bare handles (e.g., `@handle` → `https://x.com/handle`) with user confirmation. Validate wallet with `new PublicKey(address)` from `@solana/web3.js`. Omit skipped optional fields entirely — do not send empty strings.
@@ -143,6 +143,7 @@ Unauthenticated. See [API Reference — Get Existing Token Data](references/api-
 #### 6a-ii. Collect user updates
 
 Present available metadata fields in groups:
+
 - **Identity:** name, symbol, icon, tokenDescription
 - **Links:** website, twitter, twitterCommunity, telegram, discord, instagram, tiktok, otherUrl
 - **Supply & Market:** circulatingSupply, circulatingSupplyUrl, coingeckoCoinId
@@ -167,11 +168,11 @@ Ask for confirmation. If the user says no, ask which field to change.
 
 ## Step 8. Submit and Report
 
-| Flow | Action |
-| ---- | ------ |
-| **Basic** | `POST /basic/submit` with `submitVerification: true` and collected params. Include merged `tokenMetadata` if metadata was collected. Report `verificationCreated` / `metadataCreated`. |
-| **Express** | Load [Payment Execution](references/payment-execution.md), follow steps 7a–7e. Include merged `tokenMetadata` if metadata was collected. |
-| **Basic metadata-only** | `POST /basic/submit` with `submitVerification: false` and merged `tokenMetadata` only. Report `metadataCreated`. |
+| Flow                      | Action                                                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Basic**                 | `POST /basic/submit` with `submitVerification: true` and collected params. Include merged `tokenMetadata` if metadata was collected. Report `verificationCreated` / `metadataCreated`.                                   |
+| **Express**               | Load [Payment Execution](references/payment-execution.md), follow steps 7a–7e. Include merged `tokenMetadata` if metadata was collected.                                                                                 |
+| **Basic metadata-only**   | `POST /basic/submit` with `submitVerification: false` and merged `tokenMetadata` only. Report `metadataCreated`.                                                                                                         |
 | **Express metadata-only** | Load [Payment Execution](references/payment-execution.md), follow steps 7a–7e. Payment still applies (1 JUP). Send `twitterHandle: ""` and `description: ""` per the exception in Step 6a-iii. Report `metadataCreated`. |
 
 See [API Reference](references/api-reference.md) for request/response details.
@@ -180,11 +181,11 @@ See [API Reference](references/api-reference.md) for request/response details.
 
 # Input Auto-Correction
 
-| User provides                           | Auto-correct to                 | Confirm? |
-| --------------------------------------- | ------------------------------- | -------- |
-| `@handle` or bare handle                | `https://x.com/{handle}`       | Yes      |
-| `twitter.com/handle` or `x.com/handle`  | Add `https://` prefix           | Yes      |
-| Token mint with leading/trailing spaces | Trimmed string                  | No       |
+| User provides                           | Auto-correct to          | Confirm? |
+| --------------------------------------- | ------------------------ | -------- |
+| `@handle` or bare handle                | `https://x.com/{handle}` | Yes      |
+| `twitter.com/handle` or `x.com/handle`  | Add `https://` prefix    | Yes      |
+| Token mint with leading/trailing spaces | Trimmed string           | No       |
 
 ---
 
