@@ -8,9 +8,9 @@ Skills follow the [Agent Skills](https://agentskills.io/) format.
 
 ### Claude Code
 
-```bash
+```
 /plugin marketplace add jup-ag/agent-skills
-/plugin install jupiter@jup-ag/agent-skills
+/plugin install jupiter@jup-ag-skills
 ```
 
 ### Codex
