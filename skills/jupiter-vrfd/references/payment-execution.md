@@ -1,12 +1,17 @@
-# Express Payment Execution
+# Payment Execution
 
-Use this guide after the user has confirmed the public express verification flow.
+Use this guide after the user wants to submit and has confirmed the paying wallet details.
 
 The guide relies only on these routes:
 
 - `GET /express/check-eligibility`
 - `GET /payments/express/craft-txn`
 - `POST /payments/express/execute`
+
+Precondition:
+
+- the user has already provided the paying wallet
+- the user has confirmed that wallet holds at least 1 JUP
 
 ## 1. Locate the Local Signing Source
 
@@ -255,7 +260,7 @@ On success, report:
 
 - Solana transaction signature
 - token mint
-- express verification submitted
+- verification submitted
 
 Useful failure buckets:
 

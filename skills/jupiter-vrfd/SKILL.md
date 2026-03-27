@@ -1,55 +1,53 @@
 ---
 name: jupiter-vrfd
-description: Use when checking Jupiter express verification eligibility or running the public express verification payment flow.
+description: Use when submitting a Jupiter token verification request (1 JUP) or checking verification eligibility.
 ---
 
 # Jupiter Token Verification
 
-This skill covers only the public express verification flow.
+This skill covers the public token verification submission flow.
 
 - **Base URL**: `https://token-verification-dev-api.jup.ag`
 - **Cost**: 1 JUP
-- **Naming**: user-facing tier is **express**; the API stores it as `"premium"`
 - **Public routes covered**:
   - `GET /express/check-eligibility`
   - `GET /payments/express/craft-txn`
   - `POST /payments/express/execute`
-- **Auth**: no API key required for the public express flow
+- **Auth**: no API key required for the public submission flow
 
 ## Use / Do Not Use
 
 **Use when:**
 
-- checking whether a token is eligible for express verification
-- crafting and signing the 1 JUP express payment transaction
-- executing the public express verification flow
-- optionally passing a `tokenMetadata` object that the user already has
+- checking whether a token is eligible for submission
+- crafting and signing the submission payment transaction
+- executing the submission flow
+- optionally updating token metadata as part of the submission
 
 **Do not use when:**
 
-- basic verification is needed
 - the agent would need private or internal routes
 - the agent needs to fetch or merge existing metadata from non-public endpoints
 - the user wants swaps, trading, or unrelated Jupiter flows
 
 ## Triggers
 
-`verify token`, `express verification`, `check express eligibility`, `craft express transaction`, `execute express payment`, `pay for verification`
+`verify token`, `submit verification`, `check eligibility`, `craft payment transaction`, `execute payment`, `pay for verification`
 
 ## Intent Router
 
 | User intent | Endpoint | Method | Auth |
 | --- | --- | --- | --- |
-| Check express eligibility | `/express/check-eligibility?tokenId=...` | `GET` | None |
-| Craft express payment transaction | `/payments/express/craft-txn?senderAddress=...` | `GET` | None |
-| Sign and execute express payment | `/payments/express/execute` | `POST` | None |
+| Check eligibility | `/express/check-eligibility?tokenId=...` | `GET` | None |
+| Craft payment transaction | `/payments/express/craft-txn?senderAddress=...` | `GET` | None |
+| Sign and execute payment | `/payments/express/execute` | `POST` | None |
 
 ## References
 
 Load these on demand:
 
 - **[API Reference](references/api-reference.md)** for request and response shapes for the 3 public routes
-- **[Payment Execution](references/payment-execution.md)** when the user confirms the express payment flow
+- **[Payment Execution](references/payment-execution.md)** when the user wants to submit and has confirmed the paying wallet details
 
 ---
 
@@ -61,28 +59,25 @@ Extract as much as possible from the user's first message. Skip questions whose 
 
 Look for:
 
-- intent: eligibility check or full express submission
+- intent: explicit eligibility-only check or submission help
 - token mint
-- wallet address
+- paying wallet address
 - token Twitter URL or handle
 - requester Twitter URL or handle
 - description
-- optional `tokenMetadata` object
+- confirmation that the paying wallet holds at least 1 JUP
 
-## Step 1. Determine Intent
+## Step 1. Route the Request
 
-If unclear, ask whether the user wants:
+If the user explicitly asks only to check eligibility, do that and stop after the eligibility response.
 
-1. an express eligibility check, or
-2. the full express payment flow
-
-Default to the eligibility check if the message is ambiguous.
+Otherwise, proceed directly into the submission flow. If the user says `verify`, `submit`, `apply`, or similar, treat it as a submission request.
 
 ## Step 2. Collect Token Mint
 
 `tokenId` is always required. Validate that it is a Solana public key.
 
-## Step 3. Check Express Eligibility
+## Step 3. Check Eligibility
 
 Call:
 
@@ -92,16 +87,47 @@ GET {BASE_URL}/express/check-eligibility?tokenId={tokenId}
 
 Interpret the result:
 
-- `canVerify: true` means the token can enter the express verification flow
-- `canVerify: false` means the user cannot submit express verification; explain `verificationError`
-- `canMetadata: true` only means the execute endpoint can accept `tokenMetadata` if the caller already has a complete payload
-- `canMetadata: false` means metadata cannot be submitted in the same execute call
+- `canVerify: true` means the token can enter the submission flow
+- `canVerify: false` means the user cannot submit; explain `verificationError`
+- `canMetadata: true` means the execute endpoint can also accept a `tokenMetadata` update
+- `canMetadata: false` means metadata cannot be updated in this submission
 
 For an eligibility-only request, report the result and stop here.
 
+## Step 3a. Offer Metadata Update
+
+If `canMetadata: true`, ask the user whether they would also like to update their token metadata as part of this submission.
+
+If they say **yes**, present the available metadata fields:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `icon` | string | Token icon URL |
+| `name` | string | Token name |
+| `symbol` | string | Token symbol |
+| `website` | string | Project website URL |
+| `telegram` | string | Telegram link |
+| `twitter` | string | Twitter / X URL |
+| `twitterCommunity` | string | Twitter community URL |
+| `discord` | string | Discord invite link |
+| `instagram` | string | Instagram URL |
+| `tiktok` | string | TikTok URL |
+| `circulatingSupply` | string | Circulating supply value |
+| `useCirculatingSupply` | boolean | Enable circulating supply display |
+| `tokenDescription` | string | Token description |
+| `coingeckoCoinId` | string | CoinGecko coin ID |
+| `useCoingeckoCoinId` | boolean | Enable CoinGecko integration |
+| `circulatingSupplyUrl` | string | URL that returns circulating supply |
+| `useCirculatingSupplyUrl` | boolean | Enable supply URL |
+| `otherUrl` | string | Any other relevant URL |
+
+Collect only the fields the user wants to update. Build the `tokenMetadata` object with just those fields plus `tokenId`. Do not include fields the user did not specify.
+
+If they say **no**, or if `canMetadata: false`, skip metadata and continue.
+
 ## Step 4. Resolve Local Signer Source
 
-Only for the full express payment flow.
+Only for submission requests.
 
 Check for a local signing source in this order:
 
@@ -112,15 +138,14 @@ Only confirm file paths and variable names. Never read secret values. Never deri
 
 ## Step 5. Batch-Collect Remaining Parameters
 
-Collect all missing fields in one prompt.
+Collect all missing fields in one prompt, including confirmation that the paying wallet holds at least 1 JUP.
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `walletAddress` | Yes | Maps to `senderAddress` in the API body |
-| `twitterHandle` | Yes for normal express verification | Full `x.com` or `twitter.com` URL |
+| `walletAddress` | Yes | Paying wallet; maps to `senderAddress` in the API body |
+| `twitterHandle` | Yes for normal submission | Full `x.com` or `twitter.com` URL |
 | `senderTwitterHandle` | No | Omit if not provided |
-| `description` | Yes for normal express verification | Short token description |
-| `tokenMetadata` | No | Only accept it if the user already has the object they want to send |
+| `description` | Yes for normal submission | Short token description |
 
 Validation rules:
 
@@ -128,8 +153,7 @@ Validation rules:
 - Twitter URLs must be `https://x.com/...` or `https://twitter.com/...`
 - bare handles may be normalized to `https://x.com/{handle}` with user confirmation
 - omit absent optional fields instead of sending empty strings
-
-If the user wants a metadata-only execute call, this skill can support it only when they already provide the full `tokenMetadata` object. Do not fetch or reconstruct metadata through private routes.
+- require the user to confirm the paying wallet currently holds at least 1 JUP before continuing
 
 ## Step 6. Confirm Before Submitting
 
@@ -140,10 +164,13 @@ Summarize:
 - token Twitter URL
 - requester Twitter URL if present
 - description
-- whether `tokenMetadata` will be sent
+- metadata fields to update, if any
 - cost: 1 JUP
 
-Warn the user to keep at least 1 JUP plus a small amount of SOL for fees in the paying wallet.
+Require an explicit final confirmation that:
+
+- the listed wallet will pay 1 JUP
+- the user wants you to proceed with the submission now
 
 ## Step 7. Submit and Report
 

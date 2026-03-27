@@ -2,7 +2,7 @@
 
 > **Base URL**: `https://token-verification-dev-api.jup.ag`
 
-This reference intentionally documents only the 3 public express routes used by the skill.
+This reference intentionally documents only the 3 public submission routes used by the skill.
 
 ## Authentication
 
@@ -16,7 +16,7 @@ This reference intentionally documents only the 3 public express routes used by 
 
 ## GET /express/check-eligibility
 
-Checks whether a token is eligible for express verification and whether the execute route could also accept `tokenMetadata`.
+Checks whether a token is eligible for submission and whether the execute route could also accept `tokenMetadata`.
 
 ```http
 GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId={tokenId}
@@ -39,7 +39,7 @@ GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId=
 
 Notes:
 
-- `canVerify: true` means the token can use the express verification flow
+- `canVerify: true` means the token can use the submission flow
 - `canVerify: false` means the caller should stop and inspect `verificationError`
 - `canMetadata: true` means `POST /payments/express/execute` may accept a `tokenMetadata` payload
 - this skill does not document private helpers for fetching or merging metadata
@@ -48,7 +48,7 @@ Notes:
 
 ## GET /payments/express/craft-txn
 
-Creates the unsigned 1 JUP payment transaction used by the express flow.
+Creates the unsigned 1 JUP payment transaction used by the submission flow.
 
 ```http
 GET https://token-verification-dev-api.jup.ag/payments/express/craft-txn?senderAddress={walletAddress}
@@ -56,7 +56,7 @@ GET https://token-verification-dev-api.jup.ag/payments/express/craft-txn?senderA
 
 | Param | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `senderAddress` | string | Yes | Wallet that will pay the 1 JUP fee |
+| `senderAddress` | string | Yes | Wallet that will pay 1 JUP |
 
 **Response**
 
@@ -85,7 +85,7 @@ The `transaction` value is unsigned. Verify it locally before signing.
 
 ## POST /payments/express/execute
 
-Submits the signed transaction and creates the express verification request.
+Submits the signed transaction and creates the verification request.
 
 ```http
 POST https://token-verification-dev-api.jup.ag/payments/express/execute
@@ -171,4 +171,4 @@ All fields other than `tokenId` are optional and may be `string`, `boolean`, or 
 
 - Solana addresses must be valid public keys
 - Twitter URLs must be from `x.com`, `www.x.com`, `twitter.com`, or `www.twitter.com`
-- The express fee is 1 JUP, represented as `1000000` base units with 6 decimals
+- The submission cost is 1 JUP, represented as `1000000` base units with 6 decimals
