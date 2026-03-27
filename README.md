@@ -9,13 +9,13 @@ Skills follow the [Agent Skills](https://agentskills.io/) format.
 ### Claude Code
 
 ```bash
-claude plugin add jup-ag/agent-skills/jupiter-plugin
+claude plugin add jup-ag/agent-skills/plugins/claude
 ```
 
 ### Codex
 
 ```bash
-codex install jup-ag/agent-skills/jupiter-codex-plugin
+codex install jup-ag/agent-skills/plugins/codex
 ```
 
 ## Available Skills

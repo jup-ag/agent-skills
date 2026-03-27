@@ -5,13 +5,13 @@ Jupiter DeFi integration skills for Solana — swap, lend, perps, and more.
 ## Installation
 
 ```bash
-claude plugin add jup-ag/agent-skills/jupiter-plugin
+claude plugin add jup-ag/agent-skills/plugins/claude
 ```
 
 Or test locally:
 
 ```bash
-claude --plugin-dir ./jupiter-plugin
+claude --plugin-dir ./plugins/claude
 ```
 
 ## Included Skills
