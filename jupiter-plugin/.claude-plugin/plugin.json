@@ -1,0 +1,14 @@
+{
+  "name": "jupiter",
+  "description": "Jupiter DeFi integration skills for Solana — swap, lend, perps, and more",
+  "version": "1.0.0",
+  "author": {
+    "name": "jup-ag",
+    "url": "https://jup.ag"
+  },
+  "homepage": "https://jup.md",
+  "repository": "https://github.com/jup-ag/agent-skills",
+  "license": "MIT",
+  "keywords": ["solana", "jupiter", "defi", "swap", "lend", "perps", "dex-aggregator"],
+  "skills": "./skills/"
+}

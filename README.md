@@ -4,6 +4,20 @@ Skills for AI coding agents to integrate with the Jupiter ecosystem.
 
 Skills follow the [Agent Skills](https://agentskills.io/) format.
 
+## Plugins
+
+### Claude Code
+
+```bash
+claude plugin add jup-ag/agent-skills/jupiter-plugin
+```
+
+### Codex
+
+```bash
+codex install jup-ag/agent-skills/jupiter-codex-plugin
+```
+
 ## Available Skills
 
 ### integrating-jupiter

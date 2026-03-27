@@ -1,0 +1,29 @@
+{
+  "name": "jupiter",
+  "version": "1.0.0",
+  "description": "Jupiter DeFi integration skills for Solana — swap, lend, perps, and more",
+  "author": {
+    "name": "jup-ag",
+    "url": "https://jup.ag"
+  },
+  "homepage": "https://jup.md",
+  "repository": "https://github.com/jup-ag/agent-skills",
+  "license": "MIT",
+  "keywords": ["solana", "jupiter", "defi", "swap", "lend", "perps", "dex-aggregator"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Jupiter",
+    "shortDescription": "Jupiter DeFi skills for Solana",
+    "longDescription": "Expert coding skills for integrating Jupiter swap, lend, perps, and trigger APIs on Solana. Covers endpoint selection, integration flows, error handling, and production hardening.",
+    "developerName": "jup-ag",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "websiteURL": "https://jup.ag",
+    "brandColor": "#C7F284",
+    "defaultPrompt": [
+      "Use Jupiter to swap SOL for USDC on Solana.",
+      "Help me integrate the Jupiter Lend protocol.",
+      "Help me migrate from Jupiter Metis to Swap API v2."
+    ]
+  }
+}
