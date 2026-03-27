@@ -30,6 +30,18 @@ npx skills add jup-ag/agent-skills --skill "jupiter-lend"
 
 
 
+### jupiter-swap-migration
+
+Helps agents migrate existing Jupiter integrations from Metis (v1) or Ultra to Swap API v2.
+
+#### Installation
+
+```bash
+npx skills add jup-ag/agent-skills --skill "jupiter-swap-migration"
+```
+
+
+
 ## Quick Install
 
 ### Installation
