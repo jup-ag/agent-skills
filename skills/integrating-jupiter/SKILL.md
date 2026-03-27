@@ -108,7 +108,7 @@ async function signAndSend(
 | Swap/quote | [Swap](#swap) | `GET /swap/v2/order` -> sign -> `POST /swap/v2/execute` |
 | Lend/borrow/yield | [Lend](#lend) | `POST /lend/v1/earn/deposit` or `/withdraw` |
 | Leverage/perps | [Perps](#perps) | On-chain via Anchor IDL (no REST API yet) |
-| Limit orders | [Trigger](#trigger-limit-orders) | `POST /trigger/v1/createOrder` -> sign -> `POST /trigger/v1/execute` |
+| Limit orders | [Trigger](#trigger-limit-orders) | JWT auth -> `POST /trigger/v2/orders/price` |
 | DCA/recurring buys | [Recurring](#recurring-dca) | `POST /recurring/v1/createOrder` -> sign -> `POST /recurring/v1/execute` |
 | Token search/verification | [Tokens](#tokens) | `GET /tokens/v2/search?query={mint}` |
 | Price lookup | [Price](#price) | `GET /price/v3?ids={mints}` |
@@ -133,7 +133,7 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Routing**: 4 routers compete — Metis (API value: `iris`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
 - **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) for current thresholds and disqualifying params.
 - **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed. `referralAccount`/`referralFee`/`receiver` disable JupiterZ only (Metis/Dflow/OKX remain). `payer` reduces routing to Metis only (per gasless docs; routing docs group all four as disabling JupiterZ but do not itemize the additional Dflow/OKX restriction). `/build` transactions cannot use `/execute` — self-manage via RPC.
-- **Migrating from v1/Ultra?** Use the `jupiter-swap-migration` skill instead.
+- **Migrating from an older integration?** Use the `jupiter-swap-migration` skill.
 - Refs: [Overview](https://dev.jup.ag/docs/swap/index.md) | [Order & Execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) | [Build](https://dev.jup.ag/docs/swap/v2/build/index.md) | [Fees](https://dev.jup.ag/docs/swap/v2/fees.md) | [Routing](https://dev.jup.ag/docs/swap/v2/routing.md) | [Gasless](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) | [Migration](https://dev.jup.ag/docs/swap/v2/migration.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/swap/v2/swap.yaml)
 
 Common error codes returned by `/swap/v2/execute` with recommended actions:
@@ -184,13 +184,15 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 
 ### Trigger (Limit Orders)
 
-- **Base URL**: `https://api.jup.ag/trigger/v1`
+- **Base URL**: `https://api.jup.ag/trigger/v2`
 - **Triggers**: `limit order`, `trigger`, `price condition`
-- **Fee**: 0.1% (non-stable), 0.03% (stable pairs)
-- **Pagination**: 10 orders per page
-- **Endpoints**: `/createOrder` (POST), `/cancelOrder` (POST), `/cancelOrders` (POST, max 5 per tx), `/execute` (POST), `/getTriggerOrders` (GET)
-- **Gotchas**: Frontend enforces 5 USD min; on-chain has no minimum. Program does NOT validate if rates are favorable — validate target price before create. Token-2022 disabled. Default zero slippage ("Exact" mode); set `slippageBps` for flexible fill with higher fill rate (auto slippage via RTSE).
-- Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create](https://dev.jup.ag/docs/trigger/create-order.md) | [Get orders](https://dev.jup.ag/docs/trigger/get-trigger-orders.md) | [Best Practices](https://dev.jup.ag/docs/trigger-api/best-practices) | [OpenAPI](https://dev.jup.ag/openapi-spec/trigger/trigger.yaml)
+- **Min order**: 10 USD equivalent
+- **Auth**: Dual-auth — `x-api-key` (all requests) + `Authorization: Bearer <jwt>` (order mutations). JWT obtained via challenge-response: `POST /auth/challenge` → sign challenge with wallet → `POST /auth/verify` → receive token. JWT expiry does NOT affect open orders — they continue executing.
+- **Endpoints**: `/auth/challenge` (POST, body: `walletPubkey` + `type`), `/auth/verify` (POST, body: `type` + `walletPubkey` + base58 `signature`), `/vault` (GET), `/vault/register` (GET), `/deposit/craft` (POST), `/orders/price` (POST create, PATCH update), `/orders/price/cancel/{orderId}` (POST, initiates withdrawal), `/orders/price/confirm-cancel/{orderId}` (POST, submits signed withdrawal + `cancelRequestId`), `/orders/history` (GET, wallet implicit via JWT)
+- **Order types**: `single` (one directional trigger), `oco` (take-profit + stop-loss pair), `otoco` (entry trigger + OCO). `triggerCondition`: `"above"` or `"below"`.
+- **Architecture**: Off-chain custodial vault (Privy) per wallet. Orders invisible on-chain until execution — MEV-resistant. Triggers on USD price (not pool rate ratios). Partial fills supported.
+- **Gotchas**: Order creation is 3 steps — `GET /vault` (register if new), `POST /deposit/craft` (returns `transaction` + `requestId`), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`. Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`. Response field is `id` (not `orderId`).
+- Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create order](https://dev.jup.ag/docs/trigger/create-order.md) | [Order history](https://dev.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://dev.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/trigger/trigger.yaml)
 
 ---
 
@@ -202,7 +204,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Constraints**: Min 100 USD total, min 2 orders, min 50 USD per order
 - **Pagination**: 10 orders per page
 - **Endpoints**: `/createOrder` (POST), `/cancelOrder` (POST), `/execute` (POST), `/getRecurringOrders` (GET)
-- **Gotchas**: Token-2022 NOT supported. Price-based recurring orders are **deprecated** — use `params.time` only.
+- **Gotchas**: Token-2022 NOT supported. Use `params.time` for order scheduling; price-based ordering is not supported.
 - Refs: [Overview](https://dev.jup.ag/docs/recurring/index.md) | [Create](https://dev.jup.ag/docs/recurring/create-order.md) | [Get orders](https://dev.jup.ag/docs/recurring/get-recurring-orders.md) | [Best Practices](https://dev.jup.ag/docs/recurring/best-practices) | [OpenAPI](https://dev.jup.ag/openapi-spec/recurring/recurring.yaml)
 
 ---

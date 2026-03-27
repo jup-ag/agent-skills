@@ -32,7 +32,7 @@ Production-ready code snippets in `examples/`:
 
 ## Related skills
 
-- `jupiter-swap-migration` — Migration guide from Metis (v1) or Ultra to Swap API v2
+- `jupiter-swap-migration` — Migration guide for existing swap integrations
 - `jupiter-lend` — Deep SDK-level integration with `@jup-ag/lend`
 
 ## License
