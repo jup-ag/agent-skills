@@ -191,8 +191,8 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Endpoints**: `/auth/challenge` (POST, body: `walletPubkey` + `type`), `/auth/verify` (POST, body: `type` + `walletPubkey` + base58 `signature`), `/vault` (GET), `/vault/register` (GET), `/deposit/craft` (POST), `/orders/price` (POST create, PATCH update), `/orders/price/cancel/{orderId}` (POST, initiates withdrawal), `/orders/price/confirm-cancel/{orderId}` (POST, submits signed withdrawal + `cancelRequestId`), `/orders/history` (GET, wallet implicit via JWT)
 - **Order types**: `single` (one directional trigger), `oco` (take-profit + stop-loss pair), `otoco` (entry trigger + OCO). `triggerCondition`: `"above"` or `"below"`.
 - **Architecture**: Off-chain custodial vault (Privy) per wallet. Orders invisible on-chain until execution — MEV-resistant. Triggers on USD price (not pool rate ratios). Partial fills supported.
-- **Gotchas**: Order creation is 3 steps — `GET /vault` (register if new), `POST /deposit/craft` (returns `transaction` + `requestId`), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`. Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`. Response field is `id` (not `orderId`).
-- Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create order](https://dev.jup.ag/docs/trigger/create-order.md) | [Order history](https://dev.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://dev.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/trigger/trigger.yaml)
+- **Gotchas**: Order creation is 3 steps — `GET /vault/register` (register if new), `POST /deposit/craft` (returns `transaction` + `requestId`), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`. Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`. Response field is `id` (not `orderId`).
+- Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create order](https://dev.jup.ag/docs/trigger/create-order.md) | [Order history](https://dev.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://dev.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/trigger/v2/trigger.yaml)
 
 ---
 
@@ -393,7 +393,7 @@ async function withRetry<T>(action: () => Promise<T>, maxRetries = 3): Promise<T
 
 ## Complete Working Examples
 
-Production-ready code snippets. Each example uses the `jupiterFetch`, `signAndSend`, and `withRetry` helpers from the sections above.
+Production-ready code snippets. Each example uses the `jupiterFetch` helper from the sections above; apply `withRetry` around execute calls in production.
 
 - [Swap: End-to-End](./examples/swap.md) — Order -> sign -> execute -> confirm flow
 - [Lend: USDC Deposit](./examples/lend.md) — Deposit into Jupiter Lend earn pool
