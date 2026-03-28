@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "integrate-jupiter",
-      "source": "./plugins/claude",
+      "source": "./.plugins/integrate-jupiter/claude",
       "description": "Jupiter DeFi integration skills for Solana — swap, lend, perps, and more",
       "version": "1.0.0",
       "author": {

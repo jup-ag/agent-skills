@@ -8,7 +8,7 @@
       "name": "integrate-jupiter",
       "source": {
         "source": "local",
-        "path": "./plugins/codex"
+        "path": "./.plugins/integrate-jupiter/codex"
       },
       "policy": {
         "installation": "AVAILABLE"
