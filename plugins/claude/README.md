@@ -18,8 +18,11 @@ claude --plugin-dir ./plugins/claude
 ## Included Skills
 
 - **integrating-jupiter** — Comprehensive guide for all Jupiter APIs (Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, etc.)
-- **jupiter-lend** — Jupiter Lend Protocol SDK integration (lending, borrowing, vaults, jlTokens)
 - **jupiter-swap-migration** — Migration guide from Metis (v1) or Ultra to Swap API v2
+
+## MCP Server
+
+This plugin configures the [Jupiter MCP server](https://dev.jup.ag/ai/mcp) — a read-only documentation server that exposes all Jupiter documentation and OpenAPI specs through the MCP protocol.
 
 ## Links
 

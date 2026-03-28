@@ -9,6 +9,5 @@
   "homepage": "https://jup.md",
   "repository": "https://github.com/jup-ag/agent-skills",
   "license": "MIT",
-  "keywords": ["solana", "jupiter", "defi", "swap", "lend", "perps", "dex-aggregator"],
-  "skills": "./skills/"
+  "keywords": ["solana", "jupiter", "defi", "swap", "lend", "perps", "dex-aggregator"]
 }

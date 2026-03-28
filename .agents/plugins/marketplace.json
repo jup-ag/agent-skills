@@ -1,0 +1,19 @@
+{
+  "name": "jup-ag-skills",
+  "interface": {
+    "displayName": "Jupiter"
+  },
+  "plugins": [
+    {
+      "name": "jupiter",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
