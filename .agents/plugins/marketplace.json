@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "jupiter",
+      "name": "integrate-jupiter",
       "source": {
         "source": "local",
         "path": "./plugins/codex"
