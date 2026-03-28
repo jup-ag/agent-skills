@@ -21,7 +21,7 @@
     "websiteURL": "https://jup.ag",
     "brandColor": "#C7F284",
     "defaultPrompt": [
-      "Use Jupiter to swap SOL for USDC on Solana.",
+      "How do I integrate Jupiter Swap API v2 in my app?",
       "Help me integrate Jupiter APIs on Solana.",
       "Help me migrate from Jupiter Metis to Swap API v2."
     ]
