@@ -13,7 +13,6 @@ This skill routes agents through the public Jupiter token-verification flow for 
   - `GET /express/check-eligibility`
   - `GET /payments/express/craft-txn`
   - `POST /payments/express/execute`
-- **Auth**: no API key required for the public submission flow
 
 ## Use / Do Not Use
 
@@ -37,11 +36,11 @@ This skill routes agents through the public Jupiter token-verification flow for 
 
 ## Intent Router
 
-| User intent | Endpoint | Method | Auth |
-| --- | --- | --- | --- |
-| Check eligibility | `/express/check-eligibility?tokenId=...` | `GET` | None |
-| Craft payment transaction | `/payments/express/craft-txn?senderAddress=...` | `GET` | None |
-| Sign and execute payment | `/payments/express/execute` | `POST` | None |
+| User intent               | Endpoint                                        | Method |
+| ------------------------- | ----------------------------------------------- | ------ |
+| Check eligibility         | `/express/check-eligibility?tokenId=...`        | `GET`  |
+| Craft payment transaction | `/payments/express/craft-txn?senderAddress=...` | `GET`  |
+| Sign and execute payment  | `/payments/express/execute`                     | `POST` |
 
 ## References
 

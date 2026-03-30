@@ -11,14 +11,6 @@ For this skill, this file is the source of truth for:
 - accepted input formats and normalization rules
 - available `tokenMetadata` fields
 
-## Authentication
-
-| Endpoint | Auth Required |
-| --- | --- |
-| `GET /express/check-eligibility` | None |
-| `GET /payments/express/craft-txn` | None |
-| `POST /payments/express/execute` | None |
-
 ---
 
 ## GET /express/check-eligibility
