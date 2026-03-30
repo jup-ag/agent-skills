@@ -6,18 +6,19 @@ Jupiter DeFi integration skills for Solana — swap, lend, perps, and more.
 
 ```
 /plugin marketplace add jup-ag/agent-skills
-/plugin install jupiter@jup-ag-skills
+/plugin install integrate-jupiter@jup-ag-skills
 ```
 
 Or test locally:
 
 ```bash
-claude --plugin-dir ./plugins/claude
+claude --plugin-dir ./.plugins/integrate-jupiter/claude
 ```
 
 ## Included Skills
 
 - **integrating-jupiter** — Comprehensive guide for all Jupiter APIs (Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, etc.)
+- **jupiter-lend** — Guide for Jupiter Lend protocol integrations, including lending, borrowing, vaults, and jlTokens
 - **jupiter-swap-migration** — Migration guide from Metis (v1) or Ultra to Swap API v2
 
 ## MCP Server

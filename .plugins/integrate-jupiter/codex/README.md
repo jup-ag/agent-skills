@@ -1,12 +1,25 @@
 # Jupiter Plugin for Codex
 
-Jupiter DeFi integration skills for Solana — swap, lend, perps, and more.
+Jupiter integration skills for Solana — swap, perps, trigger, and more.
 
 ## Installation
 
-```bash
-codex install jup-ag/agent-skills/plugins/codex
-```
+This repository intentionally keeps the Codex plugin package at `./.plugins/integrate-jupiter/codex`.
+That path is what `.agents/plugins/marketplace.json` registers for Codex, so the plugin can live alongside the Claude package in the same repo.
+
+Repo-local install:
+
+1. Open this repository root in Codex.
+2. Restart Codex if the workspace was already open so Codex reloads the local marketplace definition.
+3. Open `/plugins`.
+4. Install `integrate-jupiter` from the `Jupiter` marketplace.
+
+Home-local install:
+
+1. Copy this folder to `~/plugins/integrate-jupiter`.
+2. Add a home-local marketplace entry in `~/.agents/plugins/marketplace.json` that points to `./plugins/integrate-jupiter`.
+3. Restart Codex.
+4. Install `integrate-jupiter` from `/plugins`.
 
 ## Included Skills
 
@@ -19,7 +32,6 @@ This plugin configures the [Jupiter MCP server](https://dev.jup.ag/ai/mcp) — a
 
 ## Links
 
-- [jup.md](https://jup.md) — Installation hub
 - [jup.ag](https://jup.ag) — Jupiter
 - [Agent Skills](https://github.com/jup-ag/agent-skills) — Source repository
 
