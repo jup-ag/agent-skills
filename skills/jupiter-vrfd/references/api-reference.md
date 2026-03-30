@@ -4,6 +4,13 @@
 
 This reference intentionally documents only the 3 public routes used by the skill.
 
+For this skill, this file is the source of truth for:
+
+- exact request and response shapes
+- submission-mode field requirements
+- accepted input formats and normalization rules
+- available `tokenMetadata` fields
+
 ## Authentication
 
 | Endpoint | Auth Required |
@@ -139,6 +146,41 @@ Notes:
 
 ---
 
+## Canonical Execute Contract
+
+Use this section as the single source of truth for building the execute request.
+
+### Submission Modes
+
+| Mode | Meaning |
+| --- | --- |
+| `verification` | Create a verification request only |
+| `verification+metadata` | Create a verification request and update token metadata in the same paid request |
+| `metadata-only` | Update token metadata without creating a verification request |
+
+### Required Fields By Submission Mode
+
+| Field | `verification` | `verification+metadata` | `metadata-only` | Notes |
+| --- | --- | --- | --- | --- |
+| `tokenId` | Yes | Yes | Yes | Solana token mint |
+| `walletAddress` | Yes | Yes | Yes | User-facing name for `senderAddress` |
+| `twitterHandle` | Yes | Yes | Send `""` | Normalize to full `https://x.com/{handle}` URL when present |
+| `senderTwitterHandle` | Optional | Optional | Optional | Normalize to full `https://x.com/{handle}` URL when present |
+| `description` | Yes | Yes | Send `""` | Short token description when verification is created |
+| `tokenMetadata` | Omit | Optional | Yes | Include only the fields the user wants to update, plus `tokenId` |
+
+### Accepted Input Formats And Normalization
+
+| Field | User may provide | Normalize to |
+| --- | --- | --- |
+| `twitterHandle` | `@handle`, bare `handle`, or `https://x.com/handle` | `https://x.com/{handle}` |
+| `senderTwitterHandle` | `@handle`, bare `handle`, or `https://x.com/handle` | `https://x.com/{handle}` |
+| `tokenId` | mint with surrounding spaces | Trimmed string before validation |
+
+Confirm handle normalization with the user before execute when the user did not already provide the normalized URL.
+
+---
+
 ## Optional tokenMetadata Payload
 
 `POST /payments/express/execute` accepts an optional `tokenMetadata` object with this shape:
@@ -169,8 +211,31 @@ Notes:
 
 All fields other than `tokenId` are optional and may be `string`, `boolean`, or `null` according to the server schema.
 
+### tokenMetadata Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `tokenId` | string | Token mint being updated |
+| `icon` | string | Token icon URL |
+| `name` | string | Token name |
+| `symbol` | string | Token symbol |
+| `website` | string | Project website URL |
+| `telegram` | string | Telegram link |
+| `twitter` | string | Twitter / X URL |
+| `twitterCommunity` | string | Twitter community URL |
+| `discord` | string | Discord invite link |
+| `instagram` | string | Instagram URL |
+| `tiktok` | string | TikTok URL |
+| `circulatingSupply` | string | Circulating supply value |
+| `useCirculatingSupply` | boolean | Enable circulating supply display |
+| `tokenDescription` | string | Token description |
+| `coingeckoCoinId` | string | CoinGecko coin ID |
+| `useCoingeckoCoinId` | boolean | Enable CoinGecko integration |
+| `circulatingSupplyUrl` | string | URL that returns circulating supply |
+| `useCirculatingSupplyUrl` | boolean | Enable supply URL |
+| `otherUrl` | string | Any other relevant URL |
+
 ## Validation Notes
 
 - Solana addresses must be valid public keys
-- The skill accepts `@handle`, bare `handle`, or `https://x.com/handle` for `twitterHandle` and `senderTwitterHandle`, then normalizes them to full `https://x.com/{handle}` URLs before execute
 - The submission cost is 1 JUP, represented as `1000000` base units with 6 decimals

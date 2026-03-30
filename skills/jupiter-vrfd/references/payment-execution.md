@@ -2,6 +2,8 @@
 
 Use this guide after the user wants to submit a verification or metadata request and has confirmed the paying wallet details.
 
+For request-field requirements, accepted input formats, normalization rules, and `tokenMetadata` fields, use [API Reference](api-reference.md). This guide is only for the local signing and execution mechanics.
+
 The guide relies only on these routes:
 
 - `GET /express/check-eligibility`
@@ -79,9 +81,8 @@ Write a config file that contains request parameters and secret locations, never
 Notes:
 
 - `walletAddress` is the user-facing name for the same value sent to the API as `senderAddress`
+- use [API Reference](api-reference.md#canonical-execute-contract) as the source of truth for which request keys belong in `config.json`
 - omit optional keys the user did not provide
-- `twitterHandle` and `senderTwitterHandle` may start as `@handle`, bare `handle`, or `https://x.com/handle`; normalize them to full `https://x.com/{handle}` URLs before execute
-- if the caller is doing a metadata-only execute request, send `twitterHandle: ""` and `description: ""` because the current execute schema still requires strings
 - if `tokenMetadata` is present, pass through the object the user already has; this guide does not fetch or merge metadata via private routes
 
 ## 5. Write `pay.mjs`

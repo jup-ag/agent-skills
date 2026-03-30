@@ -5,7 +5,7 @@ description: Use when a user wants to check Jupiter public token-verification el
 
 # Jupiter Token Verification
 
-This skill covers the public Jupiter token-verification flow for a Solana token mint, including optional metadata updates when the public API allows them.
+This skill routes agents through the public Jupiter token-verification flow for a Solana token mint.
 
 - **Base URL**: `https://token-verification-dev-api.jup.ag`
 - **Cost**: 1 JUP
@@ -47,7 +47,7 @@ This skill covers the public Jupiter token-verification flow for a Solana token 
 
 Load these on demand:
 
-- **[API Reference](references/api-reference.md)** for request and response shapes for the 3 public routes
+- **[API Reference](references/api-reference.md)** for the exact request and response shapes, accepted input formats, normalization rules, submission-mode field requirements, and token metadata fields. This is the source of truth for request construction.
 - **[Payment Execution](references/payment-execution.md)** when the user wants to execute a request and has confirmed the paying wallet details
 
 ## Agent Operating Rules
@@ -121,34 +121,15 @@ For an eligibility-only request, report the result and stop here.
 - If `canVerify: false` and `canMetadata: true`, explain that verification is unavailable but a metadata-only paid request may still be possible. Ask whether they want metadata-only submission.
 - If `canVerify: false` and `canMetadata: false`, stop after explaining the returned errors.
 
-## Step 3b. Collect Metadata Fields
+## Step 3b. Load The Canonical Request Contract
 
-If the chosen mode includes metadata, present the available metadata fields:
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `icon` | string | Token icon URL |
-| `name` | string | Token name |
-| `symbol` | string | Token symbol |
-| `website` | string | Project website URL |
-| `telegram` | string | Telegram link |
-| `twitter` | string | Twitter / X URL |
-| `twitterCommunity` | string | Twitter community URL |
-| `discord` | string | Discord invite link |
-| `instagram` | string | Instagram URL |
-| `tiktok` | string | TikTok URL |
-| `circulatingSupply` | string | Circulating supply value |
-| `useCirculatingSupply` | boolean | Enable circulating supply display |
-| `tokenDescription` | string | Token description |
-| `coingeckoCoinId` | string | CoinGecko coin ID |
-| `useCoingeckoCoinId` | boolean | Enable CoinGecko integration |
-| `circulatingSupplyUrl` | string | URL that returns circulating supply |
-| `useCirculatingSupplyUrl` | boolean | Enable supply URL |
-| `otherUrl` | string | Any other relevant URL |
-
-Collect only the fields the user wants to update. Build the `tokenMetadata` object with just those fields plus `tokenId`. Do not include fields the user did not specify.
-
-If the chosen mode does not include metadata, continue without `tokenMetadata`.
+- Load [API Reference](references/api-reference.md) before collecting execute inputs.
+- Use the API reference as the source of truth for:
+  - which fields are required for the chosen submission mode
+  - accepted user input forms for `twitterHandle` and `senderTwitterHandle`
+  - how to normalize those fields before execute
+  - which `tokenMetadata` fields are available
+- Collect only the missing required fields and only the metadata fields the user wants to change.
 
 ## Step 4. Resolve Local Signer Source
 
@@ -164,28 +145,9 @@ Only confirm file paths and variable names in chat. Never print secret values. O
 
 If the current agent cannot safely access a local signer source, stop here and hand the user the local execution steps from [Payment Execution](references/payment-execution.md) instead of asking for secrets in chat.
 
-## Step 5. Batch-Collect Remaining Parameters
+## Step 5. Confirm Before Executing
 
-Collect all missing fields in one prompt, including confirmation that the paying wallet holds at least 1 JUP plus a small amount of SOL for fees.
-
-| Field | Required | Notes |
-| --- | --- | --- |
-| `submissionMode` | Yes for execute requests | `verification`, `verification+metadata`, or `metadata-only` |
-| `walletAddress` | Yes | Paying wallet; maps to `senderAddress` in the API body |
-| `twitterHandle` | Yes for any flow that creates verification | Accept `@handle`, bare `handle`, or `https://x.com/handle`; normalize to `https://x.com/{handle}` before execute. Use `""` only for metadata-only execute. |
-| `senderTwitterHandle` | No | Accept `@handle`, bare `handle`, or `https://x.com/handle`; normalize to `https://x.com/{handle}` before execute. Omit if not provided. |
-| `description` | Yes for any flow that creates verification | Short token description; use `""` only for metadata-only execute |
-
-Validation rules:
-
-- wallet must be a valid Solana public key
-- `twitterHandle` and `senderTwitterHandle` may be `@handle`, bare `handle`, or `https://x.com/handle`
-- normalize handle inputs to `https://x.com/{handle}` with user confirmation before execute
-- omit absent optional fields instead of sending empty strings
-- for metadata-only execute requests, set `twitterHandle: ""` and `description: ""` at execute time instead of asking the user to invent values
-- require the user to confirm the paying wallet currently holds at least 1 JUP plus a small amount of SOL for fees before continuing
-
-## Step 6. Confirm Before Submitting
+Batch-collect all missing required fields from the API reference, including confirmation that the paying wallet holds at least 1 JUP plus a small amount of SOL for fees.
 
 Summarize:
 
@@ -205,28 +167,19 @@ Require an explicit final confirmation that:
 - the chosen submission mode is correct
 - the user wants you to proceed with the submission now
 
-## Step 7. Submit and Report
+## Step 6. Submit And Report
 
 Load [Payment Execution](references/payment-execution.md) and follow the local signing flow:
 
-1. craft the unsigned transaction with `GET /payments/express/craft-txn`
-2. verify the transaction contents before signing
-3. sign locally
-4. submit via `POST /payments/express/execute`, sending `twitterHandle: ""` and `description: ""` only for metadata-only execute requests
+1. prepare the request fields using the canonical rules in [API Reference](references/api-reference.md)
+2. craft the unsigned transaction with `GET /payments/express/craft-txn`
+3. verify the transaction contents before signing
+4. sign locally
+5. submit via `POST /payments/express/execute`
 
 Report the returned transaction signature and whether `verificationCreated` / `metadataCreated` were set.
 
 If the current agent cannot run the local signing flow safely, stop and hand the user the exact local script and `config.json` steps instead of claiming the request was submitted.
-
----
-
-# Input Auto-Correction
-
-| User provides | Auto-correct to | Confirm? |
-| --- | --- | --- |
-| `@handle` or bare handle for `twitterHandle` or `senderTwitterHandle` | `https://x.com/{handle}` | Yes |
-| `x.com/handle` for `twitterHandle` or `senderTwitterHandle` | Add `https://` prefix | Yes |
-| token mint with surrounding spaces | Trimmed string | No |
 
 ---
 
