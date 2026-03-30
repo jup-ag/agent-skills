@@ -18,6 +18,14 @@ For Codex, the marketplace entry points to `./.plugins/integrate-jupiter/codex` 
 
 ### Codex
 
+Install on your machine from GitHub:
+
+1. Clone the repository: `git clone https://github.com/jup-ag/agent-skills.git`
+2. Run `bash scripts/install_codex_plugin.sh` from the cloned repo root.
+3. Restart Codex.
+4. Open `/plugins`.
+5. Install `integrate-jupiter` from your local marketplace.
+
 Repo-local install:
 
 1. Open this repository root in Codex.

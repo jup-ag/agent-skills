@@ -33,7 +33,7 @@ Production-ready code snippets in `examples/`:
 ## Related skills
 
 - `jupiter-swap-migration` — Migration guide for existing swap integrations
-- `jupiter-lend` — Deep SDK-level integration with `@jup-ag/lend`
+- Lend guidance is bundled directly in this skill via the `Lend` section and `examples/lend.md`
 
 ## License
 

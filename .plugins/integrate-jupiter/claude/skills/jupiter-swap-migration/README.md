@@ -20,7 +20,7 @@ Before/after code and mapping tables in `examples/`:
 ## Related skills
 
 - `integrating-jupiter` — Comprehensive Jupiter API integration guide (use for new builds, not migrations)
-- `jupiter-lend` — Deep SDK-level integration with `@jup-ag/lend`
+- Lend coverage lives in the bundled `integrating-jupiter` skill
 
 ## License
 

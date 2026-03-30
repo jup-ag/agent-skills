@@ -1,6 +1,6 @@
 # Jupiter Plugin for Claude Code
 
-Jupiter DeFi integration skills for Solana — swap, lend, perps, and more.
+Jupiter integration and documentation skills for Solana, crypto, and finance workflows.
 
 ## Installation
 
@@ -18,7 +18,6 @@ claude --plugin-dir ./.plugins/integrate-jupiter/claude
 ## Included Skills
 
 - **integrating-jupiter** — Comprehensive guide for all Jupiter APIs (Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, etc.)
-- **jupiter-lend** — Guide for Jupiter Lend protocol integrations, including lending, borrowing, vaults, and jlTokens
 - **jupiter-swap-migration** — Migration guide from Metis (v1) or Ultra to Swap API v2
 
 ## MCP Server
@@ -27,7 +26,6 @@ This plugin configures the [Jupiter MCP server](https://dev.jup.ag/ai/mcp) — a
 
 ## Links
 
-- [jup.md](https://jup.md) — Installation hub
 - [jup.ag](https://jup.ag) — Jupiter
 - [Agent Skills](https://github.com/jup-ag/agent-skills) — Source repository
 
