@@ -4,9 +4,19 @@ Jupiter integration and documentation skills for Solana, crypto, and finance wor
 
 ## Installation
 
-```
-/plugin marketplace add jup-ag/agent-skills
-/plugin install integrate-jupiter@jup-ag-skills
+Use `bash scripts/install_plugin.sh` as the installer entrypoint for this packaged plugin.
+
+Install from a local clone:
+
+1. Clone the repository: `git clone https://github.com/jup-ag/agent-skills.git`
+2. Run `bash scripts/install_plugin.sh` from the cloned repo root.
+3. Choose `Claude Code` or `Both`.
+
+Manual alternative:
+
+```bash
+claude plugin marketplace add /path/to/agent-skills
+claude plugin install integrate-jupiter@jup-ag-skills
 ```
 
 Or test locally:

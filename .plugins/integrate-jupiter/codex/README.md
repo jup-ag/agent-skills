@@ -6,14 +6,16 @@ Jupiter integration skills for Solana — swap, lend, perps, trigger, and more.
 
 This repository intentionally keeps the Codex plugin package at `./.plugins/integrate-jupiter/codex`.
 That path is what `.agents/plugins/marketplace.json` registers for Codex, so the plugin can live alongside the Claude package in the same repo.
+Use `bash scripts/install_plugin.sh` as the installer entrypoint for this packaged plugin.
 
 Install on your machine from GitHub:
 
 1. Clone the repository: `git clone https://github.com/jup-ag/agent-skills.git`
-2. Run `bash scripts/install_codex_plugin.sh` from the cloned repo root.
-3. Restart Codex.
-4. Open `/plugins`.
-5. Install `integrate-jupiter` from your local marketplace.
+2. Run `bash scripts/install_plugin.sh` from the cloned repo root.
+3. Choose `Codex` or `Both`.
+4. Restart Codex.
+5. Open `/plugins`.
+6. Install `integrate-jupiter` from your local marketplace.
 
 The installer creates `~/plugins/integrate-jupiter` and adds or updates `~/.agents/plugins/marketplace.json`.
 On a first-time local setup, that marketplace is created as `Local Plugins`.
@@ -21,7 +23,7 @@ The installer does not replace unrelated plugins. It only installs or updates `i
 
 Update an existing machine-local install:
 
-1. Re-run `bash scripts/install_codex_plugin.sh --force`
+1. Re-run `bash scripts/install_plugin.sh --provider codex --force`
 2. Restart Codex.
 
 The installer requires `jq` to update the marketplace JSON.

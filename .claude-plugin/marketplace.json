@@ -11,15 +11,15 @@
     {
       "name": "integrate-jupiter",
       "source": "./.plugins/integrate-jupiter/claude",
-      "description": "Jupiter DeFi integration skills for Solana — swap, lend, perps, and more",
+      "description": "Jupiter integration and documentation skills for Solana, crypto, and finance workflows",
       "version": "1.0.0",
       "author": {
-        "name": "jup-ag"
+        "name": "Jupiter"
       },
-      "homepage": "https://jup.md",
+      "homepage": "https://jup.ag",
       "repository": "https://github.com/jup-ag/agent-skills",
       "license": "MIT",
-      "keywords": ["solana", "jupiter", "defi", "swap", "lend", "perps"]
+      "keywords": ["solana", "jupiter", "defi", "finance", "crypto", "documentation", "swap", "lend", "borrow", "earn", "perps", "trigger", "dex-aggregator"]
     }
   ]
 }
