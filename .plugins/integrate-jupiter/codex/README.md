@@ -1,6 +1,6 @@
 # Jupiter Plugin for Codex
 
-Jupiter integration skills for Solana — swap, perps, trigger, and more.
+Jupiter integration skills for Solana — swap, lend, perps, trigger, and more.
 
 ## Installation
 
@@ -43,6 +43,7 @@ Home-local install:
 ## Included Skills
 
 - **integrating-jupiter** — Comprehensive guide for all Jupiter APIs (Swap, Lend, Perps, Trigger, Recurring, Tokens, Price, Portfolio, etc.)
+- **jupiter-lend** — Deep SDK-level integration for Jupiter Lend earn, borrow, vaults, and jlTokens
 - **jupiter-swap-migration** — Migration guide from Metis (v1) or Ultra to Swap API v2
 
 ## MCP Server

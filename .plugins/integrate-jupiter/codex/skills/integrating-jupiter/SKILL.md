@@ -167,7 +167,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **SDK**: `@jup-ag/lend` (TypeScript)
 - **Endpoints**: `/earn/deposit` (POST), `/earn/withdraw` (POST), `/earn/mint` (POST), `/earn/redeem` (POST), `/earn/deposit-instructions` (POST), `/earn/withdraw-instructions` (POST), `/earn/tokens` (GET), `/earn/positions` (GET), `/earn/earnings` (GET)
 - **Gotchas**: Recompute account state before each state-changing action. Encode risk checks (health factors, liquidation boundaries) as preconditions. All deposit/withdraw/mint/redeem return base64 unsigned `VersionedTransaction`.
-- **For SDK-level integration** with `@jup-ag/lend` and `@jup-ag/lend-read`, use this Lend section together with `examples/lend.md`.
+- **For SDK-level integration** with `@jup-ag/lend` and `@jup-ag/lend-read`, use the `jupiter-lend` skill.
 - Refs: [Overview](https://dev.jup.ag/docs/lend/index.md) | [Earn](https://dev.jup.ag/docs/lend/earn.md) | [SDK](https://dev.jup.ag/docs/lend/sdk.md) | [OpenAPI](https://dev.jup.ag/openapi-spec/lend/lend.yaml)
 
 ---
