@@ -45,7 +45,7 @@ TMPDIR=$(mktemp -d /tmp/jup-verify-XXXXXX) &&
 cd "$TMPDIR" &&
 npm init -y &&
 npm pkg set type=module &&
-npm install @solana/web3.js @solana/spl-token bs58 dotenv tsx
+npm install @solana/web3.js@1 @solana/spl-token bs58 dotenv tsx
 ```
 
 ## 4. Write `config.json`
