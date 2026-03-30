@@ -2,7 +2,7 @@
 
 > **Base URL**: `https://token-verification-dev-api.jup.ag`
 
-This reference intentionally documents only the 3 public submission routes used by the skill.
+This reference intentionally documents only the 3 public routes used by the skill.
 
 ## Authentication
 
@@ -16,7 +16,7 @@ This reference intentionally documents only the 3 public submission routes used 
 
 ## GET /express/check-eligibility
 
-Checks whether a token is eligible for submission and whether the execute route could also accept `tokenMetadata`.
+Checks whether a token can enter the public verification flow and whether the execute route could also accept `tokenMetadata`.
 
 ```http
 GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId={tokenId}
@@ -39,8 +39,9 @@ GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId=
 
 Notes:
 
-- `canVerify: true` means the token can use the submission flow
-- `canVerify: false` means the caller should stop and inspect `verificationError`
+- `canVerify: true` means the token can use the verification flow
+- `canVerify: false` and `canMetadata: false` means the caller should stop and inspect `verificationError` and `metadataError`
+- `canVerify: false` and `canMetadata: true` means verification is blocked, but a metadata-only execute request may still be possible
 - `canMetadata: true` means `POST /payments/express/execute` may accept a `tokenMetadata` payload
 - this skill does not document private helpers for fetching or merging metadata
 
@@ -85,7 +86,7 @@ The `transaction` value is unsigned. Verify it locally before signing.
 
 ## POST /payments/express/execute
 
-Submits the signed transaction and creates the verification request.
+Submits the signed transaction and creates the verification request, metadata update, or both.
 
 ```http
 POST https://token-verification-dev-api.jup.ag/payments/express/execute
@@ -112,9 +113,9 @@ Content-Type: application/json
 | `requestId` | string | Yes | Value returned by `craft-txn` |
 | `senderAddress` | string | Yes | Wallet that signed the transaction |
 | `tokenId` | string | Yes | Token mint being verified |
-| `twitterHandle` | string | Yes | Full `x.com` or `twitter.com` URL |
-| `senderTwitterHandle` | string | No | Requester Twitter URL |
-| `description` | string | Yes | Token description |
+| `twitterHandle` | string | Yes for verification flow | The skill accepts `@handle`, bare `handle`, or `https://x.com/handle` from the user, then normalizes to `https://x.com/{handle}` before execute. For metadata-only execute, send `""` if the user did not provide one. |
+| `senderTwitterHandle` | string | No | The skill accepts `@handle`, bare `handle`, or `https://x.com/handle`, then normalizes to `https://x.com/{handle}` before execute. |
+| `description` | string | Yes for verification flow | Token description. For metadata-only execute, send `""` if the user did not provide one. |
 | `tokenMetadata` | object | No | Optional metadata payload forwarded to the execute route |
 
 **Response**
@@ -133,6 +134,7 @@ Notes:
 
 - the route can create verification, metadata, or both depending on eligibility
 - for metadata-only execute calls, the current schema still expects string values for `twitterHandle` and `description`; send `""` if the user did not provide them
+- normalize `twitterHandle` and `senderTwitterHandle` to full `https://x.com/{handle}` URLs before execute
 - if `tokenMetadata` is included, pass the object the user already has; this skill does not cover private metadata fetch or merge routes
 
 ---
@@ -170,5 +172,5 @@ All fields other than `tokenId` are optional and may be `string`, `boolean`, or 
 ## Validation Notes
 
 - Solana addresses must be valid public keys
-- Twitter URLs must be from `x.com`, `www.x.com`, `twitter.com`, or `www.twitter.com`
+- The skill accepts `@handle`, bare `handle`, or `https://x.com/handle` for `twitterHandle` and `senderTwitterHandle`, then normalizes them to full `https://x.com/{handle}` URLs before execute
 - The submission cost is 1 JUP, represented as `1000000` base units with 6 decimals

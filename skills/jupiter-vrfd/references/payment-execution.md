@@ -1,6 +1,6 @@
 # Payment Execution
 
-Use this guide after the user wants to submit and has confirmed the paying wallet details.
+Use this guide after the user wants to submit a verification or metadata request and has confirmed the paying wallet details.
 
 The guide relies only on these routes:
 
@@ -10,6 +10,7 @@ The guide relies only on these routes:
 
 Precondition:
 
+- the selected submission mode is already known (`verification`, `verification+metadata`, or `metadata-only`)
 - the user has already provided the paying wallet
 - the user has confirmed that wallet holds at least 1 JUP plus a small amount of SOL for fees
 
@@ -34,9 +35,10 @@ Security rules:
 
 Before installing packages or calling Jupiter:
 
-- if `curl`, `npm install`, or the execution script fails with DNS, `fetch failed`, or other sandbox-style network errors, rerun with the environment's required approval or escalation
-- prefer Node 22+ with `node --experimental-strip-types`; in restricted sandboxes, `tsx` can fail with `listen EPERM ...pipe` because it opens an IPC socket
-- make the temp workspace ESM before running `pay.ts`, because `npm init -y` defaults to `"type": "commonjs"` and that breaks `import` syntax in the script
+- if HTTP, package installation, or local file access is blocked by the current agent environment, request the required approval or hand the local execution steps to the user
+- prefer a plain ESM script saved as `pay.mjs`; the template below also works as `pay.ts` if the runtime already supports it
+- make the temp workspace ESM before running the script, because `npm init -y` defaults to `"type": "commonjs"` and that breaks `import` syntax
+- equivalent package-manager or shell commands are fine if the environment already provides them
 
 ## 3. Set Up a Temporary Workspace
 
@@ -45,8 +47,13 @@ TMPDIR=$(mktemp -d /tmp/jup-verify-XXXXXX) &&
 cd "$TMPDIR" &&
 npm init -y &&
 npm pkg set type=module &&
-npm install @solana/web3.js@1 @solana/spl-token bs58 dotenv tsx
+npm install @solana/web3.js@1 @solana/spl-token bs58 dotenv
 ```
+
+Notes:
+
+- if the agent already has these packages available, it may reuse them instead of creating a fresh workspace
+- add `tsx` only if the environment needs it for a `pay.ts` fallback
 
 ## 4. Write `config.json`
 
@@ -73,10 +80,11 @@ Notes:
 
 - `walletAddress` is the user-facing name for the same value sent to the API as `senderAddress`
 - omit optional keys the user did not provide
+- `twitterHandle` and `senderTwitterHandle` may start as `@handle`, bare `handle`, or `https://x.com/handle`; normalize them to full `https://x.com/{handle}` URLs before execute
 - if the caller is doing a metadata-only execute request, send `twitterHandle: ""` and `description: ""` because the current execute schema still requires strings
 - if `tokenMetadata` is present, pass through the object the user already has; this guide does not fetch or merge metadata via private routes
 
-## 5. Write `pay.ts`
+## 5. Write `pay.mjs`
 
 The script should:
 
@@ -87,11 +95,11 @@ The script should:
 5. deserialize and verify the returned transaction before signing
 6. sign locally
 7. call `POST /payments/express/execute`
-8. print `SUCCESS:<signature>` on success or `ERROR:<code>:<message>` on failure
+8. print `SUCCESS:<json>` on success or `ERROR:<code>:<message>` on failure
 
 The script must include these comments:
 
-```typescript
+```javascript
 // SECURITY: Private key is used only for local signing.
 // Only the signed transaction is sent to the Jupiter API.
 // The private key never leaves this machine.
@@ -99,7 +107,7 @@ The script must include these comments:
 
 ### Template
 
-```typescript
+```javascript
 // SECURITY: Private key is used only for local signing.
 // Only the signed transaction is sent to the Jupiter API.
 // The private key never leaves this machine.
@@ -127,6 +135,32 @@ if (config.envPath) {
   dotenv.config({ path: path.resolve(config.envPath) });
 }
 
+function normalizeXHandle(value) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const trimmed = String(value).trim();
+  if (trimmed === "") {
+    return "";
+  }
+
+  if (trimmed.startsWith("https://x.com/")) {
+    return trimmed;
+  }
+
+  const normalizedHandle = trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
+  return `https://x.com/${normalizedHandle}`;
+}
+
+function parseSecretKey(value) {
+  const trimmed = value.trim();
+  if (trimmed.startsWith("[")) {
+    return new Uint8Array(JSON.parse(trimmed));
+  }
+  return bs58.decode(trimmed);
+}
+
 function loadKeypair() {
   if (config.keypairPath) {
     const secret = JSON.parse(
@@ -141,7 +175,7 @@ function loadKeypair() {
     console.error("ERROR:NO_KEY:Missing private key");
     process.exit(1);
   }
-  return Keypair.fromSecretKey(bs58.decode(privateKey));
+  return Keypair.fromSecretKey(parseSecretKey(privateKey));
 }
 
 function fail(message) {
@@ -152,13 +186,17 @@ function fail(message) {
 async function main() {
   const keypair = loadKeypair();
   const senderAddress = keypair.publicKey.toBase58();
+  const twitterHandle = normalizeXHandle(config.twitterHandle);
+  const senderTwitterHandle = normalizeXHandle(config.senderTwitterHandle);
 
   if (senderAddress !== config.walletAddress) {
     fail(`ERROR:WALLET_MISMATCH:${senderAddress} != ${config.walletAddress}`);
   }
 
   const craftRes = await fetch(
-    `${BASE_URL}/payments/express/craft-txn?senderAddress=${senderAddress}`
+    `${BASE_URL}/payments/express/craft-txn?senderAddress=${encodeURIComponent(
+      senderAddress
+    )}`
   );
   if (!craftRes.ok) {
     fail(`ERROR:CRAFT_FAILED:${craftRes.status}:${await craftRes.text()}`);
@@ -212,10 +250,10 @@ async function main() {
     requestId: craftData.requestId,
     senderAddress,
     tokenId: config.tokenId,
-    twitterHandle: config.twitterHandle ?? "",
+    twitterHandle: twitterHandle ?? "",
     description: config.description ?? "",
-    ...(config.senderTwitterHandle
-      ? { senderTwitterHandle: config.senderTwitterHandle }
+    ...(senderTwitterHandle
+      ? { senderTwitterHandle }
       : {}),
     ...(config.tokenMetadata ? { tokenMetadata: config.tokenMetadata } : {}),
   };
@@ -237,7 +275,13 @@ async function main() {
   }
 
   if (executeRes.ok && executeData.status === "Success") {
-    console.log(`SUCCESS:${executeData.signature}`);
+    console.log(
+      `SUCCESS:${JSON.stringify({
+        signature: executeData.signature,
+        verificationCreated: Boolean(executeData.verificationCreated),
+        metadataCreated: Boolean(executeData.metadataCreated),
+      })}`
+    );
     return;
   }
 
@@ -254,16 +298,21 @@ main().catch((err) => {
 Preferred:
 
 ```bash
-cd "$TMPDIR" && node --experimental-strip-types pay.ts
+cd "$TMPDIR" && node pay.mjs
 ```
 
 Notes:
 
-- this requires Node 22+ and the ESM `package.json` change above
 - if the script fails with `fetch failed`, rerun it with the environment's required network approval or escalation
-- do not default to `tsx` in restricted sandboxes
+- if the environment uses another package manager or runtime, equivalent commands are fine
 
-Fallback:
+Fallback for Node 22+ when the file is saved as `pay.ts`:
+
+```bash
+cd "$TMPDIR" && node --experimental-strip-types pay.ts
+```
+
+Fallback when `tsx` is available and the environment allows it:
 
 ```bash
 cd "$TMPDIR" && npx tsx pay.ts
@@ -273,7 +322,7 @@ Use the fallback only when the environment allows `tsx` to create its IPC pipe.
 
 Parse the output:
 
-- `SUCCESS:<signature>` means the request was accepted
+- `SUCCESS:<json>` means the request was accepted. The JSON payload includes `signature`, `verificationCreated`, and `metadataCreated`.
 - `ERROR:<code>:<message>` means the flow failed
 
 ## 7. Report and Clean Up
@@ -282,7 +331,10 @@ On success, report:
 
 - Solana transaction signature
 - token mint
-- verification submitted
+- whether `verificationCreated` was `true`
+- whether `metadataCreated` was `true`
+
+If the agent had to hand the script to the user instead of running it locally, clearly state that the request was not executed by the agent.
 
 Useful failure buckets:
 
