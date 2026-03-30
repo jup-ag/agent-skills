@@ -119,6 +119,38 @@ require_jq() {
   fi
 }
 
+require_option_value() {
+  local option="$1"
+  local value="${2-}"
+
+  if [[ -z "${value}" || "${value}" == -* ]]; then
+    echo "Missing value for ${option}." >&2
+    usage >&2
+    exit 1
+  fi
+}
+
+read_claude_marketplace_source_path() {
+  local marketplace_name="$1"
+  local state_path="${HOME}/.claude/plugins/known_marketplaces.json"
+
+  if [[ ! -f "${state_path}" ]]; then
+    return 0
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    jq -r --arg marketplace_name "${marketplace_name}" '.[$marketplace_name].source.path // empty' "${state_path}"
+  else
+    awk -v marketplace="\"${marketplace_name}\"" '
+      $0 ~ marketplace"[[:space:]]*:" { in_marketplace=1 }
+      in_marketplace && match($0, /"path"[[:space:]]*:[[:space:]]*"([^"]+)"/, path) {
+        print path[1]
+        exit
+      }
+    ' "${state_path}"
+  fi
+}
+
 install_codex() {
   require_jq
 
@@ -128,6 +160,7 @@ install_codex() {
   local marketplace_path="${CODEX_MARKETPLACE_PATH/#\~/${HOME}}"
   local target_dir="${install_dir}/${PLUGIN_NAME}"
   local plugin_action="installed"
+  local should_copy=1
   local marketplace_action="added"
   local marketplace_dir=""
   local entry_json=""
@@ -147,17 +180,19 @@ install_codex() {
         rm -rf "${target_dir}"
         plugin_action="updated"
       else
-        echo "Skipped Codex install."
-        return 0
+        plugin_action="kept existing"
+        should_copy=0
       fi
     else
-      echo "Codex plugin already exists at ${target_dir}. Re-run with --force to replace it." >&2
-      exit 1
+      plugin_action="kept existing"
+      should_copy=0
     fi
   fi
 
-  mkdir -p "${target_dir}"
-  cp -R "${source_dir}/." "${target_dir}"
+  if [[ "${should_copy}" -eq 1 ]]; then
+    mkdir -p "${target_dir}"
+    cp -R "${source_dir}/." "${target_dir}"
+  fi
 
   marketplace_dir="$(dirname "${marketplace_path}")"
   mkdir -p "${marketplace_dir}"
@@ -246,7 +281,12 @@ install_codex() {
 
   mv "${tmp_file}" "${marketplace_path}"
 
-  echo "Codex plugin ${plugin_action} at ${target_dir}"
+  if [[ "${should_copy}" -eq 1 ]]; then
+    echo "Codex plugin ${plugin_action} at ${target_dir}"
+  else
+    echo "Codex plugin ${plugin_action} at ${target_dir}; marketplace registration was still checked."
+    echo "Use --force to replace the existing plugin files."
+  fi
   echo "Codex marketplace entry ${marketplace_action} in ${marketplace_path}"
   echo "Restart Codex, open /plugins, and install \`${PLUGIN_NAME}\` from your local marketplace."
 }
@@ -259,7 +299,9 @@ install_claude() {
   local plugin_action="installed"
   local add_output=""
   local update_output=""
+  local remove_output=""
   local install_output=""
+  local existing_source_path=""
 
   if ! command -v claude >/dev/null 2>&1; then
     echo "The Claude CLI is required for Claude installs." >&2
@@ -286,12 +328,33 @@ install_claude() {
     if [[ "${add_output}" != *"already installed"* ]]; then
       exit 1
     fi
-    marketplace_action="updated"
-    update_output="$(claude plugin marketplace update "${marketplace_name}" 2>&1)" || {
-      printf '%s\n' "${update_output}" >&2
+    existing_source_path="$(read_claude_marketplace_source_path "${marketplace_name}")"
+    if [[ -z "${existing_source_path}" ]]; then
+      echo "Unable to determine the existing source for Claude marketplace ${marketplace_name}." >&2
       exit 1
-    }
-    printf '%s\n' "${update_output}"
+    fi
+
+    if [[ "${existing_source_path}" != "${REPO_ROOT}" ]]; then
+      marketplace_action="replaced"
+      remove_output="$(claude plugin marketplace remove "${marketplace_name}" 2>&1)" || {
+        printf '%s\n' "${remove_output}" >&2
+        exit 1
+      }
+      printf '%s\n' "${remove_output}"
+
+      add_output="$(claude plugin marketplace add "${REPO_ROOT}" 2>&1)" || {
+        printf '%s\n' "${add_output}" >&2
+        exit 1
+      }
+      printf '%s\n' "${add_output}"
+    else
+      marketplace_action="updated"
+      update_output="$(claude plugin marketplace update "${marketplace_name}" 2>&1)" || {
+        printf '%s\n' "${update_output}" >&2
+        exit 1
+      }
+      printf '%s\n' "${update_output}"
+    fi
   fi
 
   plugin_id="${PLUGIN_NAME}@${marketplace_name}"
@@ -315,6 +378,7 @@ install_claude() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --provider)
+      require_option_value "$1" "${2-}"
       PROVIDER="$(normalize_provider "$2")" || {
         echo "Unknown provider: $2" >&2
         usage >&2
@@ -327,14 +391,17 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --install-dir)
+      require_option_value "$1" "${2-}"
       CODEX_INSTALL_DIR="$2"
       shift 2
       ;;
     --marketplace-path)
+      require_option_value "$1" "${2-}"
       CODEX_MARKETPLACE_PATH="$2"
       shift 2
       ;;
     --claude-scope)
+      require_option_value "$1" "${2-}"
       case "$2" in
         user|project|local)
           CLAUDE_SCOPE="$2"
