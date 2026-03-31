@@ -16,15 +16,12 @@ Precondition:
 - the user has already provided the paying wallet
 - the user has confirmed that wallet holds at least 1 JUP plus a small amount of SOL for fees
 
-## 1. Locate the Local Signing Source
+## 1. Wallet Source
 
-Find where the private key is stored without reading its value.
+The user provides their wallet keypair source. Two formats are supported:
 
-Check in this order:
-
-1. `.env` / `.env.local` for `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY`
-2. `~/.config/solana/id.json`
-3. a user-provided keypair file path
+- **Keypair JSON file** — a file path to a Solana keypair JSON array (e.g. `~/.config/solana/id.json`)
+- **Environment variable** — an env var name containing a base58 private key (e.g. `PRIVATE_KEY` in `.env`)
 
 Security rules:
 
@@ -35,68 +32,35 @@ Security rules:
 
 ## 2. Preflight the Execution Environment
 
-Before installing packages or calling Jupiter:
+Before running the script:
 
-- if HTTP, package installation, or local file access is blocked by the current agent environment, request the required approval or hand the local execution steps to the user
-- prefer a plain ESM script saved as `pay.mjs`; the template below also works as `pay.ts` if the runtime already supports it
-- make the temp workspace ESM before running the script, because `npm init -y` defaults to `"type": "commonjs"` and that breaks `import` syntax
-- equivalent package-manager or shell commands are fine if the environment already provides them
+- if HTTP or local file access is blocked by the current agent environment, request the required approval or hand the local execution steps to the user
+- the script requires `@solana/web3.js@1`, `@solana/spl-token`, and `bs58` as dependencies
+- prefer a plain ESM script saved as `pay.mjs`
+- if the user's project already has these packages, no additional installation is needed
+- equivalent package-manager or shell commands are fine
 
-## 3. Set Up a Temporary Workspace
+If the user does not already have the required packages:
 
 ```bash
-TMPDIR=$(mktemp -d /tmp/jup-verify-XXXXXX) &&
-cd "$TMPDIR" &&
-npm init -y &&
-npm pkg set type=module &&
-npm install @solana/web3.js@1 @solana/spl-token bs58 dotenv
+npm install @solana/web3.js@1 @solana/spl-token bs58
 ```
 
-Notes:
+Ensure the working directory is ESM-compatible (`"type": "module"` in `package.json`) or use the `.mjs` extension.
 
-- if the agent already has these packages available, it may reuse them instead of creating a fresh workspace
-- add `tsx` only if the environment needs it for a `pay.ts` fallback
-
-## 4. Write `config.json`
-
-Write a config file that contains request parameters and secret locations, never secret values.
-
-```json
-{
-  "envPath": "/absolute/path/to/.env",
-  "envKeyName": "PRIVATE_KEY",
-  "walletAddress": "8xDr...",
-  "tokenId": "So11111111111111111111111111111111111111112",
-  "twitterHandle": "https://x.com/jupiterexchange",
-  "senderTwitterHandle": "https://x.com/requester_handle",
-  "description": "Official wrapped SOL token",
-  "tokenMetadata": {
-    "tokenId": "So11111111111111111111111111111111111111112",
-    "name": "Wrapped SOL",
-    "symbol": "SOL"
-  }
-}
-```
-
-Notes:
-
-- `walletAddress` is the user-facing name for the same value sent to the API as `senderAddress`
-- use [API Reference](api-reference.md#canonical-execute-contract) as the source of truth for which request keys belong in `config.json`
-- omit optional keys the user did not provide
-- if `tokenMetadata` is present, pass through the object the user already has; this guide does not fetch or merge metadata via private routes
-
-## 5. Write `pay.mjs`
+## 3. Write `pay.mjs`
 
 The script should:
 
-1. load env vars from `config.json`
-2. load the private key from the user's `.env` or keypair file
-3. derive the wallet locally and abort if it does not match `walletAddress`
-4. call `GET /payments/express/craft-txn?senderAddress={derivedWallet}`
-5. deserialize and verify the returned transaction before signing
-6. sign locally
-7. call `POST /payments/express/execute`
-8. print `SUCCESS:<json>` on success or `ERROR:<code>:<message>` on failure
+1. load the keypair from the user's wallet source
+2. derive the wallet address locally and abort if it does not match the expected address
+3. call `GET /payments/express/craft-txn?senderAddress={derivedWallet}`
+4. deserialize and verify the returned transaction before signing (security requirement)
+5. sign locally
+6. call `POST /payments/express/execute`
+7. print the result
+
+The agent fills in the constant values at the top of the template from the conversation context. Normalize `twitterHandle` and `senderTwitterHandle` to `https://x.com/{handle}` format before writing them into the script (see [API Reference](api-reference.md) for normalization rules).
 
 The script must include these comments:
 
@@ -119,10 +83,20 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import bs58 from "bs58";
-import dotenv from "dotenv";
 import fs from "fs";
-import path from "path";
 
+// ── Parameters (agent fills these in) ────────────────
+const KEYPAIR_PATH = ""; // e.g. "~/.config/solana/id.json" — leave empty if using ENV_KEY
+const ENV_KEY = "";      // e.g. "PRIVATE_KEY" — leave empty if using KEYPAIR_PATH
+const ENV_FILE = "";     // e.g. ".env" — path to env file, only needed with ENV_KEY
+const WALLET_ADDRESS = "";
+const TOKEN_ID = "";
+const TWITTER_HANDLE = "";        // normalized to https://x.com/{handle}
+const SENDER_TWITTER_HANDLE = ""; // optional, normalized
+const DESCRIPTION = "";
+const TOKEN_METADATA = null;      // optional object, e.g. { tokenId: "...", name: "..." }
+
+// ── Constants ────────────────────────────────────────
 const BASE_URL = "https://token-verification-dev-api.jup.ag";
 const JUP_MINT = new PublicKey("JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN");
 const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
@@ -130,68 +104,116 @@ const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
 );
 const MAX_AMOUNT = BigInt(1_000_000);
 
-const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
-
-if (config.envPath) {
-  dotenv.config({ path: path.resolve(config.envPath) });
-}
-
-function normalizeXHandle(value) {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  const trimmed = String(value).trim();
-  if (trimmed === "") {
-    return "";
-  }
-
-  if (trimmed.startsWith("https://x.com/")) {
-    return trimmed;
-  }
-
-  const normalizedHandle = trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
-  return `https://x.com/${normalizedHandle}`;
-}
-
-function parseSecretKey(value) {
-  const trimmed = value.trim();
-  if (trimmed.startsWith("[")) {
-    return new Uint8Array(JSON.parse(trimmed));
-  }
-  return bs58.decode(trimmed);
-}
-
+// ── Load keypair ─────────────────────────────────────
 function loadKeypair() {
-  if (config.keypairPath) {
-    const secret = JSON.parse(
-      fs.readFileSync(path.resolve(config.keypairPath), "utf8")
-    );
+  if (KEYPAIR_PATH) {
+    const resolved = KEYPAIR_PATH.replace(/^~/, process.env.HOME);
+    const secret = JSON.parse(fs.readFileSync(resolved, "utf8"));
     return Keypair.fromSecretKey(new Uint8Array(secret));
   }
 
-  const keyName = config.envKeyName ?? "PRIVATE_KEY";
-  const privateKey = process.env[keyName] ?? process.env.SOLANA_PRIVATE_KEY;
-  if (!privateKey) {
-    console.error("ERROR:NO_KEY:Missing private key");
-    process.exit(1);
+  if (ENV_KEY) {
+    if (ENV_FILE) {
+      const resolvedEnv = ENV_FILE.replace(/^~/, process.env.HOME);
+      const lines = fs.readFileSync(resolvedEnv, "utf8").split("\n");
+      for (const line of lines) {
+        const match = line.match(/^\s*(?:export\s+)?([^#=]+?)\s*=\s*(.*)\s*$/);
+        if (match && match[1] === ENV_KEY) {
+          return Keypair.fromSecretKey(bs58.decode(match[2].replace(/^["']|["']$/g, "")));
+        }
+      }
+    }
+    const envValue = process.env[ENV_KEY];
+    if (envValue) {
+      return Keypair.fromSecretKey(bs58.decode(envValue));
+    }
   }
-  return Keypair.fromSecretKey(parseSecretKey(privateKey));
+
+  throw new Error("NO_KEY: Set KEYPAIR_PATH or ENV_KEY at the top of the script");
 }
 
-function fail(message) {
-  console.error(message);
-  process.exit(1);
+// ── Verify transaction (VRFD security requirement) ───
+function verifyTransaction(tx, craftData) {
+  const accountKeys = tx.message.staticAccountKeys;
+  const mainIxs = tx.message.compiledInstructions.filter(
+    (ix) => !accountKeys[ix.programIdIndex].equals(COMPUTE_BUDGET_PROGRAM_ID)
+  );
+
+  if (mainIxs.length !== 1) {
+    throw new Error("TX_VERIFY_FAILED: unexpected instruction count");
+  }
+
+  const ix = mainIxs[0];
+  const programId = accountKeys[ix.programIdIndex];
+  if (!programId.equals(TOKEN_PROGRAM_ID)) {
+    throw new Error("TX_VERIFY_FAILED: unexpected program");
+  }
+
+  const data = Buffer.from(ix.data);
+  const opcode = data[0];
+  if ((opcode !== 3 && opcode !== 12) || data.length < 9) {
+    throw new Error("TX_VERIFY_FAILED: not a token transfer");
+  }
+
+  const transferAmount = data.readBigUInt64LE(1);
+  const expectedAmount = BigInt(craftData.amount);
+  if (transferAmount !== expectedAmount || transferAmount > MAX_AMOUNT) {
+    throw new Error("TX_VERIFY_FAILED: amount mismatch");
+  }
+
+  const destIndex =
+    opcode === 12 ? ix.accountKeyIndexes[2] : ix.accountKeyIndexes[1];
+  const destination = accountKeys[destIndex];
+  const expectedReceiverAta = getAssociatedTokenAddressSync(
+    JUP_MINT,
+    new PublicKey(craftData.receiverAddress)
+  );
+  if (!destination.equals(expectedReceiverAta)) {
+    throw new Error("TX_VERIFY_FAILED: destination mismatch");
+  }
 }
 
+// ── Sign and execute ─────────────────────────────────
+async function signAndExecute(txBase64, wallet, craftData, executeParams) {
+  const tx = VersionedTransaction.deserialize(
+    Buffer.from(txBase64, "base64")
+  );
+
+  verifyTransaction(tx, craftData);
+
+  tx.sign([wallet]);
+
+  const res = await fetch(`${BASE_URL}/payments/express/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      transaction: Buffer.from(tx.serialize()).toString("base64"),
+      requestId: craftData.requestId,
+      ...executeParams,
+    }),
+  });
+
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = { message: text };
+  }
+
+  if (res.ok && data.status === "Success") return data;
+  throw new Error(`EXECUTE_FAILED: ${JSON.stringify(data)}`);
+}
+
+// ── Main ─────────────────────────────────────────────
 async function main() {
-  const keypair = loadKeypair();
-  const senderAddress = keypair.publicKey.toBase58();
-  const twitterHandle = normalizeXHandle(config.twitterHandle);
-  const senderTwitterHandle = normalizeXHandle(config.senderTwitterHandle);
+  const wallet = loadKeypair();
+  const senderAddress = wallet.publicKey.toBase58();
 
-  if (senderAddress !== config.walletAddress) {
-    fail(`ERROR:WALLET_MISMATCH:${senderAddress} != ${config.walletAddress}`);
+  if (senderAddress !== WALLET_ADDRESS) {
+    throw new Error(
+      `WALLET_MISMATCH: ${senderAddress} != ${WALLET_ADDRESS}`
+    );
   }
 
   const craftRes = await fetch(
@@ -200,106 +222,47 @@ async function main() {
     )}`
   );
   if (!craftRes.ok) {
-    fail(`ERROR:CRAFT_FAILED:${craftRes.status}:${await craftRes.text()}`);
-  }
-
-  const craftData = await craftRes.json();
-  const tx = VersionedTransaction.deserialize(
-    Buffer.from(craftData.transaction, "base64")
-  );
-
-  const accountKeys = tx.message.staticAccountKeys;
-  const mainIxs = tx.message.compiledInstructions.filter(
-    (ix) => !accountKeys[ix.programIdIndex].equals(COMPUTE_BUDGET_PROGRAM_ID)
-  );
-
-  if (mainIxs.length !== 1) {
-    fail(`ERROR:TX_VERIFY_FAILED:unexpected instruction count`);
-  }
-
-  const ix = mainIxs[0];
-  const programId = accountKeys[ix.programIdIndex];
-  if (!programId.equals(TOKEN_PROGRAM_ID)) {
-    fail(`ERROR:TX_VERIFY_FAILED:unexpected program`);
-  }
-
-  const data = Buffer.from(ix.data);
-  const opcode = data[0];
-  if ((opcode !== 3 && opcode !== 12) || data.length < 9) {
-    fail(`ERROR:TX_VERIFY_FAILED:not a token transfer`);
-  }
-
-  const transferAmount = data.readBigUInt64LE(1);
-  const expectedAmount = BigInt(craftData.amount);
-  if (transferAmount !== expectedAmount || transferAmount > MAX_AMOUNT) {
-    fail(`ERROR:TX_VERIFY_FAILED:amount mismatch`);
-  }
-
-  const destIndex = opcode === 12 ? ix.accountKeyIndexes[2] : ix.accountKeyIndexes[1];
-  const destination = accountKeys[destIndex];
-  const expectedReceiverAta = getAssociatedTokenAddressSync(
-    JUP_MINT,
-    new PublicKey(craftData.receiverAddress)
-  );
-  if (!destination.equals(expectedReceiverAta)) {
-    fail(`ERROR:TX_VERIFY_FAILED:destination mismatch`);
-  }
-
-  tx.sign([keypair]);
-  const executeBody = {
-    transaction: Buffer.from(tx.serialize()).toString("base64"),
-    requestId: craftData.requestId,
-    senderAddress,
-    tokenId: config.tokenId,
-    twitterHandle: twitterHandle ?? "",
-    description: config.description ?? "",
-    ...(senderTwitterHandle
-      ? { senderTwitterHandle }
-      : {}),
-    ...(config.tokenMetadata ? { tokenMetadata: config.tokenMetadata } : {}),
-  };
-
-  const executeRes = await fetch(`${BASE_URL}/payments/express/execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(executeBody),
-  });
-
-  const executeText = await executeRes.text();
-  let executeData = executeText;
-  try {
-    executeData = JSON.parse(executeText);
-  } catch {
-    // Keep raw text for error reporting.
-  }
-
-  if (executeRes.ok && executeData.status === "Success") {
-    console.log(
-      `SUCCESS:${JSON.stringify({
-        signature: executeData.signature,
-        verificationCreated: Boolean(executeData.verificationCreated),
-        metadataCreated: Boolean(executeData.metadataCreated),
-      })}`
+    throw new Error(
+      `CRAFT_FAILED: ${craftRes.status}: ${await craftRes.text()}`
     );
-    return;
   }
+  const craftData = await craftRes.json();
 
-  fail(`ERROR:EXECUTE_FAILED:${JSON.stringify(executeData)}`);
+  const result = await signAndExecute(
+    craftData.transaction,
+    wallet,
+    craftData,
+    {
+      senderAddress,
+      tokenId: TOKEN_ID,
+      twitterHandle: TWITTER_HANDLE,
+      description: DESCRIPTION,
+      ...(SENDER_TWITTER_HANDLE
+        ? { senderTwitterHandle: SENDER_TWITTER_HANDLE }
+        : {}),
+      ...(TOKEN_METADATA ? { tokenMetadata: TOKEN_METADATA } : {}),
+    }
+  );
+
+  console.log(
+    `SUCCESS:${JSON.stringify({
+      signature: result.signature,
+      verificationCreated: Boolean(result.verificationCreated),
+      metadataCreated: Boolean(result.metadataCreated),
+    })}`
+  );
 }
 
 main().catch((err) => {
-  fail(`ERROR:EXCEPTION:${err.message}`);
+  console.error(`ERROR:${err.message}`);
+  process.exit(1);
 });
 ```
 
-## 6. Run the Script
-
-Preferred:
+## 4. Run the Script
 
 ```bash
-cd "$TMPDIR" && node pay.mjs
+node pay.mjs
 ```
 
 Notes:
@@ -310,23 +273,15 @@ Notes:
 Fallback for Node 22+ when the file is saved as `pay.ts`:
 
 ```bash
-cd "$TMPDIR" && node --experimental-strip-types pay.ts
+node --experimental-strip-types pay.ts
 ```
-
-Fallback when `tsx` is available and the environment allows it:
-
-```bash
-cd "$TMPDIR" && npx tsx pay.ts
-```
-
-Use the fallback only when the environment allows `tsx` to create its IPC pipe.
 
 Parse the output:
 
 - `SUCCESS:<json>` means the request was accepted. The JSON payload includes `signature`, `verificationCreated`, and `metadataCreated`.
-- `ERROR:<code>:<message>` means the flow failed
+- `ERROR:<message>` means the flow failed.
 
-## 7. Report and Clean Up
+## 5. Report
 
 On success, report:
 
@@ -341,17 +296,9 @@ Useful failure buckets:
 
 | Error | Likely cause |
 | --- | --- |
-| `NO_KEY` | Missing local signing key |
+| `NO_KEY` | KEYPAIR_PATH and ENV_KEY are both empty |
 | `WALLET_MISMATCH` | Wallet address does not match signing key |
 | `CRAFT_FAILED` | Invalid wallet, insufficient balance, or upstream failure |
 | `TX_VERIFY_FAILED` | Crafted transaction did not match expectations |
 | `EXECUTE_FAILED` | Expired transaction, eligibility conflict, or execution failure |
-| `EXCEPTION` | Local script or network problem |
-| `listen EPERM ...pipe` | `tsx` IPC socket blocked by the sandbox; use `node --experimental-strip-types` instead |
-| `fetch failed` | Outbound network blocked; rerun with the environment's required approval or escalation |
-
-Always remove the temp directory after the run:
-
-```bash
-rm -rf "$TMPDIR"
-```
+| `fetch failed` | Outbound network blocked; rerun with the environment's required approval |

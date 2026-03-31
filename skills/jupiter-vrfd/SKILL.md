@@ -79,6 +79,7 @@ Look for:
 - submission mode if the user already made it clear
 - token mint
 - paying wallet address
+- wallet keypair source (file path or env var name)
 - token metadata fields to update
 - token Twitter handle or URL
 - requester Twitter handle or URL
@@ -130,19 +131,23 @@ For an eligibility-only request, report the result and stop here.
   - which `tokenMetadata` fields are available
 - Collect only the missing required fields and only the metadata fields the user wants to change.
 
-## Step 4. Resolve Local Signer Source
+## Step 4. Collect Wallet
 
 Only for execute requests.
 
-Check for a local signing source in this order:
+Ask the user for their wallet keypair source. Supported formats:
 
-1. `.env` / `.env.local` contains `PRIVATE_KEY` or `SOLANA_PRIVATE_KEY`
-2. `~/.config/solana/id.json`
-3. a user-provided keypair file path
+- **Keypair JSON file** — file path to a Solana keypair JSON array (e.g. `~/.config/solana/id.json`)
+- **Environment variable** — env var name containing a base58 private key (e.g. `PRIVATE_KEY` in `.env`)
 
-Only confirm file paths and variable names in chat. Never print secret values. Only derive the wallet address inside the local execution script so it can verify that the signer matches `walletAddress`.
+Security rules:
 
-If the current agent cannot safely access a local signer source, stop here and hand the user the local execution steps from [Payment Execution](references/payment-execution.md) instead of asking for secrets in chat.
+- Never accept a raw private key or seed phrase pasted in chat.
+- Never read secret values into agent context.
+- Only record file paths and env var names. The signing key is loaded and used only inside the local execution script.
+- The wallet address is derived inside the script to verify it matches the expected `walletAddress`.
+
+If the current agent cannot safely access a local keypair, stop here and hand the user the local execution steps from [Payment Execution](references/payment-execution.md).
 
 ## Step 5. Confirm Before Executing
 
@@ -178,7 +183,7 @@ Load [Payment Execution](references/payment-execution.md) and follow the local s
 
 Report the returned transaction signature and whether `verificationCreated` / `metadataCreated` were set.
 
-If the current agent cannot run the local signing flow safely, stop and hand the user the exact local script and `config.json` steps instead of claiming the request was submitted.
+If the current agent cannot run the local signing flow safely, stop and hand the user the exact local script from [Payment Execution](references/payment-execution.md) instead of claiming the request was submitted.
 
 ---
 
