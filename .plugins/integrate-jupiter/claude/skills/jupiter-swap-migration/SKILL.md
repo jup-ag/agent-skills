@@ -80,4 +80,4 @@ Remove this skill once Jupiter decommissions the v1 (`/swap/v1`) endpoints and t
 - [Build](https://dev.jup.ag/docs/swap/v2/build/index.md)
 - [Fees](https://dev.jup.ag/docs/swap/v2/fees.md)
 - [Routing](https://dev.jup.ag/docs/swap/v2/routing.md)
-- [OpenAPI spec](https://dev.jup.ag/openapi-spec/swap/v2/swap.yaml)
+- [OpenAPI spec](https://dev.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)

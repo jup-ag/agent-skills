@@ -290,48 +290,49 @@ You can batch multiple operations—such as depositing + borrowing, or repaying 
 
 ---
 
-# 4. Jupiter Lend Build Kit
+# 4. Jupiter Lend Documentation
 
-The Jupiter Lend Build Kit provides UI components, utilities, and extensive documentation to easily integrate Jupiter Lend into your application. It serves as a comprehensive reference for both humans and AI agents.
+Use the official Jupiter Lend docs as the canonical reference for architecture, API, CPI, and advanced integration guidance.
 
-- **Staging Documentation**: [instadapp.mintlify.app](https://instadapp.mintlify.app) (Currently available at `instadapp.mintlify.app`)
+- **Official Documentation**: [dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
 
-*(Note: The build kit is currently in development on staging. Production URLs will be updated here once officially deployed.)*
-
-### Build Kit Documentation Index
-
-The Build Kit documentation covers the following core integration topics. When referencing the build kit, you can explore these pages for specific examples and concepts:
+### Documentation Index
 
 **Developers & Core Concepts:**
-- `overview`: Core concepts and getting started.
-- `api-vs-sdk`: Guidance on choosing between the Jupiter API and the `@jup-ag/lend` SDKs for integration.
+- **Overview**: [Jupiter Lend Overview](https://dev.jup.ag/docs/lend)
+- **Core Architecture**: [Core Architecture](https://dev.jup.ag/docs/lend/architecture)
+- **Oracles**: [Oracles](https://dev.jup.ag/docs/lend/oracles)
+- **API vs SDK**: [API vs SDK](https://dev.jup.ag/docs/lend/api-vs-sdk)
 
 **Earn Module (Lending):**
-- `earn-overview`: Fetching market configurations, supply caps, and yield metrics for tokens.
-- `user-position`: Fetching a user's supplied balance and accrued yield.
-- **Operations**:
-  - `deposit-earn`: Supplying assets to the protocol.
-  - `withdraw-earn`: Removing supplied assets and yield.
+- **Earn Overview**: [Earn Overview](https://dev.jup.ag/docs/lend/earn)
+- **Earn API (Beta)**: [Earn API (Beta)](https://dev.jup.ag/docs/lend/earn/api)
+- **Earn CPI Integration**: [Earn CPI Integration](https://dev.jup.ag/docs/lend/earn/cpi)
 
 **Borrow Module (Vaults):**
-- `overview-borrow`: Core Vault concepts, LTV limits, and borrowing caps.
-- `vault-data`: Fetching dynamic vault configurations, risk metrics, rates, and limits.
-- **Operations**:
-  - `create-position`: Minting a new position NFT to start borrowing.
-  - `deposit-borrow`: Supplying collateral to a specific vault.
-  - `borrow`: Drawing debt against deposited collateral.
-  - `repay`: Repaying outstanding debt.
-  - `withdraw-borrow`: Withdrawing deposited collateral.
-  - `operate-combined`: Batching multiple actions (e.g., Deposit + Borrow, Repay + Withdraw) in a single transaction.
-  - `liquidate`: Mechanics of liquidating unhealthy positions.
+- **Borrow Overview**: [Borrow Overview](https://dev.jup.ag/docs/lend/borrow)
+- **Borrow API (Soon)**: [Borrow API (Soon)](https://dev.jup.ag/docs/lend/borrow/api)
+- **Borrow CPI Integration**: [Borrow CPI Integration](https://dev.jup.ag/docs/lend/borrow/cpi)
 
 **Flashloan Module:**
-- `flashloan-overview`: Core concepts and use cases for flashloans.
-- `flashloan-operate`: Executing flashloans using `getFlashloanIx` with custom intermediate logic.
+- **Flashloans**: [Flashloans](https://dev.jup.ag/docs/lend/flashloan)
+- **Execute a Flashloan**: [Execute a Flashloan](https://dev.jup.ag/docs/lend/flashloan/execute)
+
+**Liquidity Module:**
+- **Unifying Liquidity**: [Unifying Liquidity](https://dev.jup.ag/docs/lend/liquidity)
+- **Liquidity Data & Analytics**: [Liquidity Data & Analytics](https://dev.jup.ag/docs/lend/liquidity/analytics)
+
+**Advanced Guides:**
+- **Advanced Guides Index**: [Advanced Guides](https://dev.jup.ag/docs/lend/advanced)
+- **Multiply (Leverage)**: [Multiply (Leverage)](https://dev.jup.ag/docs/lend/advanced/multiply)
+- **Unwind (Deleverage)**: [Unwind (Deleverage)](https://dev.jup.ag/docs/lend/advanced/unwind)
+- **Repay with Collateral and Max Withdraw**: [Repay with Collateral and Max Withdraw](https://dev.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw)
+- **Vault Swap**: [Vault Swap](https://dev.jup.ag/docs/lend/advanced/vault-swap)
+- **Utilisation After Deposit**: [Utilisation After Deposit](https://dev.jup.ag/docs/lend/advanced/utilization-after-deposit)
 
 **Resources:**
-- `program-addresses`: Official Mainnet Program IDs for Liquidity, Lending, Vaults, and Oracles.
-- `idl-and-types`: Accessing raw IDLs for building CPIs and parsing on-chain state.
+- **Program Addresses**: [Program addresses](https://dev.jup.ag/docs/lend/program-addresses)
+- **IDL and Types**: [IDL and types](https://dev.jup.ag/docs/lend/idl-and-types)
 
 
 ---
@@ -544,8 +545,16 @@ main().catch(console.error);
 ## API Documentation
 
 - **Jupiter Lend Overview**: [dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
-- **Lend API (Earn)**: [dev.jup.ag/docs/lend/earn](https://dev.jup.ag/docs/lend/earn) | REST API for Earn operations (deposit/withdraw)
-- **Lend API (Borrow)**: *(Coming Soon)*
+- **Core Architecture**: [dev.jup.ag/docs/lend/architecture](https://dev.jup.ag/docs/lend/architecture)
+- **API vs SDK**: [dev.jup.ag/docs/lend/api-vs-sdk](https://dev.jup.ag/docs/lend/api-vs-sdk)
+- **Earn Overview**: [dev.jup.ag/docs/lend/earn](https://dev.jup.ag/docs/lend/earn)
+- **Earn API (Beta)**: [dev.jup.ag/docs/lend/earn/api](https://dev.jup.ag/docs/lend/earn/api) | REST API for Earn operations (deposit/withdraw)
+- **Borrow Overview**: [dev.jup.ag/docs/lend/borrow](https://dev.jup.ag/docs/lend/borrow)
+- **Borrow API (Soon)**: [dev.jup.ag/docs/lend/borrow/api](https://dev.jup.ag/docs/lend/borrow/api)
+- **Earn CPI Integration**: [dev.jup.ag/docs/lend/earn/cpi](https://dev.jup.ag/docs/lend/earn/cpi)
+- **Borrow CPI Integration**: [dev.jup.ag/docs/lend/borrow/cpi](https://dev.jup.ag/docs/lend/borrow/cpi)
+- **Program Addresses**: [dev.jup.ag/docs/lend/program-addresses](https://dev.jup.ag/docs/lend/program-addresses)
+- **IDL and Types**: [dev.jup.ag/docs/lend/idl-and-types](https://dev.jup.ag/docs/lend/idl-and-types)
 
 ## SDKs
 
