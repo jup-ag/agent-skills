@@ -1,25 +1,12 @@
 ---
 name: jupiter-lend
-description: Interact with Jupiter Lend Protocol. Read-only SDK (@jup-ag/lend-read) for querying liquidity pools, lending markets (jlTokens), and vaults. Write SDK (@jup-ag/lend) for lending (deposit/withdraw) and vault operations (deposit collateral, borrow, repay, manage positions). No API keys needed for on-chain interactions.
-license: MIT
+version: 0.1.2
+description: Interact with Jupiter Lend Protocol. Read-only SDK (@jup-ag/lend-read) for querying liquidity pools, lending markets (jlTokens), and vaults. Write SDK (@jup-ag/lend) for lending (deposit/withdraw) and vault operations (deposit collateral, borrow, repay, manage positions).
+homepage: https://jup.ag/lend
 metadata:
-  author: jup-ag
-  version: "1.0.0"
-tags:
-  - jupiter
-  - jup-ag
-  - jupiter-lend
-  - jupiter-lend-read
-  - fluid-protocol
-  - jltoken
-  - jlp
-  - jupiter-vaults
-  - jupiter-liquidity
-  - lend
-  - borrow
-  - earn
-  - solana
-  - defi
+  protocol: jupiter-lend
+  category: defi
+  chains: [solana]
 ---
 
 # Jupiter Lend Protocol
@@ -30,6 +17,19 @@ The protocol uses two main SDKs:
 
 - `@jup-ag/lend-read`: Read-only queries for all programs (Liquidity, Lending, Vaults)
 - `@jup-ag/lend`: Write operations (deposit, withdraw, borrow, repay)
+
+## Agent usage
+
+Example prompts you can use to demo Jupiter Lend integrations:
+
+- Discover all available vaults and list them
+- Fetch all vault positions for a user
+- Deposit collateral and borrow in a single transaction
+- Repay max debt and withdraw max collateral for a position
+- Get user Earn (jlToken) positions and underlying balances
+- Build a flashloan for arbitrage or liquidation
+- Get liquidity rates and APY for a token
+- Create a new vault position (positionId 0), deposit collateral, and borrow
 
 ## SDK Installation
 
@@ -65,56 +65,15 @@ Understanding the architecture and terminology of Jupiter Lend will help you bui
 - **Dust Borrow**: A tiny residual amount of debt intentionally kept on positions to handle division rounding complexities.
 - **Sentinel Values**: Constants like `MAX_WITHDRAW_AMOUNT` and `MAX_REPAY_AMOUNT` that tell the protocol to dynamically calculate and withdraw/repay the maximum mathematically possible amount for a position.
 
+### Amounts and units
+
+All SDK amounts use **base units** (smallest token unit, e.g. `1_000_000` = 1 USDC for 6 decimals).
+
 ---
 
-# 2. Reading Data (@jup-ag/lend-read)
+# 2. Jupiter Earn (Lending)
 
-The read SDK uses a unified `Client` to query Liquidity, Lending, and Vault modules. All queries are **read-only** and fetch decoded on-chain accounts via RPC. This is how integrators find available markets, rates, and existing user positions.
-
-### Quick Start (Read SDK)
-
-```typescript
-import { Client } from "@jup-ag/lend-read";
-import { Connection, PublicKey } from "@solana/web3.js";
-
-// Initialize with a connection
-const connection = new Connection("https://api.mainnet-beta.solana.com");
-const client = new Client(connection);
-```
-
-### Finding User Vault Positions
-
-Before making Vault operations (like deposit, borrow, or repay), you need to know a user's existing `positionId` (which maps to an NFT).
-
-```typescript
-const userPublicKey = new PublicKey("YOUR_WALLET_PUBKEY");
-
-// Retrieve all positions owned by the user
-// Returns both the user position details and the corresponding Vault data
-const { userPositions_, vaultsData_ } = await client.vault.positionsByUser(userPublicKey);
-
-for (let i = 0; i < userPositions_.length; i++) {
-  console.log(`Position ID (nftId): ${userPositions_[i].nftId}`);
-  console.log(`Vault ID: ${vaultsData_[i].constantVariables.vaultId}`);
-  console.log(`Collateral Supplied: ${userPositions_[i].supply}`);
-  console.log(`Debt Borrowed: ${userPositions_[i].borrow}`);
-}
-```
-
-### Liquidity Module
-
-Access liquidity pool data, interest rates, and user supply/borrow positions.
-
-```typescript
-const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-
-// Get market data for a token (rates, prices, utilization)
-const data = await client.liquidity.getOverallTokenData(USDC);
-
-// View rates (basis points: 10000 = 100%)
-const supplyApr = Number(data.supplyRate) / 100;
-const borrowApr = Number(data.borrowRate) / 100;
-```
+Jupiter Earn allows users to supply assets to earn yield. In return, users receive yield-bearing `jlTokens` (e.g., `jlUSDC`).
 
 ### Lending Module (jlTokens)
 
@@ -128,14 +87,45 @@ const allDetails = await client.lending.getAllJlTokenDetails();
 const position = await client.lending.getUserPosition(USDC, userPublicKey);
 ```
 
+## Lending (Earn)
+
+Deposit underlying assets to receive yield-bearing tokens, or withdraw them.
+
+```typescript
+import { getDepositIxs, getWithdrawIxs } from "@jup-ag/lend/earn";
+import BN from "bn.js";
+
+// Deposit 1 USDC (base units: 1_000_000 for 6 decimals)
+const { ixs: depositIxs } = await getDepositIxs({
+  amount: new BN(1_000_000),
+  asset: USDC_PUBKEY,
+  signer: userPublicKey,
+  connection,
+});
+
+// Withdraw 0.1 USDC (100_000 base units @ 6 decimals)
+const { ixs: withdrawIxs } = await getWithdrawIxs({
+  amount: new BN(100_000),
+  asset: USDC_PUBKEY,
+  signer: userPublicKey,
+  connection,
+});
+```
+
+---
+
+# 3. Jupiter Borrow (Vaults)
+
+Vaults handle collateral deposits and debt borrowing.
+
 ### Vault Module & Discovery
 
 Access vault configurations, positions, exchange prices, and liquidation data. This is crucial for dynamically listing all available leverage markets.
 
 ```typescript
 // Discover all available vaults
-const allVaults = await client.vault.getAllVaultsAddresses();
-const totalVaults = await client.vault.getTotalVaults();
+const allVaults = await client.vault.getAllVaults();
+const totalVaults = allVaults.length;
 
 // Get comprehensive vault data (config + state + rates + limits) for a specific vault
 const vaultId = 1;
@@ -148,32 +138,22 @@ const borrowable = vaultData.limitsAndAvailability.borrowable;
 
 ---
 
-# 3. Writing Data (@jup-ag/lend)
+### Finding User Vault Positions
 
-All write operations generate instructions (`ixs`) and Address Lookup Tables (`addressLookupTableAccounts`) that must be wrapped in a **versioned (v0) transaction**.
-
-## Lending (Earn)
-
-Deposit underlying assets to receive yield-bearing tokens, or withdraw them.
+Before making Vault operations (like deposit, borrow, or repay), you need to know a user's existing `positionId` (which maps to an NFT).
 
 ```typescript
-import { getDepositIxs, getWithdrawIxs } from "@jup-ag/lend/earn";
-import BN from "bn.js";
+const userPublicKey = new PublicKey("YOUR_WALLET_PUBKEY");
 
-// Deposit 1 USDC (assuming 6 decimals)
-const { ixs: depositIxs } = await getDepositIxs({
-  amount: new BN(1_000_000),
-  asset: USDC_PUBKEY,
-  signer: userPublicKey,
-  connection,
-});
+// Retrieve all positions owned by the user
+// Each position includes full vault data: NftPosition & { vault: VaultEntireData }
+const positions = await client.vault.getAllUserPositions(userPublicKey);
 
-// Withdraw
-const { ixs: withdrawIxs } = await getWithdrawIxs({
-  amount: new BN(100_000),
-  asset: USDC_PUBKEY,
-  signer: userPublicKey,
-  connection,
+positions.forEach((p) => {
+  console.log(`Position ID (nftId): ${p.nftId}`);
+  console.log(`Vault ID: ${p.vault.constantViews.vaultId}`);
+  console.log(`Collateral Supplied: ${p.supply.toString()}`);
+  console.log(`Debt Borrowed: ${p.borrow.toString()}`);
 });
 ```
 
@@ -188,7 +168,9 @@ The direction of the operation is determined by the sign of `colAmount` and `deb
 - **Borrow**: `colAmount` = 0, `debtAmount` > 0
 - **Repay**: `colAmount` = 0, `debtAmount` < 0
 
-> **Important**: If `positionId` is `0`, a new position NFT is created, and the SDK returns the new `positionId`.
+**Sentinels**: `MAX_REPAY_AMOUNT` and `MAX_WITHDRAW_AMOUNT` are already signed (negative); pass them as-is—do not call `.neg()` on them.
+
+**Important**: If `positionId` is `0`, a new position NFT is created, and the SDK returns the new `positionId`.
 
 ### Common Vault Patterns
 
@@ -197,7 +179,7 @@ The direction of the operation is determined by the sign of `colAmount` and `deb
 ```typescript
 import { getOperateIx } from "@jup-ag/lend/borrow";
 
-// Deposit 1 token (base units)
+// Deposit 1 USDC (base units: 1_000_000 for 6 decimals)
 const { ixs, addressLookupTableAccounts, positionId: newPositionId } = await getOperateIx({
   vaultId: 1,
   positionId: 0, // 0 = create new position
@@ -211,12 +193,12 @@ const { ixs, addressLookupTableAccounts, positionId: newPositionId } = await get
 **2. Borrow Debt**
 
 ```typescript
-// Borrow 0.5 tokens against existing position
+// Borrow 0.5 USDC (500_000 base units @ 6 decimals)
 const { ixs, addressLookupTableAccounts } = await getOperateIx({
   vaultId: 1,
   positionId: EXISTING_POSITION_ID, // Use the nftId retrieved from the read SDK
   colAmount: new BN(0),
-  debtAmount: new BN(500_000), // Positive = Borrow
+  debtAmount: new BN(500_000), // Positive = Borrow (0.5 USDC @ 6 decimals)
   connection,
   signer,
 });
@@ -259,22 +241,19 @@ const { ixs, addressLookupTableAccounts } = await getOperateIx({
 You can batch multiple operations—such as depositing + borrowing, or repaying + withdrawing—in a single transaction using `getOperateIx`:
 
 - **a. Deposit + Borrow in one Tx:**
-  Pass both `colAmount` and `debtAmount` to deposit collateral and borrow simultaneously.
-
+Pass both `colAmount` and `debtAmount` to deposit collateral and borrow simultaneously.
   ```typescript
   const { ixs, addressLookupTableAccounts } = await getOperateIx({
     vaultId: 1,
     positionId: 0, // Create new position
-    colAmount: new BN(1_000_000), // Deposit collateral
-    debtAmount: new BN(500_000),  // Borrow
+    colAmount: new BN(1_000_000), // Deposit 1 USDC (6 decimals)
+    debtAmount: new BN(500_000),  // Borrow 0.5 USDC (6 decimals)
     connection,
     signer,
   });
   ```
-
 - **b. Repay + Withdraw in one Tx:**
-  Repay debt and withdraw collateral at once. Use max sentinels for a full repayment or to withdraw the maximum available.
-
+Repay debt and withdraw collateral at once. Use max sentinels for a full repayment or to withdraw the maximum available.
   ```typescript
   import { getOperateIx, MAX_WITHDRAW_AMOUNT, MAX_REPAY_AMOUNT } from "@jup-ag/lend/borrow";
 
@@ -290,54 +269,103 @@ You can batch multiple operations—such as depositing + borrowing, or repaying 
 
 ---
 
-# 4. Jupiter Lend Documentation
+---
 
-Use the official Jupiter Lend docs as the canonical reference for architecture, API, CPI, and advanced integration guidance.
+# 4. Flashloans
 
-- **Official Documentation**: [dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
+Flashloans allow you to borrow liquidity from the protocol without requiring upfront collateral. Return the borrowed amount within the exact same transaction—there are **no flashloan fees**. Borrow the asset you need directly for arbitrage, liquidations, or other use cases.
 
-### Documentation Index
+### Executing a Flashloan (@jup-ag/lend)
 
-**Developers & Core Concepts:**
-- **Overview**: [Jupiter Lend Overview](https://dev.jup.ag/docs/lend)
-- **Core Architecture**: [Core Architecture](https://dev.jup.ag/docs/lend/architecture)
-- **Oracles**: [Oracles](https://dev.jup.ag/docs/lend/oracles)
-- **API vs SDK**: [API vs SDK](https://dev.jup.ag/docs/lend/api-vs-sdk)
+The `@jup-ag/lend` SDK provides simple helper functions to retrieve the instructions needed to execute a flashloan. The most convenient way is using `getFlashloanIx`.
 
-**Earn Module (Lending):**
-- **Earn Overview**: [Earn Overview](https://dev.jup.ag/docs/lend/earn)
-- **Earn API (Beta)**: [Earn API (Beta)](https://dev.jup.ag/docs/lend/earn/api)
-- **Earn CPI Integration**: [Earn CPI Integration](https://dev.jup.ag/docs/lend/earn/cpi)
+```typescript
+import { getFlashloanIx } from "@jup-ag/lend/flashloan";
+import { Connection, PublicKey, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import BN from "bn.js";
 
-**Borrow Module (Vaults):**
-- **Borrow Overview**: [Borrow Overview](https://dev.jup.ag/docs/lend/borrow)
-- **Borrow API (Soon)**: [Borrow API (Soon)](https://dev.jup.ag/docs/lend/borrow/api)
-- **Borrow CPI Integration**: [Borrow CPI Integration](https://dev.jup.ag/docs/lend/borrow/cpi)
+async function executeFlashloan() {
+  const connection = new Connection("https://api.mainnet-beta.solana.com");
+  const signer = new PublicKey("YOUR_WALLET_PUBKEY");
+  const asset = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC
 
-**Flashloan Module:**
-- **Flashloans**: [Flashloans](https://dev.jup.ag/docs/lend/flashloan)
-- **Execute a Flashloan**: [Execute a Flashloan](https://dev.jup.ag/docs/lend/flashloan/execute)
+  const borrowAmount = new BN(100_000_000); // 100 USDC (base units, 6 decimals)
 
-**Liquidity Module:**
-- **Unifying Liquidity**: [Unifying Liquidity](https://dev.jup.ag/docs/lend/liquidity)
-- **Liquidity Data & Analytics**: [Liquidity Data & Analytics](https://dev.jup.ag/docs/lend/liquidity/analytics)
+  // 1. Get the borrow and payback instructions
+  const { borrowIx, paybackIx } = await getFlashloanIx({
+    connection,
+    signer,
+    asset,
+    amount: borrowAmount,
+  });
 
-**Advanced Guides:**
-- **Advanced Guides Index**: [Advanced Guides](https://dev.jup.ag/docs/lend/advanced)
-- **Multiply (Leverage)**: [Multiply (Leverage)](https://dev.jup.ag/docs/lend/advanced/multiply)
-- **Unwind (Deleverage)**: [Unwind (Deleverage)](https://dev.jup.ag/docs/lend/advanced/unwind)
-- **Repay with Collateral and Max Withdraw**: [Repay with Collateral and Max Withdraw](https://dev.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw)
-- **Vault Swap**: [Vault Swap](https://dev.jup.ag/docs/lend/advanced/vault-swap)
-- **Utilisation After Deposit**: [Utilisation After Deposit](https://dev.jup.ag/docs/lend/advanced/utilization-after-deposit)
+  // 2. Define your custom instructions that utilize the borrowed funds
+  const myCustomArbitrageInstructions = [
+    // ... your instructions here
+  ];
 
-**Resources:**
-- **Program Addresses**: [Program addresses](https://dev.jup.ag/docs/lend/program-addresses)
-- **IDL and Types**: [IDL and types](https://dev.jup.ag/docs/lend/idl-and-types)
+  // 3. Assemble the transaction: Borrow -> Custom Logic -> Payback
+  const instructions = [
+    borrowIx,
+    ...myCustomArbitrageInstructions,
+    paybackIx
+  ];
 
+  const latestBlockhash = await connection.getLatestBlockhash();
+  const message = new TransactionMessage({
+    payerKey: signer,
+    recentBlockhash: latestBlockhash.blockhash,
+    instructions,
+  }).compileToV0Message();
+
+  const transaction = new VersionedTransaction(message);
+  // Sign and send...
+}
+```
 
 ---
 
-# 5. Complete Working Examples
+# 5. Liquidity
+
+The Liquidity layer is the foundation of Jupiter Lend, holding all the underlying assets. While you usually interact with the Earn and Borrow layers, querying the Liquidity layer directly is highly useful for analytics, dashboards, and APY aggregators.
+
+### Liquidity Module
+
+Access liquidity pool data, interest rates, and user supply/borrow positions.
+
+```typescript
+const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+
+// Get market data for a token (rates, prices, utilization)
+const data = await client.liquidity.getOverallTokenData(USDC);
+
+// View rates (basis points: 10000 = 100%)
+const supplyApr = Number(data.supplyRate) / 100;
+const borrowApr = Number(data.borrowRate) / 100;
+```
+
+---
+
+# 6. Jupiter Lend Build Kit
+
+The Jupiter Lend Build Kit offers developer components, powerful utilities, and in-depth documentation to help you build and integrate with Jupiter Lend efficiently.
+
+**Base URL**: [https://dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
+
+### Build Kit Documentation Index
+
+- **Getting started**: [overview](https://dev.jup.ag/docs/lend), [API vs SDK](https://dev.jup.ag/docs/lend/api-vs-sdk)
+- **Earn**: [overview](https://dev.jup.ag/docs/lend/earn), [deposit](https://dev.jup.ag/docs/lend/earn/deposit), [withdraw](https://dev.jup.ag/docs/lend/earn/withdraw), [read data](https://dev.jup.ag/docs/lend/earn/read-data)
+- **Wallet integrations (Privy)**: [Earn with Privy](https://dev.jup.ag/docs/lend/wallets/privy-earn), [Borrow with Privy](https://dev.jup.ag/docs/lend/wallets/privy-borrow)
+- **Borrow**: [overview](https://dev.jup.ag/docs/lend/borrow), [create position](https://dev.jup.ag/docs/lend/borrow/create-position), [deposit](https://dev.jup.ag/docs/lend/borrow/deposit), [borrow](https://dev.jup.ag/docs/lend/borrow/borrow), [repay](https://dev.jup.ag/docs/lend/borrow/repay), [withdraw](https://dev.jup.ag/docs/lend/borrow/withdraw), [combined operate](https://dev.jup.ag/docs/lend/borrow/combined), [liquidate](https://dev.jup.ag/docs/lend/borrow/liquidation), [read vault data](https://dev.jup.ag/docs/lend/borrow/read-vault-data)
+- **Flashloan**: [overview](https://dev.jup.ag/docs/lend/flashloan), [execute](https://dev.jup.ag/docs/lend/flashloan/execute)
+- **Advanced**: [advanced/multiply](https://dev.jup.ag/docs/lend/advanced/multiply), [advanced/unwind](https://dev.jup.ag/docs/lend/advanced/unwind), [advanced/repay-withdraw-collateral](https://dev.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw), [advanced/vault-swap](https://dev.jup.ag/docs/lend/advanced/vault-swap), [advanced/utilization-after-deposit](https://dev.jup.ag/docs/lend/advanced/utilization-after-deposit), [advanced/native-staked-vault/overview](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/overview), [advanced/native-staked-vault/deposit](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/deposit), [advanced/native-staked-vault/withdraw](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/withdraw)
+- **Liquidity**: [liquidity/analytics](https://dev.jup.ag/docs/lend/liquidity/analytics)
+- **Resources**: [resources/program-addresses](https://dev.jup.ag/docs/lend/resources/program-addresses), [resources/idl-and-types](https://dev.jup.ag/docs/lend/resources/idl-and-types), [resources/dune](https://dev.jup.ag/docs/lend/resources/dune)
+
+---
+
+# 7. Complete Working Examples
 
 > Copy-paste-ready scripts. Install dependencies: `npm install @solana/web3.js bn.js @jup-ag/lend @jup-ag/lend-read`
 
@@ -363,7 +391,7 @@ const KEYPAIR_PATH = "/path/to/your/keypair.json";
 const RPC_URL = "https://api.mainnet-beta.solana.com";
 const VAULT_ID = 1;
 
-const DEPOSIT_AMOUNT = new BN(1_000_000);
+const DEPOSIT_AMOUNT = new BN(1_000_000); // 1 USDC @ 6 decimals
 
 function loadKeypair(keypairPath: string): Keypair {
   const fullPath = path.resolve(keypairPath);
@@ -378,17 +406,14 @@ async function main() {
 
   // 1. Read Data: Find existing user positions for the vault
   const client = new Client(connection);
-  const { userPositions_, vaultsData_ } = await client.vault.positionsByUser(signer);
+  const positions = await client.vault.getAllUserPositions(signer);
 
-  let targetPositionId = 0; // Default to 0 (create new position)
+  let targetPositionId = 0; // 0 = create new position
 
-  // Find an existing position for our target Vault ID
-  for (let i = 0; i < userPositions_.length; i++) {
-    if (vaultsData_[i].constantVariables.vaultId === VAULT_ID) {
-      targetPositionId = userPositions_[i].nftId;
-      console.log(`Found existing position NFT: ${targetPositionId}`);
-      break;
-    }
+  const existing = positions.find((p) => p.vault.constantViews.vaultId === VAULT_ID);
+  if (existing) {
+    targetPositionId = existing.nftId;
+    console.log(`Found existing position NFT: ${targetPositionId}`);
   }
 
   if (targetPositionId === 0) {
@@ -458,10 +483,10 @@ const KEYPAIR_PATH = "/path/to/your/keypair.json";
 const RPC_URL = "https://api.mainnet-beta.solana.com";
 const VAULT_ID = 1;
 
-const DEPOSIT_AMOUNT = new BN(1_000_000);
-const BORROW_AMOUNT = new BN(500_000);
-const REPAY_AMOUNT = new BN(100_000);
-const WITHDRAW_AMOUNT = new BN(200_000);
+const DEPOSIT_AMOUNT = new BN(1_000_000);  // 1 USDC @ 6 decimals
+const BORROW_AMOUNT = new BN(500_000);    // 0.5 USDC @ 6 decimals
+const REPAY_AMOUNT = new BN(100_000);     // 0.1 USDC @ 6 decimals
+const WITHDRAW_AMOUNT = new BN(200_000);  // 0.2 USDC @ 6 decimals
 
 function loadKeypair(keypairPath: string): Keypair {
   const fullPath = path.resolve(keypairPath);
@@ -540,21 +565,13 @@ main().catch(console.error);
 
 ---
 
-# Resources
+# 8. Resources
 
 ## API Documentation
 
 - **Jupiter Lend Overview**: [dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
-- **Core Architecture**: [dev.jup.ag/docs/lend/architecture](https://dev.jup.ag/docs/lend/architecture)
-- **API vs SDK**: [dev.jup.ag/docs/lend/api-vs-sdk](https://dev.jup.ag/docs/lend/api-vs-sdk)
-- **Earn Overview**: [dev.jup.ag/docs/lend/earn](https://dev.jup.ag/docs/lend/earn)
-- **Earn API (Beta)**: [dev.jup.ag/docs/lend/earn/api](https://dev.jup.ag/docs/lend/earn/api) | REST API for Earn operations (deposit/withdraw)
-- **Borrow Overview**: [dev.jup.ag/docs/lend/borrow](https://dev.jup.ag/docs/lend/borrow)
-- **Borrow API (Soon)**: [dev.jup.ag/docs/lend/borrow/api](https://dev.jup.ag/docs/lend/borrow/api)
-- **Earn CPI Integration**: [dev.jup.ag/docs/lend/earn/cpi](https://dev.jup.ag/docs/lend/earn/cpi)
-- **Borrow CPI Integration**: [dev.jup.ag/docs/lend/borrow/cpi](https://dev.jup.ag/docs/lend/borrow/cpi)
-- **Program Addresses**: [dev.jup.ag/docs/lend/program-addresses](https://dev.jup.ag/docs/lend/program-addresses)
-- **IDL and Types**: [dev.jup.ag/docs/lend/idl-and-types](https://dev.jup.ag/docs/lend/idl-and-types)
+- **Lend API (Earn)**: [api-reference/lend/earn](https://dev.jup.ag/api-reference/lend/earn) | REST API for Earn operations (deposit/withdraw/mint/redeem, tokens, positions, earnings)
+- **Lend API (Borrow)**: *(Coming Soon)*
 
 ## SDKs
 
@@ -572,8 +589,8 @@ main().catch(console.error);
 | Program                   | Address                                       |
 | ------------------------- | --------------------------------------------- |
 | Liquidity                 | `jupeiUmn818Jg1ekPURTpr4mFo29p46vygyykFJ3wZC` |
-| Lending                   | `jup3YeL8QhtSx1e253b2FDvsMNC87fDrgQZivbrndc9` |
+| Lending(Earn)             | `jup3YeL8QhtSx1e253b2FDvsMNC87fDrgQZivbrndc9` |
 | Lending Reward Rate Model | `jup7TthsMgcR9Y3L277b8Eo9uboVSmu1utkuXHNUKar` |
-| Vaults                    | `jupr81YtYssSyPt8jbnGuiWon5f6x9TcDEFxYe3Bdzi` |
+| Vaults(Borrow)            | `jupr81YtYssSyPt8jbnGuiWon5f6x9TcDEFxYe3Bdzi` |
 | Oracle                    | `jupnw4B6Eqs7ft6rxpzYLJZYSnrpRgPcr589n5Kv4oc` |
 | Flashloan                 | `jupgfSgfuAXv4B6R2Uxu85Z1qdzgju79s6MfZekN6XS` |
