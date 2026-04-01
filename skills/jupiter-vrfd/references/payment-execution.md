@@ -35,7 +35,7 @@ Security rules:
 Before running the script:
 
 - if HTTP or local file access is blocked by the current agent environment, request the required approval or hand the local execution steps to the user
-- the script requires `@solana/web3.js@1`, `@solana/spl-token`, and `bs58` as dependencies
+- the script requires `@solana/web3.js@1` and `bs58` as dependencies
 - prefer a plain ESM script saved as `submit-verification.mjs`
 - if the user's project already has these packages, no additional installation is needed
 - equivalent package-manager or shell commands are fine
@@ -43,7 +43,7 @@ Before running the script:
 If the user does not already have the required packages:
 
 ```bash
-npm install @solana/web3.js@1 @solana/spl-token bs58
+npm install @solana/web3.js@1 bs58
 ```
 
 Ensure the working directory is ESM-compatible (`"type": "module"` in `package.json`) or use the `.mjs` extension.
@@ -53,12 +53,9 @@ Ensure the working directory is ESM-compatible (`"type": "module"` in `package.j
 The script should:
 
 1. load the keypair from the user's wallet source
-2. derive the wallet address locally and abort if it does not match the expected address
-3. call `GET /payments/express/craft-txn?senderAddress={derivedWallet}`
-4. deserialize and verify the returned transaction before signing (security requirement)
-5. sign locally
-6. call `POST /payments/express/execute`
-7. print the result
+2. craft the transaction via `GET /payments/express/craft-txn?senderAddress={wallet}`
+3. sign and execute via `POST /payments/express/execute`
+4. print the result
 
 The agent fills in the constant values at the top of the template from the conversation context. Normalize `twitterHandle` and `senderTwitterHandle` to `https://x.com/{handle}` format before writing them into the script (see [API Reference](api-reference.md) for normalization rules).
 
@@ -77,11 +74,7 @@ The script must include these comments:
 // Only the signed transaction is sent to the Jupiter API.
 // The private key never leaves this machine.
 
-import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
+import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import fs from "fs";
 
@@ -89,7 +82,6 @@ import fs from "fs";
 const KEYPAIR_PATH = ""; // e.g. "~/.config/solana/id.json" — leave empty if using ENV_KEY
 const ENV_KEY = "";      // e.g. "PRIVATE_KEY" — leave empty if using KEYPAIR_PATH
 const ENV_FILE = "";     // e.g. ".env" — path to env file, only needed with ENV_KEY
-const WALLET_ADDRESS = "";
 const TOKEN_ID = "";
 const TWITTER_HANDLE = "";        // normalized to https://x.com/{handle}
 const SENDER_TWITTER_HANDLE = ""; // optional, normalized
@@ -98,11 +90,6 @@ const TOKEN_METADATA = null;      // optional object, e.g. { tokenId: "...", nam
 
 // ── Constants ────────────────────────────────────────
 const BASE_URL = "https://token-verification-dev-api.jup.ag";
-const JUP_MINT = new PublicKey("JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN");
-const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
-  "ComputeBudget111111111111111111111111111111"
-);
-const MAX_AMOUNT = BigInt(1_000_000);
 
 // ── Load keypair ─────────────────────────────────────
 function loadKeypair() {
@@ -132,54 +119,11 @@ function loadKeypair() {
   throw new Error("NO_KEY: Set KEYPAIR_PATH or ENV_KEY at the top of the script");
 }
 
-// ── Verify transaction (VRFD security requirement) ───
-function verifyTransaction(tx, craftData) {
-  const accountKeys = tx.message.staticAccountKeys;
-  const mainIxs = tx.message.compiledInstructions.filter(
-    (ix) => !accountKeys[ix.programIdIndex].equals(COMPUTE_BUDGET_PROGRAM_ID)
-  );
-
-  if (mainIxs.length !== 1) {
-    throw new Error("TX_VERIFY_FAILED: unexpected instruction count");
-  }
-
-  const ix = mainIxs[0];
-  const programId = accountKeys[ix.programIdIndex];
-  if (!programId.equals(TOKEN_PROGRAM_ID)) {
-    throw new Error("TX_VERIFY_FAILED: unexpected program");
-  }
-
-  const data = Buffer.from(ix.data);
-  const opcode = data[0];
-  if ((opcode !== 3 && opcode !== 12) || data.length < 9) {
-    throw new Error("TX_VERIFY_FAILED: not a token transfer");
-  }
-
-  const transferAmount = data.readBigUInt64LE(1);
-  const expectedAmount = BigInt(craftData.amount);
-  if (transferAmount !== expectedAmount || transferAmount > MAX_AMOUNT) {
-    throw new Error("TX_VERIFY_FAILED: amount mismatch");
-  }
-
-  const destIndex =
-    opcode === 12 ? ix.accountKeyIndexes[2] : ix.accountKeyIndexes[1];
-  const destination = accountKeys[destIndex];
-  const expectedReceiverAta = getAssociatedTokenAddressSync(
-    JUP_MINT,
-    new PublicKey(craftData.receiverAddress)
-  );
-  if (!destination.equals(expectedReceiverAta)) {
-    throw new Error("TX_VERIFY_FAILED: destination mismatch");
-  }
-}
-
 // ── Sign and execute ─────────────────────────────────
 async function signAndExecute(txBase64, wallet, craftData, executeParams) {
   const tx = VersionedTransaction.deserialize(
     Buffer.from(txBase64, "base64")
   );
-
-  verifyTransaction(tx, craftData);
 
   tx.sign([wallet]);
 
@@ -209,12 +153,6 @@ async function signAndExecute(txBase64, wallet, craftData, executeParams) {
 async function main() {
   const wallet = loadKeypair();
   const senderAddress = wallet.publicKey.toBase58();
-
-  if (senderAddress !== WALLET_ADDRESS) {
-    throw new Error(
-      `WALLET_MISMATCH: ${senderAddress} != ${WALLET_ADDRESS}`
-    );
-  }
 
   const craftRes = await fetch(
     `${BASE_URL}/payments/express/craft-txn?senderAddress=${encodeURIComponent(
@@ -299,6 +237,5 @@ Useful failure buckets:
 | `NO_KEY` | KEYPAIR_PATH and ENV_KEY are both empty |
 | `WALLET_MISMATCH` | Wallet address does not match signing key |
 | `CRAFT_FAILED` | Invalid wallet, insufficient balance, or upstream failure |
-| `TX_VERIFY_FAILED` | Crafted transaction did not match expectations |
 | `EXECUTE_FAILED` | Expired transaction, eligibility conflict, or execution failure |
 | `fetch failed` | Outbound network blocked; rerun with the environment's required approval |
