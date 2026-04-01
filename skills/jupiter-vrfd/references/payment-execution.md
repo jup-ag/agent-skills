@@ -36,7 +36,7 @@ Before running the script:
 
 - if HTTP or local file access is blocked by the current agent environment, request the required approval or hand the local execution steps to the user
 - the script requires `@solana/web3.js@1`, `@solana/spl-token`, and `bs58` as dependencies
-- prefer a plain ESM script saved as `pay.mjs`
+- prefer a plain ESM script saved as `submit-verification.mjs`
 - if the user's project already has these packages, no additional installation is needed
 - equivalent package-manager or shell commands are fine
 
@@ -48,7 +48,7 @@ npm install @solana/web3.js@1 @solana/spl-token bs58
 
 Ensure the working directory is ESM-compatible (`"type": "module"` in `package.json`) or use the `.mjs` extension.
 
-## 3. Write `pay.mjs`
+## 3. Write `submit-verification.mjs`
 
 The script should:
 
@@ -262,7 +262,7 @@ main().catch((err) => {
 ## 4. Run the Script
 
 ```bash
-node pay.mjs
+node submit-verification.mjs
 ```
 
 Notes:
@@ -270,10 +270,10 @@ Notes:
 - if the script fails with `fetch failed`, rerun it with the environment's required network approval or escalation
 - if the environment uses another package manager or runtime, equivalent commands are fine
 
-Fallback for Node 22+ when the file is saved as `pay.ts`:
+Fallback for Node 22+ when the file is saved as `submit-verification.ts`:
 
 ```bash
-node --experimental-strip-types pay.ts
+node --experimental-strip-types submit-verification.ts
 ```
 
 Parse the output:
