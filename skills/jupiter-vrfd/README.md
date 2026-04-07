@@ -1,6 +1,6 @@
 # Jupiter VRFD Agent Skill
 
-Skills for AI coding agents to work with the public Jupiter Token Verification and metadata submission flow.
+Skill for AI agents to work with the public Jupiter Token Verification and metadata submission flow.
 
 ## What does the skill cover
 
