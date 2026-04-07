@@ -66,7 +66,7 @@ Load these on demand:
 For execute requests in constrained agent environments:
 
 - outbound HTTP and package installation may require approval or user permission
-- prefer plain ESM Node execution with `submit-verification.mjs`, because it works in more restricted environments than `tsx`
+- prefer plain ESM Node execution (`.mjs`), because it works in more restricted environments than `tsx`
 - equivalent shell and package-manager commands are fine; do not block on a specific CLI if the environment already has an equivalent way to run the same steps
 
 ## Resources
