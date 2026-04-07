@@ -48,15 +48,13 @@ The Codex marketplace entry intentionally resolves to `./.plugins/integrate-jupi
 
 ### integrating-jupiter
 
-Helps agents integrate with the whole Jupiter Suite of APIs. 
+Helps agents integrate with the whole Jupiter Suite of APIs.
 
 #### Installation
 
 ```bash
 npx skills add jup-ag/agent-skills --skill "integrating-jupiter"
 ```
-
-
 
 ### jupiter-lend
 
@@ -68,7 +66,15 @@ Helps agents integrate with Jupiter Lend protocol (powered by Fluid Protocol) â€
 npx skills add jup-ag/agent-skills --skill "jupiter-lend"
 ```
 
+### jupiter-vrfd
 
+Helps agents guide users through the Jupiter Token Verification express flow â€” submit verification requests, pay with JUP tokens, and check verification status.
+
+#### Installation
+
+```bash
+npx skills add jup-ag/agent-skills --skill "jupiter-vrfd"
+```
 
 ### jupiter-swap-migration
 
@@ -79,8 +85,6 @@ Helps agents migrate existing Jupiter integrations from Metis (v1) or Ultra to S
 ```bash
 npx skills add jup-ag/agent-skills --skill "jupiter-swap-migration"
 ```
-
-
 
 ## Quick Install
 

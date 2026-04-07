@@ -7,6 +7,7 @@ PACKAGED_SKILLS=(
   "integrating-jupiter"
   "jupiter-lend"
   "jupiter-swap-migration"
+  "jupiter-vrfd"
 )
 
 usage() {
