@@ -42,8 +42,8 @@ Do not use when:
 
 | User intent               | Endpoint                                                  | Method |
 | ------------------------- | --------------------------------------------------------- | ------ |
-| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId=...` | `GET`  |
-| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress=...`   | `GET`  |
+| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId={TOKEN_ID}` | `GET`  |
+| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress={SENDER_ADDRESS}`   | `GET`  |
 | Sign and execute payment  | `/tokens/v2/verify/express/execute`                       | `POST` |
 
 ## Examples
