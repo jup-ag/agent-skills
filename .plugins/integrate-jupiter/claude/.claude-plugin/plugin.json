@@ -1,0 +1,13 @@
+{
+  "name": "integrate-jupiter",
+  "description": "Jupiter integration and documentation skills for Solana, crypto, and finance workflows",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jupiter",
+    "url": "https://jup.ag"
+  },
+  "homepage": "https://jup.ag",
+  "repository": "https://github.com/jup-ag/agent-skills",
+  "license": "MIT",
+  "keywords": ["solana", "jupiter", "defi", "finance", "crypto", "documentation", "swap", "lend", "borrow", "earn", "perps", "trigger", "dex-aggregator"]
+}

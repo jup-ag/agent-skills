@@ -3,4 +3,5 @@ CLAUDE.md
 AGENTS.md
 .claude/*
 .agents/*
-.env
+!.agents/plugins/
+!.agents/plugins/marketplace.json

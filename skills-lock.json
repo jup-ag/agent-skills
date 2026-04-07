@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "jupiter-vrfd": {
+      "source": "/Users/nghanyi/Documents/Jupiter/agent-skills/skills/jupiter-vrfd",
+      "sourceType": "local",
+      "computedHash": "dde5911a0c3dc8b31c18d84f1aeea61e2f16f2005f58a8718844965516e12ad6"
+    }
+  }
+}

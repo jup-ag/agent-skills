@@ -1,0 +1,33 @@
+{
+  "name": "integrate-jupiter",
+  "version": "1.0.0",
+  "description": "Jupiter integration and documentation skills for Solana, crypto, and finance workflows",
+  "author": {
+    "name": "Jupiter",
+    "url": "https://jup.ag"
+  },
+  "homepage": "https://jup.ag",
+  "repository": "https://github.com/jup-ag/agent-skills",
+  "license": "MIT",
+  "keywords": ["solana", "jupiter", "defi", "finance", "crypto", "documentation", "swap", "lend", "borrow", "earn", "perps", "trigger", "dex-aggregator"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Jupiter",
+    "shortDescription": "Jupiter crypto and finance docs for Solana",
+    "longDescription": "Expert coding skills and documentation for integrating Jupiter swap, lend, perps, trigger, tokens, and price APIs on Solana. Covers endpoint selection, finance and crypto workflows, error handling, and production hardening.",
+    "developerName": "Jupiter",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "websiteURL": "https://jup.ag",
+    "brandColor": "#C7F284",
+    "composerIcon": "./assets/logo.png",
+    "logo": "./assets/logo.png",
+    "defaultPrompt": [
+      "How do I integrate Jupiter Swap API v2 in my app?",
+      "How do I integrate Jupiter Lend earn or borrow flows in my app?",
+      "Help me integrate Jupiter APIs on Solana.",
+      "Help me migrate from Jupiter Metis to Swap API v2."
+    ]
+  }
+}
