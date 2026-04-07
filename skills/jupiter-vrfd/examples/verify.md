@@ -26,11 +26,11 @@ async function jupiterFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 const wallet = Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY!));
 
-const TOKEN_ID = '';
-const TWITTER_HANDLE = '';          // normalized to https://x.com/{handle}
-const SENDER_TWITTER_HANDLE = '';   // optional, normalized
-const DESCRIPTION = '';
-const TOKEN_METADATA = null;        // optional object for metadata updates
+const TOKEN_ID = '<TOKEN_ID>';
+const TWITTER_HANDLE = '<TWITTER_HANDLE>';          // normalized to https://x.com/{handle}
+const SENDER_TWITTER_HANDLE = '<SENDER_TWITTER_HANDLE>';   // optional, normalized
+const DESCRIPTION = '<DESCRIPTION>';
+const TOKEN_METADATA = null;        // optional: replace with metadata object for updates
 
 async function verifyToken() {
   const senderAddress = wallet.publicKey.toBase58();
