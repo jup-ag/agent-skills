@@ -95,6 +95,29 @@ x-api-key: {API_KEY}
 
 The `transaction` value is unsigned. Verify it locally before signing.
 
+**Response fields:**
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `receiverAddress` | string | Destination wallet (must be Jupiter burn multisig) |
+| `mint` | string | Token mint being transferred |
+| `amount` | string | Transfer amount in base units |
+| `tokenDecimals` | number | Decimal places for `mint` |
+| `tokenUsdRate` | number? | USD price of `mint` at craft time (may be absent) |
+| `feeLamports` | number | **Deprecated** — use `feeAmount` instead |
+| `feeUsdAmount` | number? | Fee expressed in USD (may be absent if prices unavailable) |
+| `feeMint` | string | Mint used for fees — SOL when `gasless: false`, the transferred token when `gasless: true` |
+| `feeTokenDecimals` | number | Decimal places for `feeMint` |
+| `feeAmount` | number | Amount of `feeMint` the sender will pay as fees |
+| `transaction` | string? | Base64-encoded unsigned transaction. **Only present when `code` is `0`** |
+| `lastValidBlockHeight` | string? | Block height after which the transaction expires. Only present when `transaction` is present |
+| `requestId` | string | Unique identifier — pass to `/execute` |
+| `totalTime` | number | Server-side craft time in milliseconds |
+| `expireAt` | string? | ISO 8601 timestamp after which the transaction is invalid |
+| `code` | number | `0` = success, non-zero = error (see error codes below) |
+| `error` | string? | Human-readable error message. Only present when `code` is non-zero |
+| `gasless` | boolean | `true` if Jupiter covers SOL gas fees and collects fees in the transferred token instead |
+
 **Transaction verification before signing:**
 
 - `receiverAddress` must be `8gMBNeKwXaoNi9bhbVUWFt4Uc5aobL9PeYMXfYDMePE2` (Jupiter burn multisig)
@@ -102,16 +125,27 @@ The `transaction` value is unsigned. Verify it locally before signing.
 - `amount` must be `1000000000` (1000 JUP at 6 decimals)
 - `expireAt` must be in the future — if expired, re-call `craft-txn`
 
-**Error response** (HTTP 400/403):
+**Error responses:**
 
-```json
-{
-  "error": "Insufficient JUP balance",
-  "code": "INSUFFICIENT_BALANCE"
-}
-```
+HTTP 400/500 returns `{ "error": "..." }` for input validation failures (invalid address, invalid mint, invalid amount).
 
-Common error codes: `INSUFFICIENT_BALANCE`, `INVALID_SENDER`, `UNAUTHORIZED`.
+When the response is HTTP 200 but `code` is non-zero, the craft succeeded at the API level but the transaction would fail on-chain. The `transaction` field will be absent.
+
+### Craft-txn error codes
+
+| Code | Source | Meaning | Action |
+| --- | --- | --- | --- |
+| `0` | — | Success | Sign and submit via `/execute` |
+| `1` | Taker state | Insufficient token balance | Prompt user to acquire more JUP |
+| `2` | Taker state | Insufficient SOL for gas (< 0.01 SOL) | Prompt user to top up SOL |
+| `3` | Taker state | Transfer amount too small for gasless (must be ≥ 10x fee) | Increase amount or add SOL for gas |
+| `1001` | System program | Account does not have enough SOL | Top up SOL |
+| `2001` | Token program | Insufficient funds | Check token balance |
+| `2002` | Token program | Invalid mint | Verify mint address |
+| `2004` | Token program | Owner does not match | Check token account ownership |
+| `2009` | Token program | Token account uninitialized | Ensure token account exists |
+| `2017` | Token program | Account is frozen | Contact token issuer |
+| `3000` | Associated token | ATA owner mismatch | Check receiver address derivation |
 
 ---
 
