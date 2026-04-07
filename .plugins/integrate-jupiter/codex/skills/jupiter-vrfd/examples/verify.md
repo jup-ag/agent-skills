@@ -1,21 +1,28 @@
 # Verify: Express Verification Example
 
-> **Prerequisites:** This example uses the `jupiterFetch` helper defined in the
-> **Developer Quickstart** section of the main `SKILL.md`. That helper prepends
-> `https://api.jup.ag` to every path and attaches the `x-api-key` header
-> automatically, so you never need to build full URLs or pass the API key
-> manually.
->
-> This script requires `@solana/web3.js@1` and `bs58` — v2 of web3.js has a
-> completely different API surface. The private key is used only for local
-> signing — only the signed transaction is sent to the Jupiter API.
+> **Prerequisites:** This script requires `@solana/web3.js@1` and `bs58` — v2
+> of web3.js has a completely different API surface. The private key is used
+> only for local signing — only the signed transaction is sent to the Jupiter
+> API.
 
 ```typescript
 import { Keypair, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-// jupiterFetch<T>(path, init?) is defined in Developer Quickstart (SKILL.md).
-// It prepends https://api.jup.ag and adds the x-api-key header.
+const BASE = 'https://api.jup.ag';
+const API_KEY = process.env.JUPITER_API_KEY!; // from portal.jup.ag
+
+async function jupiterFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: { 'x-api-key': API_KEY, ...init?.headers },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Jupiter API ${res.status}: ${body}`);
+  }
+  return res.json();
+}
 
 const wallet = Keypair.fromSecretKey(bs58.decode(process.env.WALLET_PRIVATE_KEY!));
 

@@ -209,7 +209,7 @@ Use this section as the single source of truth for building the execute request.
 | Field | `verification` | `verification+metadata` | `metadata-only` | Notes |
 | --- | --- | --- | --- | --- |
 | `tokenId` | Yes | Yes | Yes | Solana token mint |
-| `walletAddress` | Yes | Yes | Yes | User-facing name for `senderAddress` |
+| `senderAddress` | Yes | Yes | Yes | Wallet that signed the transaction (the paying wallet) |
 | `twitterHandle` | Yes | Yes | Send `""` | Normalize to full `https://x.com/{handle}` URL when present |
 | `senderTwitterHandle` | Optional | Optional | Optional | Normalize to full `https://x.com/{handle}` URL when present |
 | `description` | Yes | Yes | Send `""` | Short token description when verification is created |
