@@ -46,6 +46,17 @@ Notes:
 - `canMetadata: true` means `POST /tokens/v2/verify/express/execute` may accept a `tokenMetadata` payload
 - this skill does not document private helpers for fetching or merging metadata
 
+**Error response** (HTTP 400/403):
+
+```json
+{
+  "error": "Invalid token mint address",
+  "code": "INVALID_TOKEN_ID"
+}
+```
+
+Common error codes: `INVALID_TOKEN_ID`, `UNAUTHORIZED` (missing or invalid API key).
+
 ---
 
 ## GET /tokens/v2/verify/express/craft-txn
@@ -83,6 +94,24 @@ x-api-key: {API_KEY}
 ```
 
 The `transaction` value is unsigned. Verify it locally before signing.
+
+**Transaction verification before signing:**
+
+- `receiverAddress` should match the expected VRFD treasury
+- `mint` must be `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
+- `amount` must be `1000000000` (1000 JUP at 6 decimals)
+- `expireAt` must be in the future — if expired, re-call `craft-txn`
+
+**Error response** (HTTP 400/403):
+
+```json
+{
+  "error": "Insufficient JUP balance",
+  "code": "INSUFFICIENT_BALANCE"
+}
+```
+
+Common error codes: `INSUFFICIENT_BALANCE`, `INVALID_SENDER`, `UNAUTHORIZED`.
 
 ---
 
@@ -133,12 +162,33 @@ x-api-key: {API_KEY}
 }
 ```
 
+**Error response** (HTTP 400/409/500):
+
+```json
+{
+  "error": "Transaction expired",
+  "code": "TRANSACTION_EXPIRED"
+}
+```
+
+Common error codes:
+
+| Code | HTTP | Retryable | Meaning |
+| --- | --- | --- | --- |
+| `TRANSACTION_EXPIRED` | 400 | Yes (re-craft) | Transaction `expireAt` has passed; call `craft-txn` again |
+| `ELIGIBILITY_CONFLICT` | 409 | No | Token eligibility changed between check and execute |
+| `EXECUTION_FAILED` | 500 | Maybe | On-chain execution failed; check signature on-chain before retrying |
+| `UNAUTHORIZED` | 403 | No | Missing or invalid API key |
+| `INVALID_PAYLOAD` | 400 | No | Missing required fields or malformed request body |
+
 Notes:
 
 - the route can create verification, metadata, or both depending on eligibility
 - for metadata-only execute calls, the current schema still expects string values for `twitterHandle` and `description`; send `""` if the user did not provide them
 - normalize `twitterHandle` and `senderTwitterHandle` to full `https://x.com/{handle}` URLs before execute
 - if `tokenMetadata` is included, pass the object the user already has; this skill does not cover private metadata fetch or merge routes
+- on `TRANSACTION_EXPIRED`, re-call `craft-txn` and restart the signing flow
+- on `EXECUTION_FAILED`, check the transaction signature on-chain before deciding whether to retry
 
 ---
 

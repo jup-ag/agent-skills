@@ -46,6 +46,8 @@ If the user does not already have the required packages:
 npm install @solana/web3.js@1 bs58
 ```
 
+**Important**: This script requires `@solana/web3.js` **v1** (the `@1` version range). Version 2 has a completely different API surface — `Keypair`, `VersionedTransaction`, and `Connection` do not exist in v2. If the project already has v2 installed, either install v1 in a separate directory or use the v1 API equivalents.
+
 Ensure the working directory is ESM-compatible (`"type": "module"` in `package.json`) or use the `.mjs` extension.
 
 ## 3. Write `submit-verification.mjs`
@@ -126,6 +128,18 @@ async function signAndExecute(txBase64, wallet, craftData, executeParams) {
   const tx = VersionedTransaction.deserialize(
     Buffer.from(txBase64, "base64")
   );
+
+  // Verify transaction before signing
+  if (new Date(craftData.expireAt) <= new Date()) {
+    throw new Error("TRANSACTION_EXPIRED: craft-txn expireAt has passed — re-craft");
+  }
+  console.log(`Verification: receiver=${craftData.receiverAddress}, mint=${craftData.mint}, amount=${craftData.amount}`);
+  if (craftData.mint !== "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN") {
+    throw new Error("MINT_MISMATCH: Expected JUP mint");
+  }
+  if (craftData.amount !== "1000000000") {
+    throw new Error("AMOUNT_MISMATCH: Expected 1000000000 (1000 JUP)");
+  }
 
   tx.sign([wallet]);
 
@@ -239,6 +253,9 @@ Useful failure buckets:
 | --- | --- |
 | `NO_KEY` | KEYPAIR_PATH and ENV_KEY are both empty |
 | `WALLET_MISMATCH` | Wallet address does not match signing key |
+| `TRANSACTION_EXPIRED` | `craft-txn` `expireAt` has passed; re-craft a new transaction |
+| `MINT_MISMATCH` | `craft-txn` returned an unexpected mint; do not sign |
+| `AMOUNT_MISMATCH` | `craft-txn` returned an unexpected amount; do not sign |
 | `CRAFT_FAILED` | Invalid wallet, insufficient balance, or upstream failure |
 | `EXECUTE_FAILED` | Expired transaction, eligibility conflict, or execution failure |
 | `fetch failed` | Outbound network blocked; rerun with the environment's required approval |

@@ -1,6 +1,6 @@
 ---
 name: jupiter-vrfd
-description: Use when a user wants to check Jupiter public token-verification eligibility, submit the public 1000 JUP verification request, or send a paid metadata-only update for a Solana token mint.
+description: Use when a user mentions Jupiter token verification, VRFD eligibility, paying 1000 JUP to verify a token, submitting a verification request, or updating on-chain token metadata via the Jupiter express verification flow.
 license: MIT
 metadata:
   author: jupiter
@@ -48,11 +48,11 @@ This skill routes agents through the public Jupiter token-verification flow for 
 
 ## Intent Router
 
-| User intent               | Endpoint                                        | Method |
-| ------------------------- | ----------------------------------------------- | ------ |
-| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId=...`        | `GET`  |
-| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress=...` | `GET`  |
-| Sign and execute payment  | `/tokens/v2/verify/express/execute`                     | `POST` |
+| User intent               | Endpoint                                                   | Method |
+| ------------------------- | ---------------------------------------------------------- | ------ |
+| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId=...`  | `GET`  |
+| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress=...`    | `GET`  |
+| Sign and execute payment  | `/tokens/v2/verify/express/execute`                        | `POST` |
 
 ## References
 
@@ -77,9 +77,15 @@ For execute requests in constrained agent environments:
 - prefer plain ESM Node execution with `submit-verification.mjs`, because it works in more restricted environments than `tsx`
 - equivalent shell and package-manager commands are fine; do not block on a specific CLI if the environment already has an equivalent way to run the same steps
 
+## Rate Limits And Retries
+
+- The Jupiter API enforces rate limits per API key. On HTTP 429, back off exponentially with jitter before retrying.
+- `craft-txn` and `execute` are **not idempotent** — do not blindly retry execute after an ambiguous failure. Check the transaction signature on-chain first.
+- Only retry on transient errors (network failures, 429, 5xx). Do not retry on 400/403.
+
 ---
 
-# Agent Conversation Flow
+## Agent Conversation Flow
 
 Extract as much as possible from the user's first message. Skip questions whose answers are already present.
 
@@ -114,6 +120,7 @@ Call:
 
 ```http
 GET {BASE_URL}/tokens/v2/verify/express/check-eligibility?tokenId={tokenId}
+x-api-key: {API_KEY}
 ```
 
 Interpret the result:
@@ -189,9 +196,24 @@ Load [Payment Execution](references/payment-execution.md) and follow the local s
 
 1. prepare the request fields using the canonical rules in [API Reference](references/api-reference.md)
 2. craft the unsigned transaction with `GET /tokens/v2/verify/express/craft-txn`
-3. verify the transaction contents before signing
+3. **verify the transaction contents before signing** (see checklist below)
 4. sign locally
 5. submit via `POST /tokens/v2/verify/express/execute`
+
+### Transaction Verification Checklist
+
+Before signing the deserialized transaction, verify:
+
+- `receiverAddress` matches the expected VRFD treasury address
+- `mint` is `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN` (JUP token)
+- `amount` is `1000000000` (1000 JUP with 6 decimals)
+- `expireAt` is in the future — if expired, re-craft a new transaction
+
+If any check fails, **do not sign**. Report the mismatch to the user.
+
+### Transaction Expiry
+
+The `craft-txn` response includes an `expireAt` timestamp. If the user takes too long to confirm or the script runs after expiry, the transaction will be rejected. In that case, call `craft-txn` again to get a fresh transaction and restart from step 3.
 
 Report the returned transaction signature and whether `verificationCreated` / `metadataCreated` were set.
 
@@ -199,7 +221,7 @@ If the current agent cannot run the local signing flow safely, stop and hand the
 
 ---
 
-# Resources
+## Resources
 
 - **JUP Token Mint**: `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
 - **Jupiter Docs**: [dev.jup.ag](https://dev.jup.ag)
