@@ -58,8 +58,8 @@ This skill routes agents through the public Jupiter token-verification flow for 
 
 Load these on demand:
 
-- **[API Reference](examples/api-reference.md)** for the exact request and response shapes, accepted input formats, normalization rules, submission-mode field requirements, and token metadata fields. This is the source of truth for request construction.
-- **[Payment Execution](examples/payment-execution.md)** when the user wants to execute a request and has confirmed the paying wallet details
+- **[API Reference](./references/api-reference.md)** for the exact request and response shapes, accepted input formats, normalization rules, submission-mode field requirements, and token metadata fields. This is the source of truth for request construction.
+- **[Payment Execution](./examples/payment-execution.md)** when the user wants to execute a request and has confirmed the paying wallet details
 
 ## Agent Operating Rules
 
@@ -142,7 +142,7 @@ For an eligibility-only request, report the result and stop here.
 
 ## Step 3b. Load The Canonical Request Contract
 
-- Load [API Reference](examples/api-reference.md) before collecting execute inputs.
+- Load [API Reference](./references/api-reference.md) before collecting execute inputs.
 - Use the API reference as the source of truth for:
   - which fields are required for the chosen submission mode
   - accepted user input forms for `twitterHandle` and `senderTwitterHandle`
@@ -166,7 +166,7 @@ Security rules:
 - Only record file paths and env var names. The signing key is loaded and used only inside the local execution script.
 - The wallet address is derived inside the script to verify it matches the expected `walletAddress`.
 
-If the current agent cannot safely access a local keypair, stop here and hand the user the local execution steps from [Payment Execution](examples/payment-execution.md).
+If the current agent cannot safely access a local keypair, stop here and hand the user the local execution steps from [Payment Execution](./examples/payment-execution.md).
 
 ## Step 5. Confirm Before Executing
 
@@ -192,9 +192,9 @@ Require an explicit final confirmation that:
 
 ## Step 6. Submit And Report
 
-Load [Payment Execution](examples/payment-execution.md) and follow the local signing flow:
+Load [Payment Execution](./examples/payment-execution.md) and follow the local signing flow:
 
-1. prepare the request fields using the canonical rules in [API Reference](examples/api-reference.md)
+1. prepare the request fields using the canonical rules in [API Reference](./references/api-reference.md)
 2. craft the unsigned transaction with `GET /tokens/v2/verify/express/craft-txn`
 3. **verify the transaction contents before signing** (see checklist below)
 4. sign locally
@@ -217,7 +217,7 @@ The `craft-txn` response includes an `expireAt` timestamp. If the user takes too
 
 Report the returned transaction signature and whether `verificationCreated` / `metadataCreated` were set.
 
-If the current agent cannot run the local signing flow safely, stop and hand the user the exact local script from [Payment Execution](examples/payment-execution.md) instead of claiming the request was submitted.
+If the current agent cannot run the local signing flow safely, stop and hand the user the exact local script from [Payment Execution](./examples/payment-execution.md) instead of claiming the request was submitted.
 
 ---
 
