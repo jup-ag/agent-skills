@@ -14,7 +14,7 @@ Precondition:
 
 - the selected submission mode is already known (`verification`, `verification+metadata`, or `metadata-only`)
 - the user has already provided the paying wallet
-- the user has confirmed that wallet holds at least 1000 JUP plus a small amount of SOL for fees
+- the user has confirmed that wallet holds at least 1000 JUP
 
 ## 1. Wallet Source
 
@@ -82,18 +82,19 @@ import fs from "fs";
 
 // ── Parameters (agent fills these in) ────────────────
 const KEYPAIR_PATH = ""; // e.g. "~/.config/solana/id.json" — leave empty if using ENV_KEY
-const ENV_KEY = "";      // e.g. "PRIVATE_KEY" — leave empty if using KEYPAIR_PATH
-const ENV_FILE = "";     // e.g. ".env" — path to env file, only needed with ENV_KEY
+const ENV_KEY = ""; // e.g. "PRIVATE_KEY" — leave empty if using KEYPAIR_PATH
+const ENV_FILE = ""; // e.g. ".env" — path to env file, only needed with ENV_KEY
 const TOKEN_ID = "";
-const TWITTER_HANDLE = "";        // normalized to https://x.com/{handle}
+const TWITTER_HANDLE = ""; // normalized to https://x.com/{handle}
 const SENDER_TWITTER_HANDLE = ""; // optional, normalized
 const DESCRIPTION = "";
-const TOKEN_METADATA = null;      // optional object, e.g. { tokenId: "...", name: "..." }
+const TOKEN_METADATA = null; // optional object, e.g. { tokenId: "...", name: "..." }
 
 // ── Constants ────────────────────────────────────────
 const BASE_URL = "https://api.jup.ag";
 const API_KEY = process.env.JUPITER_API_KEY; // from portal.jup.ag
-if (!API_KEY) throw new Error("Missing JUPITER_API_KEY env var — get one at portal.jup.ag");
+if (!API_KEY)
+  throw new Error("Missing JUPITER_API_KEY env var — get one at portal.jup.ag");
 
 // ── Load keypair ─────────────────────────────────────
 function loadKeypair() {
@@ -110,7 +111,9 @@ function loadKeypair() {
       for (const line of lines) {
         const match = line.match(/^\s*(?:export\s+)?([^#=]+?)\s*=\s*(.*)\s*$/);
         if (match && match[1] === ENV_KEY) {
-          return Keypair.fromSecretKey(bs58.decode(match[2].replace(/^["']|["']$/g, "")));
+          return Keypair.fromSecretKey(
+            bs58.decode(match[2].replace(/^["']|["']$/g, ""))
+          );
         }
       }
     }
@@ -120,20 +123,24 @@ function loadKeypair() {
     }
   }
 
-  throw new Error("NO_KEY: Set KEYPAIR_PATH or ENV_KEY at the top of the script");
+  throw new Error(
+    "NO_KEY: Set KEYPAIR_PATH or ENV_KEY at the top of the script"
+  );
 }
 
 // ── Sign and execute ─────────────────────────────────
 async function signAndExecute(txBase64, wallet, craftData, executeParams) {
-  const tx = VersionedTransaction.deserialize(
-    Buffer.from(txBase64, "base64")
-  );
+  const tx = VersionedTransaction.deserialize(Buffer.from(txBase64, "base64"));
 
   // Verify transaction before signing
   if (new Date(craftData.expireAt) <= new Date()) {
-    throw new Error("TRANSACTION_EXPIRED: craft-txn expireAt has passed — re-craft");
+    throw new Error(
+      "TRANSACTION_EXPIRED: craft-txn expireAt has passed — re-craft"
+    );
   }
-  console.log(`Verification: receiver=${craftData.receiverAddress}, mint=${craftData.mint}, amount=${craftData.amount}`);
+  console.log(
+    `Verification: receiver=${craftData.receiverAddress}, mint=${craftData.mint}, amount=${craftData.amount}`
+  );
   if (craftData.mint !== "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN") {
     throw new Error("MINT_MISMATCH: Expected JUP mint");
   }
@@ -249,13 +256,13 @@ If the agent had to hand the script to the user instead of running it locally, c
 
 Useful failure buckets:
 
-| Error | Likely cause |
-| --- | --- |
-| `NO_KEY` | KEYPAIR_PATH and ENV_KEY are both empty |
-| `WALLET_MISMATCH` | Wallet address does not match signing key |
-| `TRANSACTION_EXPIRED` | `craft-txn` `expireAt` has passed; re-craft a new transaction |
-| `MINT_MISMATCH` | `craft-txn` returned an unexpected mint; do not sign |
-| `AMOUNT_MISMATCH` | `craft-txn` returned an unexpected amount; do not sign |
-| `CRAFT_FAILED` | Invalid wallet, insufficient balance, or upstream failure |
-| `EXECUTE_FAILED` | Expired transaction, eligibility conflict, or execution failure |
-| `fetch failed` | Outbound network blocked; rerun with the environment's required approval |
+| Error                 | Likely cause                                                             |
+| --------------------- | ------------------------------------------------------------------------ |
+| `NO_KEY`              | KEYPAIR_PATH and ENV_KEY are both empty                                  |
+| `WALLET_MISMATCH`     | Wallet address does not match signing key                                |
+| `TRANSACTION_EXPIRED` | `craft-txn` `expireAt` has passed; re-craft a new transaction            |
+| `MINT_MISMATCH`       | `craft-txn` returned an unexpected mint; do not sign                     |
+| `AMOUNT_MISMATCH`     | `craft-txn` returned an unexpected amount; do not sign                   |
+| `CRAFT_FAILED`        | Invalid wallet, insufficient balance, or upstream failure                |
+| `EXECUTE_FAILED`      | Expired transaction, eligibility conflict, or execution failure          |
+| `fetch failed`        | Outbound network blocked; rerun with the environment's required approval |
