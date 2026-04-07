@@ -110,7 +110,8 @@ async function signAndSend(
 | Leverage/perps | [Perps](#perps) | On-chain via Anchor IDL (no REST API yet) |
 | Limit orders | [Trigger](#trigger-limit-orders) | JWT auth -> `POST /trigger/v2/orders/price` |
 | DCA/recurring buys | [Recurring](#recurring-dca) | `POST /recurring/v1/createOrder` -> sign -> `POST /recurring/v1/execute` |
-| Token search/verification | [Tokens](#tokens) | `GET /tokens/v2/search?query={mint}` |
+| Token search | [Tokens](#tokens) | `GET /tokens/v2/search?query={mint}` |
+| Token verification/metadata update | Use `jupiter-vrfd` skill | Defer — not handled by this skill |
 | Price lookup | [Price](#price) | `GET /price/v3?ids={mints}` |
 | Portfolio/positions | [Portfolio](#portfolio) | `GET /portfolio/v1/positions/{address}` |
 | Prediction market integration | [Prediction Markets](#prediction-markets) | `GET /prediction/v1/events` -> `POST /prediction/v1/orders` |
@@ -212,7 +213,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 ### Tokens
 
 - **Base URL**: `https://api.jup.ag/tokens/v2`
-- **Triggers**: `token metadata`, `token search`, `verification`, `shield`
+- **Triggers**: `token metadata`, `token search`, `shield`
 - **Endpoints**: `/search?query={q}` (GET, comma-separate mints, max 100), `/tag?query={tag}` (GET, `verified` or `lst`), `/{category}/{interval}` (GET, categories: `toporganicscore`, `toptraded`, `toptrending`; intervals: `5m`, `1h`, `6h`, `24h`), `/recent` (GET)
 - **Gotchas**: Use mint address as primary identity; treat symbol/name as convenience. Surface `audit.isSus` and `organicScore` in UX.
 - Refs: [Overview](https://dev.jup.ag/docs/tokens/index.md) | [Token info v2](https://dev.jup.ag/docs/tokens/v2/token-information.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/tokens/v2/tokens.yaml)

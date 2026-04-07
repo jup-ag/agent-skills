@@ -25,6 +25,7 @@ This skill routes agents through the public Jupiter token-verification flow for 
 ## Use/Do Not Use
 
 Use when:
+
 - checking whether a token is eligible for submission
 - crafting and signing the submission payment transaction
 - executing the submission flow
@@ -32,6 +33,7 @@ Use when:
 - submitting a metadata-only paid update when eligibility allows metadata but not verification
 
 Do not use when:
+
 - the agent would need private or internal routes
 - the agent needs to fetch or merge existing metadata from non-public endpoints
 - the user wants swaps, trading, or unrelated Jupiter flows
@@ -40,11 +42,20 @@ Do not use when:
 
 ## Intent Router
 
-| User intent               | Endpoint                                                  | Method |
-| ------------------------- | --------------------------------------------------------- | ------ |
-| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId=...` | `GET`  |
-| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress=...`   | `GET`  |
-| Sign and execute payment  | `/tokens/v2/verify/express/execute`                       | `POST` |
+| User intent               | Endpoint                                                             | Method |
+| ------------------------- | -------------------------------------------------------------------- | ------ |
+| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId={TOKEN_ID}`     | `GET`  |
+| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress={SENDER_ADDRESS}` | `GET`  |
+| Sign and execute payment  | `/tokens/v2/verify/express/execute`                                  | `POST` |
+
+## Eligibility Decision Matrix
+
+| `canVerify` | `canMetadata` | Action                                                            |
+| ----------- | ------------- | ----------------------------------------------------------------- |
+| `true`      | `true`        | verification+metadata (if user has metadata) or verification only |
+| `true`      | `false`       | verification only, omit `tokenMetadata`                           |
+| `false`     | `true`        | metadata-only                                                     |
+| `false`     | `false`       | **STOP** — show `verificationError` / `metadataError` to user     |
 
 ## Examples
 
@@ -66,11 +77,11 @@ Load these on demand:
 For execute requests in constrained agent environments:
 
 - outbound HTTP and package installation may require approval or user permission
-- prefer plain ESM Node execution (`.mjs`), because it works in more restricted environments than `tsx`
 - equivalent shell and package-manager commands are fine; do not block on a specific CLI if the environment already has an equivalent way to run the same steps
 
 ## Resources
 
+- **Jupiter Burn Multisig**: `8gMBNeKwXaoNi9bhbVUWFt4Uc5aobL9PeYMXfYDMePE2`
 - **JUP Token Mint**: `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
 - **Jupiter Docs**: [dev.jup.ag](https://dev.jup.ag)
 - **Jupiter Verified**: [verified.jup.ag](https://verified.jup.ag)
