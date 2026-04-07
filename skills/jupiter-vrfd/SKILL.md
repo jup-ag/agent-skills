@@ -48,6 +48,15 @@ Do not use when:
 | Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress={SENDER_ADDRESS}` | `GET`  |
 | Sign and execute payment  | `/tokens/v2/verify/express/execute`                                  | `POST` |
 
+## Eligibility Decision Matrix
+
+| `canVerify` | `canMetadata` | Action |
+| --- | --- | --- |
+| `true` | `true` | verification+metadata (if user has metadata) or verification only |
+| `true` | `false` | verification only, omit `tokenMetadata` |
+| `false` | `true` | metadata-only |
+| `false` | `false` | **STOP** — show `verificationError` / `metadataError` to user |
+
 ## Examples
 
 Load these on demand:
