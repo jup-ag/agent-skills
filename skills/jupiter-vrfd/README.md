@@ -2,7 +2,7 @@
 
 Skills for AI coding agents to work with the public Jupiter Token Verification and metadata submission flow.
 
-## What this skill covers
+## What does the skill cover
 
 - **SKILL.md** - Main guidance for the public verification and metadata submission flow
 

@@ -1,6 +1,17 @@
 ---
 name: jupiter-vrfd
 description: Use when a user wants to check Jupiter public token-verification eligibility, submit the public 1000 JUP verification request, or send a paid metadata-only update for a Solana token mint.
+license: MIT
+metadata:
+  author: jupiter
+  version: "1.0.0"
+tags:
+  - jupiter
+  - jup-ag
+  - jupiter-vrfd
+  - token-verification
+  - verified
+  - solana
 ---
 
 # Jupiter Token Verification
