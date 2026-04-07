@@ -1,6 +1,6 @@
 ---
 name: jupiter-vrfd
-description: Use when a user mentions Jupiter token verification, VRFD eligibility, paying 1000 JUP to verify a token, submitting a verification request, or updating on-chain token metadata via the Jupiter express verification flow.
+description: Use when a user mentions Jupiter token verification, VRFD eligibility, paying 1000 JUP to verify a token, submitting a verification request, or updating token metadata via the Jupiter express verification flow.
 license: MIT
 metadata:
   author: jupiter
