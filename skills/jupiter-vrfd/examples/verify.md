@@ -35,7 +35,26 @@ const TOKEN_METADATA = null;        // optional object for metadata updates
 async function verifyToken() {
   const senderAddress = wallet.publicKey.toBase58();
 
-  // 1. Craft unsigned transaction
+  // 1. Check eligibility before paying
+  const eligibility = await jupiterFetch<{
+    canVerify: boolean;
+    canMetadata: boolean;
+    verificationError: string | null;
+    metadataError: string | null;
+  }>(`/tokens/v2/verify/express/check-eligibility?tokenId=${encodeURIComponent(TOKEN_ID)}`);
+
+  if (!eligibility.canVerify && !eligibility.canMetadata) {
+    throw new Error(
+      `Token is not eligible: ${eligibility.verificationError || eligibility.metadataError}`
+    );
+  }
+  if (!eligibility.canVerify) {
+    console.warn(
+      `Verification blocked (${eligibility.verificationError}), but metadata-only submission is possible`
+    );
+  }
+
+  // 2. Craft unsigned transaction
   const craft = await jupiterFetch<{
     transaction: string;
     requestId: string;
@@ -44,7 +63,7 @@ async function verifyToken() {
     expireAt: string;
   }>(`/tokens/v2/verify/express/craft-txn?senderAddress=${encodeURIComponent(senderAddress)}`);
 
-  // 2. Verify transaction before signing
+  // 3. Verify transaction before signing
   if (craft.mint !== 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN') {
     throw new Error('Unexpected mint — do not sign');
   }
@@ -55,14 +74,14 @@ async function verifyToken() {
     throw new Error('Transaction expired — re-craft');
   }
 
-  // 3. Sign the transaction
+  // 4. Sign the transaction
   const txBuf = Buffer.from(craft.transaction, 'base64');
   const tx = VersionedTransaction.deserialize(txBuf);
   tx.sign([wallet]);
 
   const signedTx = Buffer.from(tx.serialize()).toString('base64');
 
-  // 4. Execute — submit signed transaction with verification details
+  // 5. Execute — submit signed transaction with verification details
   const result = await jupiterFetch<{
     status: string;
     signature: string;
@@ -84,7 +103,7 @@ async function verifyToken() {
     }),
   });
 
-  // 5. Confirm
+  // 6. Confirm
   if (result.status === 'Success') {
     return {
       signature: result.signature,

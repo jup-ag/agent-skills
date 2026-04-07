@@ -25,6 +25,7 @@ This skill routes agents through the public Jupiter token-verification flow for 
 ## Use/Do Not Use
 
 Use when:
+
 - checking whether a token is eligible for submission
 - crafting and signing the submission payment transaction
 - executing the submission flow
@@ -32,6 +33,7 @@ Use when:
 - submitting a metadata-only paid update when eligibility allows metadata but not verification
 
 Do not use when:
+
 - the agent would need private or internal routes
 - the agent needs to fetch or merge existing metadata from non-public endpoints
 - the user wants swaps, trading, or unrelated Jupiter flows
@@ -40,11 +42,11 @@ Do not use when:
 
 ## Intent Router
 
-| User intent               | Endpoint                                                  | Method |
-| ------------------------- | --------------------------------------------------------- | ------ |
-| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId={TOKEN_ID}` | `GET`  |
-| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress={SENDER_ADDRESS}`   | `GET`  |
-| Sign and execute payment  | `/tokens/v2/verify/express/execute`                       | `POST` |
+| User intent               | Endpoint                                                             | Method |
+| ------------------------- | -------------------------------------------------------------------- | ------ |
+| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId={TOKEN_ID}`     | `GET`  |
+| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress={SENDER_ADDRESS}` | `GET`  |
+| Sign and execute payment  | `/tokens/v2/verify/express/execute`                                  | `POST` |
 
 ## Examples
 
