@@ -97,7 +97,7 @@ The `transaction` value is unsigned. Verify it locally before signing.
 
 **Transaction verification before signing:**
 
-- `receiverAddress` should match the expected VRFD treasury
+- `receiverAddress` must be `8gMBNeKwXaoNi9bhbVUWFt4Uc5aobL9PeYMXfYDMePE2` (Jupiter burn multisig)
 - `mint` must be `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
 - `amount` must be `1000000000` (1000 JUP at 6 decimals)
 - `expireAt` must be in the future — if expired, re-call `craft-txn`

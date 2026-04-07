@@ -58,12 +58,16 @@ async function verifyToken() {
   const craft = await jupiterFetch<{
     transaction: string;
     requestId: string;
+    receiverAddress: string;
     mint: string;
     amount: string;
     expireAt: string;
   }>(`/tokens/v2/verify/express/craft-txn?senderAddress=${encodeURIComponent(senderAddress)}`);
 
   // 3. Verify transaction before signing
+  if (craft.receiverAddress !== '8gMBNeKwXaoNi9bhbVUWFt4Uc5aobL9PeYMXfYDMePE2') {
+    throw new Error('Unexpected receiver — do not sign');
+  }
   if (craft.mint !== 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN') {
     throw new Error('Unexpected mint — do not sign');
   }
