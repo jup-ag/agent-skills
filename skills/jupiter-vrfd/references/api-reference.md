@@ -1,6 +1,7 @@
 # API Reference — Jupiter Token Verification
 
-> **Base URL**: `https://token-verification-dev-api.jup.ag`
+> **Base URL**: `https://api.jup.ag`
+> **Auth**: `x-api-key` header from [portal.jup.ag](https://portal.jup.ag/) (required for all requests)
 
 This reference intentionally documents only the 3 public routes used by the skill.
 
@@ -13,12 +14,13 @@ For this skill, this file is the source of truth for:
 
 ---
 
-## GET /express/check-eligibility
+## GET /tokens/v2/verify/express/check-eligibility
 
 Checks whether a token can enter the public verification flow and whether the execute route could also accept `tokenMetadata`.
 
 ```http
-GET https://token-verification-dev-api.jup.ag/express/check-eligibility?tokenId={tokenId}
+GET https://api.jup.ag/tokens/v2/verify/express/check-eligibility?tokenId={tokenId}
+x-api-key: {API_KEY}
 ```
 
 | Param | Type | Required | Notes |
@@ -41,22 +43,23 @@ Notes:
 - `canVerify: true` means the token can use the verification flow
 - `canVerify: false` and `canMetadata: false` means the caller should stop and inspect `verificationError` and `metadataError`
 - `canVerify: false` and `canMetadata: true` means verification is blocked, but a metadata-only execute request may still be possible
-- `canMetadata: true` means `POST /payments/express/execute` may accept a `tokenMetadata` payload
+- `canMetadata: true` means `POST /tokens/v2/verify/express/execute` may accept a `tokenMetadata` payload
 - this skill does not document private helpers for fetching or merging metadata
 
 ---
 
-## GET /payments/express/craft-txn
+## GET /tokens/v2/verify/express/craft-txn
 
-Creates the unsigned 1 JUP payment transaction used by the submission flow.
+Creates the unsigned 1000 JUP payment transaction used by the submission flow.
 
 ```http
-GET https://token-verification-dev-api.jup.ag/payments/express/craft-txn?senderAddress={walletAddress}
+GET https://api.jup.ag/tokens/v2/verify/express/craft-txn?senderAddress={walletAddress}
+x-api-key: {API_KEY}
 ```
 
 | Param | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `senderAddress` | string | Yes | Wallet that will pay 1 JUP |
+| `senderAddress` | string | Yes | Wallet that will pay 1000 JUP |
 
 **Response**
 
@@ -64,7 +67,7 @@ GET https://token-verification-dev-api.jup.ag/payments/express/craft-txn?senderA
 {
   "receiverAddress": "VRFD...",
   "mint": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
-  "amount": "1000000",
+  "amount": "1000000000",
   "tokenDecimals": 6,
   "feeLamports": 5000,
   "feeMint": "So11111111111111111111111111111111111111112",
@@ -83,13 +86,14 @@ The `transaction` value is unsigned. Verify it locally before signing.
 
 ---
 
-## POST /payments/express/execute
+## POST /tokens/v2/verify/express/execute
 
 Submits the signed transaction and creates the verification request, metadata update, or both.
 
 ```http
-POST https://token-verification-dev-api.jup.ag/payments/express/execute
+POST https://api.jup.ag/tokens/v2/verify/express/execute
 Content-Type: application/json
+x-api-key: {API_KEY}
 ```
 
 **Request body**
@@ -175,7 +179,7 @@ Confirm handle normalization with the user before execute when the user did not 
 
 ## Optional tokenMetadata Payload
 
-`POST /payments/express/execute` accepts an optional `tokenMetadata` object with this shape:
+`POST /tokens/v2/verify/express/execute` accepts an optional `tokenMetadata` object with this shape:
 
 ```json
 {
@@ -230,4 +234,4 @@ All fields other than `tokenId` are optional and may be `string`, `boolean`, or 
 ## Validation Notes
 
 - Solana addresses must be valid public keys
-- The submission cost is 1 JUP, represented as `1000000` base units with 6 decimals
+- The submission cost is 1000 JUP, represented as `1000000000` base units with 6 decimals

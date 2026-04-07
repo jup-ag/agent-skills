@@ -6,15 +6,15 @@ For request-field requirements, accepted input formats, normalization rules, and
 
 The guide relies only on these routes:
 
-- `GET /express/check-eligibility`
-- `GET /payments/express/craft-txn`
-- `POST /payments/express/execute`
+- `GET /tokens/v2/verify/express/check-eligibility`
+- `GET /tokens/v2/verify/express/craft-txn`
+- `POST /tokens/v2/verify/express/execute`
 
 Precondition:
 
 - the selected submission mode is already known (`verification`, `verification+metadata`, or `metadata-only`)
 - the user has already provided the paying wallet
-- the user has confirmed that wallet holds at least 1 JUP plus a small amount of SOL for fees
+- the user has confirmed that wallet holds at least 1000 JUP plus a small amount of SOL for fees
 
 ## 1. Wallet Source
 
@@ -53,8 +53,8 @@ Ensure the working directory is ESM-compatible (`"type": "module"` in `package.j
 The script should:
 
 1. load the keypair from the user's wallet source
-2. craft the transaction via `GET /payments/express/craft-txn?senderAddress={wallet}`
-3. sign and execute via `POST /payments/express/execute`
+2. craft the transaction via `GET /tokens/v2/verify/express/craft-txn?senderAddress={wallet}`
+3. sign and execute via `POST /tokens/v2/verify/express/execute`
 4. print the result
 
 The agent fills in the constant values at the top of the template from the conversation context. Normalize `twitterHandle` and `senderTwitterHandle` to `https://x.com/{handle}` format before writing them into the script (see [API Reference](api-reference.md) for normalization rules).
@@ -89,7 +89,9 @@ const DESCRIPTION = "";
 const TOKEN_METADATA = null;      // optional object, e.g. { tokenId: "...", name: "..." }
 
 // ── Constants ────────────────────────────────────────
-const BASE_URL = "https://token-verification-dev-api.jup.ag";
+const BASE_URL = "https://api.jup.ag";
+const API_KEY = process.env.JUPITER_API_KEY; // from portal.jup.ag
+if (!API_KEY) throw new Error("Missing JUPITER_API_KEY env var — get one at portal.jup.ag");
 
 // ── Load keypair ─────────────────────────────────────
 function loadKeypair() {
@@ -127,9 +129,9 @@ async function signAndExecute(txBase64, wallet, craftData, executeParams) {
 
   tx.sign([wallet]);
 
-  const res = await fetch(`${BASE_URL}/payments/express/execute`, {
+  const res = await fetch(`${BASE_URL}/tokens/v2/verify/express/execute`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
     body: JSON.stringify({
       transaction: Buffer.from(tx.serialize()).toString("base64"),
       requestId: craftData.requestId,
@@ -155,9 +157,10 @@ async function main() {
   const senderAddress = wallet.publicKey.toBase58();
 
   const craftRes = await fetch(
-    `${BASE_URL}/payments/express/craft-txn?senderAddress=${encodeURIComponent(
+    `${BASE_URL}/tokens/v2/verify/express/craft-txn?senderAddress=${encodeURIComponent(
       senderAddress
-    )}`
+    )}`,
+    { headers: { "x-api-key": API_KEY } }
   );
   if (!craftRes.ok) {
     throw new Error(

@@ -1,18 +1,19 @@
 ---
 name: jupiter-vrfd
-description: Use when a user wants to check Jupiter public token-verification eligibility, submit the public 1 JUP verification request, or send a paid metadata-only update for a Solana token mint.
+description: Use when a user wants to check Jupiter public token-verification eligibility, submit the public 1000 JUP verification request, or send a paid metadata-only update for a Solana token mint.
 ---
 
 # Jupiter Token Verification
 
 This skill routes agents through the public Jupiter token-verification flow for a Solana token mint.
 
-- **Base URL**: `https://token-verification-dev-api.jup.ag`
-- **Cost**: 1 JUP
+- **Base URL**: `https://api.jup.ag`
+- **Auth**: `x-api-key` from [portal.jup.ag](https://portal.jup.ag/) (required)
+- **Cost**: 1000 JUP
 - **Public routes covered**:
-  - `GET /express/check-eligibility`
-  - `GET /payments/express/craft-txn`
-  - `POST /payments/express/execute`
+  - `GET /tokens/v2/verify/express/check-eligibility`
+  - `GET /tokens/v2/verify/express/craft-txn`
+  - `POST /tokens/v2/verify/express/execute`
 
 ## Use / Do Not Use
 
@@ -38,9 +39,9 @@ This skill routes agents through the public Jupiter token-verification flow for 
 
 | User intent               | Endpoint                                        | Method |
 | ------------------------- | ----------------------------------------------- | ------ |
-| Check eligibility         | `/express/check-eligibility?tokenId=...`        | `GET`  |
-| Craft payment transaction | `/payments/express/craft-txn?senderAddress=...` | `GET`  |
-| Sign and execute payment  | `/payments/express/execute`                     | `POST` |
+| Check eligibility         | `/tokens/v2/verify/express/check-eligibility?tokenId=...`        | `GET`  |
+| Craft payment transaction | `/tokens/v2/verify/express/craft-txn?senderAddress=...` | `GET`  |
+| Sign and execute payment  | `/tokens/v2/verify/express/execute`                     | `POST` |
 
 ## References
 
@@ -84,7 +85,7 @@ Look for:
 - token Twitter handle or URL
 - requester Twitter handle or URL
 - description
-- confirmation that the paying wallet holds at least 1 JUP plus a small amount of SOL for fees
+- confirmation that the paying wallet holds at least 1000 JUP plus a small amount of SOL for fees
 
 ## Step 1. Route the Request
 
@@ -101,7 +102,7 @@ Otherwise, proceed into execute help. If the user says `verify`, `submit`, `appl
 Call:
 
 ```http
-GET {BASE_URL}/express/check-eligibility?tokenId={tokenId}
+GET {BASE_URL}/tokens/v2/verify/express/check-eligibility?tokenId={tokenId}
 ```
 
 Interpret the result:
@@ -151,7 +152,7 @@ If the current agent cannot safely access a local keypair, stop here and hand th
 
 ## Step 5. Confirm Before Executing
 
-Batch-collect all missing required fields from the API reference, including confirmation that the paying wallet holds at least 1 JUP plus a small amount of SOL for fees.
+Batch-collect all missing required fields from the API reference, including confirmation that the paying wallet holds at least 1000 JUP plus a small amount of SOL for fees.
 
 Summarize:
 
@@ -162,11 +163,11 @@ Summarize:
 - requester Twitter URL if present
 - description if applicable
 - metadata fields to update, if any
-- cost: 1 JUP
+- cost: 1000 JUP
 
 Require an explicit final confirmation that:
 
-- the listed wallet will pay 1 JUP
+- the listed wallet will pay 1000 JUP
 - that wallet has enough SOL for network fees
 - the chosen submission mode is correct
 - the user wants you to proceed with the submission now
@@ -176,10 +177,10 @@ Require an explicit final confirmation that:
 Load [Payment Execution](references/payment-execution.md) and follow the local signing flow:
 
 1. prepare the request fields using the canonical rules in [API Reference](references/api-reference.md)
-2. craft the unsigned transaction with `GET /payments/express/craft-txn`
+2. craft the unsigned transaction with `GET /tokens/v2/verify/express/craft-txn`
 3. verify the transaction contents before signing
 4. sign locally
-5. submit via `POST /payments/express/execute`
+5. submit via `POST /tokens/v2/verify/express/execute`
 
 Report the returned transaction signature and whether `verificationCreated` / `metadataCreated` were set.
 
