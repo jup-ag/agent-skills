@@ -350,18 +350,18 @@ const borrowApr = Number(data.borrowRate) / 100;
 
 The Jupiter Lend Build Kit offers developer components, powerful utilities, and in-depth documentation to help you build and integrate with Jupiter Lend efficiently.
 
-**Base URL**: [https://dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
+**Base URL**: [https://developers.jup.ag/docs/lend](https://developers.jup.ag/docs/lend)
 
 ### Build Kit Documentation Index
 
-- **Getting started**: [overview](https://dev.jup.ag/docs/lend), [API vs SDK](https://dev.jup.ag/docs/lend/api-vs-sdk)
-- **Earn**: [overview](https://dev.jup.ag/docs/lend/earn), [deposit](https://dev.jup.ag/docs/lend/earn/deposit), [withdraw](https://dev.jup.ag/docs/lend/earn/withdraw), [read data](https://dev.jup.ag/docs/lend/earn/read-data)
-- **Wallet integrations (Privy)**: [Earn with Privy](https://dev.jup.ag/docs/lend/wallets/privy-earn), [Borrow with Privy](https://dev.jup.ag/docs/lend/wallets/privy-borrow)
-- **Borrow**: [overview](https://dev.jup.ag/docs/lend/borrow), [create position](https://dev.jup.ag/docs/lend/borrow/create-position), [deposit](https://dev.jup.ag/docs/lend/borrow/deposit), [borrow](https://dev.jup.ag/docs/lend/borrow/borrow), [repay](https://dev.jup.ag/docs/lend/borrow/repay), [withdraw](https://dev.jup.ag/docs/lend/borrow/withdraw), [combined operate](https://dev.jup.ag/docs/lend/borrow/combined), [liquidate](https://dev.jup.ag/docs/lend/borrow/liquidation), [read vault data](https://dev.jup.ag/docs/lend/borrow/read-vault-data)
-- **Flashloan**: [overview](https://dev.jup.ag/docs/lend/flashloan), [execute](https://dev.jup.ag/docs/lend/flashloan/execute)
-- **Advanced**: [advanced/multiply](https://dev.jup.ag/docs/lend/advanced/multiply), [advanced/unwind](https://dev.jup.ag/docs/lend/advanced/unwind), [advanced/repay-withdraw-collateral](https://dev.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw), [advanced/vault-swap](https://dev.jup.ag/docs/lend/advanced/vault-swap), [advanced/utilization-after-deposit](https://dev.jup.ag/docs/lend/advanced/utilization-after-deposit), [advanced/native-staked-vault/overview](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/overview), [advanced/native-staked-vault/deposit](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/deposit), [advanced/native-staked-vault/withdraw](https://dev.jup.ag/docs/lend/advanced/native-staked-vault/withdraw)
-- **Liquidity**: [liquidity/analytics](https://dev.jup.ag/docs/lend/liquidity/analytics)
-- **Resources**: [resources/program-addresses](https://dev.jup.ag/docs/lend/resources/program-addresses), [resources/idl-and-types](https://dev.jup.ag/docs/lend/resources/idl-and-types), [resources/dune](https://dev.jup.ag/docs/lend/resources/dune)
+- **Getting started**: [overview](https://developers.jup.ag/docs/lend), [API vs SDK](https://developers.jup.ag/docs/lend/api-vs-sdk)
+- **Earn**: [overview](https://developers.jup.ag/docs/lend/earn), [deposit](https://developers.jup.ag/docs/lend/earn/deposit), [withdraw](https://developers.jup.ag/docs/lend/earn/withdraw), [read data](https://developers.jup.ag/docs/lend/earn/read-data)
+- **Wallet integrations (Privy)**: [Earn with Privy](https://developers.jup.ag/docs/lend/wallets/privy-earn), [Borrow with Privy](https://developers.jup.ag/docs/lend/wallets/privy-borrow)
+- **Borrow**: [overview](https://developers.jup.ag/docs/lend/borrow), [create position](https://developers.jup.ag/docs/lend/borrow/create-position), [deposit](https://developers.jup.ag/docs/lend/borrow/deposit), [borrow](https://developers.jup.ag/docs/lend/borrow/borrow), [repay](https://developers.jup.ag/docs/lend/borrow/repay), [withdraw](https://developers.jup.ag/docs/lend/borrow/withdraw), [combined operate](https://developers.jup.ag/docs/lend/borrow/combined), [liquidate](https://developers.jup.ag/docs/lend/borrow/liquidation), [read vault data](https://developers.jup.ag/docs/lend/borrow/read-vault-data)
+- **Flashloan**: [overview](https://developers.jup.ag/docs/lend/flashloan), [execute](https://developers.jup.ag/docs/lend/flashloan/execute)
+- **Advanced**: [advanced/multiply](https://developers.jup.ag/docs/lend/advanced/multiply), [advanced/unwind](https://developers.jup.ag/docs/lend/advanced/unwind), [advanced/repay-withdraw-collateral](https://developers.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw), [advanced/vault-swap](https://developers.jup.ag/docs/lend/advanced/vault-swap), [advanced/utilization-after-deposit](https://developers.jup.ag/docs/lend/advanced/utilization-after-deposit), [advanced/native-staked-vault/overview](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/overview), [advanced/native-staked-vault/deposit](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/deposit), [advanced/native-staked-vault/withdraw](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/withdraw)
+- **Liquidity**: [liquidity/analytics](https://developers.jup.ag/docs/lend/liquidity/analytics)
+- **Resources**: [resources/program-addresses](https://developers.jup.ag/docs/lend/resources/program-addresses), [resources/idl-and-types](https://developers.jup.ag/docs/lend/resources/idl-and-types), [resources/dune](https://developers.jup.ag/docs/lend/resources/dune)
 
 ---
 
@@ -569,8 +569,8 @@ main().catch(console.error);
 
 ## API Documentation
 
-- **Jupiter Lend Overview**: [dev.jup.ag/docs/lend](https://dev.jup.ag/docs/lend)
-- **Lend API (Earn)**: [api-reference/lend/earn](https://dev.jup.ag/api-reference/lend/earn) | REST API for Earn operations (deposit/withdraw/mint/redeem, tokens, positions, earnings)
+- **Jupiter Lend Overview**: [developers.jup.ag/docs/lend](https://developers.jup.ag/docs/lend)
+- **Lend API (Earn)**: [api-reference/lend/earn](https://developers.jup.ag/api-reference/lend/earn) | REST API for Earn operations (deposit/withdraw/mint/redeem, tokens, positions, earnings)
 - **Lend API (Borrow)**: *(Coming Soon)*
 
 ## SDKs

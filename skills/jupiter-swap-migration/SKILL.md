@@ -64,7 +64,7 @@ Each path has a dedicated example with before/after code, parameter mappings, an
 6. **ALT handling**: If using `/build`, switch from `addressLookupTableAddresses` (array) to `addressesByLookupTableAddress` (object) — remove RPC ALT resolution code
 7. **Fee event parsing**: V2 instructions don't emit fee events — update any transaction parser that depends on them
 8. **Route plan format**: If parsing route plans, use `bps` field (canonical) instead of `percent`
-9. **Error codes**: Update error handling to match [Swap v2 error codes](https://dev.jup.ag/docs/swap/v2/order-and-execute.md)
+9. **Error codes**: Update error handling to match [Swap v2 error codes](https://developers.jup.ag/docs/swap/v2/order-and-execute.md)
 10. **Test**: Run end-to-end swap on devnet/mainnet with small amount to verify
 
 ## Sunset
@@ -75,9 +75,9 @@ Remove this skill once Jupiter decommissions the v1 (`/swap/v1`) endpoints and t
 
 ## References
 
-- [Migration guide](https://dev.jup.ag/docs/swap/v2/migration.md)
-- [Order & Execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md)
-- [Build](https://dev.jup.ag/docs/swap/v2/build/index.md)
-- [Fees](https://dev.jup.ag/docs/swap/v2/fees.md)
-- [Routing](https://dev.jup.ag/docs/swap/v2/routing.md)
-- [OpenAPI spec](https://dev.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)
+- [Migration guide](https://developers.jup.ag/docs/swap/v2/migration.md)
+- [Order & Execute](https://developers.jup.ag/docs/swap/v2/order-and-execute.md)
+- [Build](https://developers.jup.ag/docs/swap/v2/build/index.md)
+- [Fees](https://developers.jup.ag/docs/swap/v2/fees.md)
+- [Routing](https://developers.jup.ag/docs/swap/v2/routing.md)
+- [OpenAPI spec](https://developers.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)

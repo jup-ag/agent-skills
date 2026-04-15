@@ -50,7 +50,7 @@ Home-local install:
 
 ## MCP Server
 
-This plugin configures the [Jupiter MCP server](https://dev.jup.ag/docs/ai/mcp) — a read-only documentation server that exposes all Jupiter documentation and OpenAPI specs through the MCP protocol.
+This plugin configures the [Jupiter MCP server](https://developers.jup.ag/docs/ai/mcp) — a read-only documentation server that exposes all Jupiter documentation and OpenAPI specs through the MCP protocol.
 
 ## Links
 
