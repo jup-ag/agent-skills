@@ -132,10 +132,10 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Rate Limit**: 50 req/10s base, scales with 24h execute volume (see [Rate Limits](#rate-limits))
 - **Endpoints**: `/order` (GET), `/execute` (POST), `/build` (GET, Metis-only raw instructions)
 - **Routing**: 4 routers compete — Metis (API value: `iris`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
-- **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) for current thresholds and disqualifying params.
+- **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://developers.jup.ag/docs/swap/v2/advanced/gasless.md) for current thresholds and disqualifying params.
 - **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed. `referralAccount`/`referralFee`/`receiver` disable JupiterZ only (Metis/Dflow/OKX remain). `payer` reduces routing to Metis only (per gasless docs; routing docs group all four as disabling JupiterZ but do not itemize the additional Dflow/OKX restriction). `/build` transactions cannot use `/execute` — self-manage via RPC.
 - **Migrating from an older integration?** Use the `jupiter-swap-migration` skill.
-- Refs: [Overview](https://dev.jup.ag/docs/swap/index.md) | [Order & Execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) | [Build](https://dev.jup.ag/docs/swap/v2/build/index.md) | [Fees](https://dev.jup.ag/docs/swap/v2/fees.md) | [Routing](https://dev.jup.ag/docs/swap/v2/routing.md) | [Gasless](https://dev.jup.ag/docs/swap/v2/advanced/gasless.md) | [Migration](https://dev.jup.ag/docs/swap/v2/migration.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/swap/index.md) | [Order & Execute](https://developers.jup.ag/docs/swap/v2/order-and-execute.md) | [Build](https://developers.jup.ag/docs/swap/v2/build/index.md) | [Fees](https://developers.jup.ag/docs/swap/v2/fees.md) | [Routing](https://developers.jup.ag/docs/swap/v2/routing.md) | [Gasless](https://developers.jup.ag/docs/swap/v2/advanced/gasless.md) | [Migration](https://developers.jup.ag/docs/swap/v2/migration.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)
 
 Common error codes returned by `/swap/v2/execute` with recommended actions:
 
@@ -169,7 +169,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Endpoints**: `/earn/deposit` (POST), `/earn/withdraw` (POST), `/earn/mint` (POST), `/earn/redeem` (POST), `/earn/deposit-instructions` (POST), `/earn/withdraw-instructions` (POST), `/earn/tokens` (GET), `/earn/positions` (GET), `/earn/earnings` (GET)
 - **Gotchas**: Recompute account state before each state-changing action. Encode risk checks (health factors, liquidation boundaries) as preconditions. All deposit/withdraw/mint/redeem return base64 unsigned `VersionedTransaction`.
 - **For SDK-level integration** with `@jup-ag/lend` and `@jup-ag/lend-read`, use the `jupiter-lend` skill.
-- Refs: [Overview](https://dev.jup.ag/docs/lend/index.md) | [Earn](https://dev.jup.ag/docs/lend/earn.md) | [SDK](https://dev.jup.ag/docs/lend/sdk.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/lend/lend.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/lend/index.md) | [Earn](https://developers.jup.ag/docs/lend/earn.md) | [SDK](https://developers.jup.ag/docs/lend/sdk.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/lend/lend.yaml)
 
 ---
 
@@ -179,7 +179,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Triggers**: `perps`, `leverage`, `long`, `short`, `position`
 - **Community SDK**: [github.com/julianfssen/jupiter-perps-anchor-idl-parsing](https://github.com/julianfssen/jupiter-perps-anchor-idl-parsing)
 - **Gotchas**: Max 9 simultaneous positions: 3 long (SOL, wETH, wBTC) + 6 short (3 tokens x 2 collateral USDC/USDT). Validate margin/leverage against account model.
-- Refs: [Overview](https://dev.jup.ag/docs/perps/index.md) | [Position account](https://dev.jup.ag/docs/perps/position-account.md) | [Position request](https://dev.jup.ag/docs/perps/position-request-account.md)
+- Refs: [Overview](https://developers.jup.ag/docs/perps/index.md) | [Position account](https://developers.jup.ag/docs/perps/position-account.md) | [Position request](https://developers.jup.ag/docs/perps/position-request-account.md)
 
 ---
 
@@ -193,7 +193,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Order types**: `single` (one directional trigger), `oco` (take-profit + stop-loss pair), `otoco` (entry trigger + OCO). `triggerCondition`: `"above"` or `"below"`.
 - **Architecture**: Off-chain custodial vault (Privy) per wallet. Orders invisible on-chain until execution — MEV-resistant. Triggers on USD price (not pool rate ratios). Partial fills supported.
 - **Gotchas**: Order creation is 3 steps — `GET /vault/register` (register if new), `POST /deposit/craft` (returns `transaction` + `requestId`), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`. Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`. Response field is `id` (not `orderId`).
-- Refs: [Overview](https://dev.jup.ag/docs/trigger/index.md) | [Create order](https://dev.jup.ag/docs/trigger/create-order.md) | [Order history](https://dev.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://dev.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/trigger/v2/trigger.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/trigger/index.md) | [Create order](https://developers.jup.ag/docs/trigger/create-order.md) | [Order history](https://developers.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://developers.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/trigger/v2/trigger.yaml)
 
 ---
 
@@ -206,7 +206,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Pagination**: 10 orders per page
 - **Endpoints**: `/createOrder` (POST), `/cancelOrder` (POST), `/execute` (POST), `/getRecurringOrders` (GET)
 - **Gotchas**: Token-2022 NOT supported. Use `params.time` for order scheduling; price-based ordering is not supported.
-- Refs: [Overview](https://dev.jup.ag/docs/recurring/index.md) | [Create](https://dev.jup.ag/docs/recurring/create-order.md) | [Get orders](https://dev.jup.ag/docs/recurring/get-recurring-orders.md) | [Best Practices](https://dev.jup.ag/docs/recurring/best-practices) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/recurring/recurring.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/recurring/index.md) | [Create](https://developers.jup.ag/docs/recurring/create-order.md) | [Get orders](https://developers.jup.ag/docs/recurring/get-recurring-orders.md) | [Best Practices](https://developers.jup.ag/docs/recurring/best-practices) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/recurring/recurring.yaml)
 
 ---
 
@@ -216,7 +216,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Triggers**: `token metadata`, `token search`, `shield`
 - **Endpoints**: `/search?query={q}` (GET, comma-separate mints, max 100), `/tag?query={tag}` (GET, `verified` or `lst`), `/{category}/{interval}` (GET, categories: `toporganicscore`, `toptraded`, `toptrending`; intervals: `5m`, `1h`, `6h`, `24h`), `/recent` (GET)
 - **Gotchas**: Use mint address as primary identity; treat symbol/name as convenience. Surface `audit.isSus` and `organicScore` in UX.
-- Refs: [Overview](https://dev.jup.ag/docs/tokens/index.md) | [Token info v2](https://dev.jup.ag/docs/tokens/v2/token-information.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/tokens/v2/tokens.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/tokens/index.md) | [Token info v2](https://developers.jup.ag/docs/tokens/v2/token-information.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/tokens/v2/tokens.yaml)
 
 ---
 
@@ -227,7 +227,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Limit**: Max 50 mint IDs per request
 - **Endpoints**: `/price/v3?ids={mints}` (GET, comma-separated)
 - **Gotchas**: Tokens with unreliable pricing return `null` or are omitted (not an error). Fail closed on missing/low-confidence data for safety-sensitive actions. Use `confidenceLevel` field.
-- Refs: [Overview](https://dev.jup.ag/docs/price/index.md) | [Price v3](https://dev.jup.ag/docs/price/v3.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/price/v3/price.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/price/index.md) | [Price v3](https://developers.jup.ag/docs/price/v3.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/price/v3/price.yaml)
 
 ---
 
@@ -238,7 +238,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Triggers**: `portfolio`, `positions`, `holdings`
 - **Endpoints**: `/positions/{address}` (GET), `/positions/{address}?platforms={ids}` (GET), `/platforms` (GET), `/staked-jup/{address}` (GET)
 - **Gotchas**: Treat empty positions as valid state. Response is beta — normalize into stable internal schema. Element types: `multiple`, `liquidity`, `trade`, `leverage`, `borrowlend`.
-- Refs: [Overview](https://dev.jup.ag/docs/portfolio/index.md) | [Jupiter positions](https://dev.jup.ag/docs/portfolio/jupiter-positions.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/portfolio/portfolio.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/portfolio/index.md) | [Jupiter positions](https://developers.jup.ag/docs/portfolio/jupiter-positions.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/portfolio/portfolio.yaml)
 
 ---
 
@@ -252,7 +252,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Deposit mints**: JupUSD (`JuprjznTrTSp2UFa3ZBUFgwdAmtZCq4MQCwysN55USD`), USDC
 - **Endpoints**: `/events` (GET), `/events/search` (GET), `/markets/{marketId}` (GET), `/orderbook/{marketId}` (GET), `/orders` (POST), `/orders/status/{pubkey}` (GET), `/positions` (GET), `/positions/{pubkey}` (DELETE), `/positions/{pubkey}/claim` (POST), `/history` (GET), `/leaderboards` (GET)
 - **Gotchas**: Check `position.claimable` before claiming. Winners get $1/contract.
-- Refs: [Overview](https://dev.jup.ag/docs/prediction/index.md) | [Events](https://dev.jup.ag/docs/prediction/events-and-markets.md) | [Positions](https://dev.jup.ag/docs/prediction/open-positions.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/prediction/prediction.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/prediction/index.md) | [Events](https://developers.jup.ag/docs/prediction/events-and-markets.md) | [Positions](https://developers.jup.ag/docs/prediction/open-positions.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/prediction/prediction.yaml)
 
 ---
 
@@ -264,7 +264,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Supported tokens**: SOL, USDC, memecoins
 - **Endpoints**: `/craft-send` (POST), `/craft-clawback` (POST), `/pending-invites` (GET), `/invite-history` (GET)
 - **Gotchas**: **Dual-sign requirement** — sender + recipient keypair (derived from invite code). Claims only via Jupiter Mobile (no API claiming). Never expose invite codes.
-- Refs: [Overview](https://dev.jup.ag/docs/send/index.md) | [Invite code](https://dev.jup.ag/docs/send/invite-code.md) | [Craft send](https://dev.jup.ag/docs/send/craft-send.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/send/send.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/send/index.md) | [Invite code](https://developers.jup.ag/docs/send/invite-code.md) | [Craft send](https://developers.jup.ag/docs/send/craft-send.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/send/send.yaml)
 
 ---
 
@@ -276,7 +276,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **Endpoints**: `/dbc-pool/create-tx` (POST), `/dbc-pool/submit` (POST, multipart/form-data), `/dbc-pool/addresses/{mint}` (GET), `/dbc/fee` (POST), `/dbc/fee/create-tx` (POST)
 - **Flow**: create-tx -> upload image to presigned URL -> upload metadata to presigned URL -> sign -> submit via `/dbc-pool/submit`
 - **Gotchas**: Must submit via `/dbc-pool/submit` (not externally) for token to get a Studio page on jup.ag. Error codes: `403` = not authorized for pool, `404` = proxy account not found.
-- Refs: [Overview](https://dev.jup.ag/docs/studio/index.md) | [Create token](https://dev.jup.ag/docs/studio/create-token.md) | [Claim fee](https://dev.jup.ag/docs/studio/claim-fee.md) | [OpenAPI](https://dev.jup.ag/docs/openapi-spec/studio/studio.yaml)
+- Refs: [Overview](https://developers.jup.ag/docs/studio/index.md) | [Create token](https://developers.jup.ag/docs/studio/create-token.md) | [Claim fee](https://developers.jup.ag/docs/studio/claim-fee.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/studio/studio.yaml)
 
 ---
 
@@ -289,7 +289,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **UI**: [lock.jup.ag](https://lock.jup.ag/)
 - **Security**: Audited by OtterSec and Sec3
 - **Gotchas**: No REST API. Use instruction scripts from the repo's `cli/src/bin/instructions` directory.
-- Refs: [Lock overview](https://dev.jup.ag/docs/lock/index.md)
+- Refs: [Lock overview](https://developers.jup.ag/docs/lock/index.md)
 
 ---
 
@@ -300,7 +300,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 - **DEX Integration** (into Iris): Free, no fees. Prereqs: code health, security audit, market traction. Implement `jupiter-amm-interface` crate. **Critical**: No network calls in implementation (accounts are pre-batched and cached). Ref impl: [github.com/jup-ag/rust-amm-implementation](https://github.com/jup-ag/rust-amm-implementation)
 - **RFQ Integration** (JupiterZ): Market makers host webhook at `/jupiter/rfq/quote` (POST, 250ms), `/jupiter/rfq/swap` (POST), `/jupiter/rfq/tokens` (GET). Reqs: 95% fill rate, 250ms response, 55s expiry. SDK: [github.com/jup-ag/rfq-webhook-toolkit](https://github.com/jup-ag/rfq-webhook-toolkit)
 - **Market Listing**: Instant routing for tokens < 30 days old. Normal routing (checked every 30 min) requires < 30% loss on $500 round-trip OR < 20% price impact comparing $1k vs $500.
-- Refs: [Overview](https://dev.jup.ag/docs/routing/index.md) | [DEX integration](https://dev.jup.ag/docs/routing/dex-integration.md) | [RFQ integration](https://dev.jup.ag/docs/routing/rfq-integration.md) | [Market listing](https://dev.jup.ag/docs/routing/market-listing.md)
+- Refs: [Overview](https://developers.jup.ag/docs/routing/index.md) | [DEX integration](https://developers.jup.ag/docs/routing/dex-integration.md) | [RFQ integration](https://developers.jup.ag/docs/routing/rfq-integration.md) | [Market listing](https://developers.jup.ag/docs/routing/market-listing.md)
 
 ---
 
@@ -317,7 +317,7 @@ Common error codes returned by `/swap/v2/execute` with recommended actions:
 
 Quotas recalculate every 10 minutes. Pro plan does NOT increase Swap API limits.
 
-**Other APIs**: Managed at portal level. Check [portal rate limits](https://dev.jup.ag/docs/portal/rate-limit.md).
+**Other APIs**: Managed at portal level. Check [portal rate limits](https://developers.jup.ag/docs/portal/rate-limit.md).
 
 **On HTTP 429**: Exponential backoff with jitter: `delay = min(baseDelay * 2^attempt + random(0, jitter), maxDelay)`. Wait for 10s sliding window refresh. Do NOT burst aggressively.
 
@@ -337,9 +337,9 @@ Quotas recalculate every 10 minutes. Pro plan does NOT increase Swap API limits.
 ## Integration Best Practices
 
 1. Start from the API-specific overview before coding endpoint calls.
-2. Enforce auth as a hard precondition for every request. Ref: [Portal setup](https://dev.jup.ag/docs/portal/setup.md)
-3. Design retry logic around documented rate-limit behavior, not fixed assumptions. Ref: [Rate limits](https://dev.jup.ag/docs/portal/rate-limit.md)
-4. Map all non-success responses to typed app errors using documented response semantics. Ref: [API responses](https://dev.jup.ag/docs/portal/responses.md)
+2. Enforce auth as a hard precondition for every request. Ref: [Portal setup](https://developers.jup.ag/docs/portal/setup.md)
+3. Design retry logic around documented rate-limit behavior, not fixed assumptions. Ref: [Rate limits](https://developers.jup.ag/docs/portal/rate-limit.md)
+4. Map all non-success responses to typed app errors using documented response semantics. Ref: [API responses](https://developers.jup.ag/docs/portal/responses.md)
 5. For order-based products (Swap/Trigger/Recurring), separate create/execute/retrieve phases in code and logs.
 6. Treat network/service health as part of runtime behavior (degrade gracefully). Ref: [Status page](https://status.jup.ag/)
 
@@ -415,11 +415,11 @@ Always fetch the freshest context from referenced docs/specs before executing a 
 
 ## Operational References
 
-- [Portal setup](https://dev.jup.ag/docs/portal/setup.md) — API key configuration
-- [Rate limits](https://dev.jup.ag/docs/portal/rate-limit.md) — Global rate limit policy
-- [Swap routing](https://dev.jup.ag/docs/swap/v2/routing.md) — Router competition and parameter impact
-- [API responses](https://dev.jup.ag/docs/portal/responses.md) — Response format standards
-- [Swap order & execute](https://dev.jup.ag/docs/swap/v2/order-and-execute.md) — Detailed error codes and response format
+- [Portal setup](https://developers.jup.ag/docs/portal/setup.md) — API key configuration
+- [Rate limits](https://developers.jup.ag/docs/portal/rate-limit.md) — Global rate limit policy
+- [Swap routing](https://developers.jup.ag/docs/swap/v2/routing.md) — Router competition and parameter impact
+- [API responses](https://developers.jup.ag/docs/portal/responses.md) — Response format standards
+- [Swap order & execute](https://developers.jup.ag/docs/swap/v2/order-and-execute.md) — Detailed error codes and response format
 - [Status page](https://status.jup.ag/) — Service health
-- [Documentation sitemap](https://dev.jup.ag/docs/llms.txt) — Full docs index
-- [Tool Kits](https://dev.jup.ag/docs/tool-kits/plugin/index.md) — Plugin, Wallet Kit, Referral Program
+- [Documentation sitemap](https://developers.jup.ag/docs/llms.txt) — Full docs index
+- [Tool Kits](https://developers.jup.ag/docs/tool-kits/plugin/index.md) — Plugin, Wallet Kit, Referral Program

@@ -83,5 +83,5 @@ For execute requests in constrained agent environments:
 
 - **Jupiter Burn Multisig**: `8gMBNeKwXaoNi9bhbVUWFt4Uc5aobL9PeYMXfYDMePE2`
 - **JUP Token Mint**: `JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN`
-- **Jupiter Docs**: [dev.jup.ag](https://dev.jup.ag)
+- **Jupiter Docs**: [developers.jup.ag](https://developers.jup.ag)
 - **Jupiter Verified**: [verified.jup.ag](https://verified.jup.ag)
