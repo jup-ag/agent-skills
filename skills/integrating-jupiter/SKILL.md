@@ -39,7 +39,10 @@ tags:
 Single skill for all Jupiter APIs, optimized for fast routing and deterministic execution.
 
 **Base URL**: `https://api.jup.ag`
-**Auth**: `x-api-key` from [portal.jup.ag](https://portal.jup.ag/) (**required for Jupiter REST endpoints**)
+
+**Auth**:
+- **Read endpoints** (e.g. `/lend/v1/earn/tokens`, `/prediction/v1/events`, `/prediction/v1/markets/{id}`, `/prediction/v1/orderbook/{id}`): keyless at 0.5 RPS works — useful for prototyping and discovery.
+- **Write endpoints** (e.g. `POST /prediction/v1/orders`, swap quote/build, transaction crafting) and **higher rate limits**: require `x-api-key` from [portal.jup.ag](https://portal.jup.ag/).
 
 ## Use/Do Not Use
 
