@@ -4,7 +4,7 @@ description: Use when a user mentions Jupiter token verification, VRFD eligibili
 license: MIT
 metadata:
   author: jup-ag
-  version: "1.0.0"
+  version: "1.0.1"
 tags:
   - jupiter
   - jup-ag
@@ -19,7 +19,7 @@ tags:
 This skill routes agents through the public Jupiter token-verification flow for a Solana token mint.
 
 **Base URL**: `https://api.jup.ag`
-**Auth**: `x-api-key` from [portal.jup.ag](https://portal.jup.ag/) (required)
+**Auth**: `x-api-key` from [developers.jup.ag](https://developers.jup.ag/) (required)
 **Cost**: 1000 JUP
 
 ## Use/Do Not Use

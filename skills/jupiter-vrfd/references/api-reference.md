@@ -1,7 +1,7 @@
 # API Reference — Jupiter Token Verification
 
 > **Base URL**: `https://api.jup.ag`
-> **Auth**: `x-api-key` header from [portal.jup.ag](https://portal.jup.ag/) (required for all requests)
+> **Auth**: `x-api-key` header from [developers.jup.ag](https://developers.jup.ag/) (required for all requests)
 
 This reference intentionally documents only the 3 public routes used by the skill.
 

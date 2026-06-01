@@ -10,7 +10,7 @@ import { Keypair, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 const BASE = 'https://api.jup.ag';
-const API_KEY = process.env.JUPITER_API_KEY!; // from portal.jup.ag
+const API_KEY = process.env.JUPITER_API_KEY!; // from developers.jup.ag
 
 async function jupiterFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

@@ -39,7 +39,7 @@ tags:
 Single skill for all Jupiter APIs, optimized for fast routing and deterministic execution.
 
 **Base URL**: `https://api.jup.ag`
-**Auth**: `x-api-key` from [portal.jup.ag](https://portal.jup.ag/) (**required for Jupiter REST endpoints**)
+**Auth**: `x-api-key` from [developers.jup.ag](https://developers.jup.ag/) (**required for Jupiter REST endpoints**)
 
 ## Use/Do Not Use
 
@@ -60,7 +60,7 @@ Do not use when:
 ```typescript
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 
-const API_KEY = process.env.JUPITER_API_KEY!;  // from portal.jup.ag
+const API_KEY = process.env.JUPITER_API_KEY!;  // from developers.jup.ag
 if (!API_KEY) throw new Error('Missing JUPITER_API_KEY');
 const BASE = 'https://api.jup.ag';
 const headers = { 'x-api-key': API_KEY };
