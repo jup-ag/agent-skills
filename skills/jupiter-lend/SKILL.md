@@ -1,6 +1,6 @@
 ---
 name: jupiter-lend
-version: 0.1.2
+version: 0.1.3
 description: Interact with Jupiter Lend Protocol. Read-only SDK (@jup-ag/lend-read) for querying liquidity pools, lending markets (jlTokens), and vaults. Write SDK (@jup-ag/lend) for lending (deposit/withdraw) and vault operations (deposit collateral, borrow, repay, manage positions).
 homepage: https://jup.ag/lend
 metadata:
@@ -359,9 +359,9 @@ The Jupiter Lend Build Kit offers developer components, powerful utilities, and 
 - **Wallet integrations (Privy)**: [Earn with Privy](https://developers.jup.ag/docs/lend/wallets/privy-earn), [Borrow with Privy](https://developers.jup.ag/docs/lend/wallets/privy-borrow)
 - **Borrow**: [overview](https://developers.jup.ag/docs/lend/borrow), [create position](https://developers.jup.ag/docs/lend/borrow/create-position), [deposit](https://developers.jup.ag/docs/lend/borrow/deposit), [borrow](https://developers.jup.ag/docs/lend/borrow/borrow), [repay](https://developers.jup.ag/docs/lend/borrow/repay), [withdraw](https://developers.jup.ag/docs/lend/borrow/withdraw), [combined operate](https://developers.jup.ag/docs/lend/borrow/combined), [liquidate](https://developers.jup.ag/docs/lend/borrow/liquidation), [read vault data](https://developers.jup.ag/docs/lend/borrow/read-vault-data)
 - **Flashloan**: [overview](https://developers.jup.ag/docs/lend/flashloan), [execute](https://developers.jup.ag/docs/lend/flashloan/execute)
-- **Advanced**: [advanced/multiply](https://developers.jup.ag/docs/lend/advanced/multiply), [advanced/unwind](https://developers.jup.ag/docs/lend/advanced/unwind), [advanced/repay-withdraw-collateral](https://developers.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw), [advanced/vault-swap](https://developers.jup.ag/docs/lend/advanced/vault-swap), [advanced/utilization-after-deposit](https://developers.jup.ag/docs/lend/advanced/utilization-after-deposit), [advanced/native-staked-vault/overview](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/overview), [advanced/native-staked-vault/deposit](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/deposit), [advanced/native-staked-vault/withdraw](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/withdraw)
+- **Advanced**: [advanced/multiply](https://developers.jup.ag/docs/lend/advanced/multiply), [advanced/unwind](https://developers.jup.ag/docs/lend/advanced/unwind), [advanced/repay-withdraw-collateral](https://developers.jup.ag/docs/lend/advanced/repay-with-collateral-max-withdraw), [advanced/vault-swap](https://developers.jup.ag/docs/lend/advanced/vault-swap), [advanced/utilization-after-deposit](https://developers.jup.ag/docs/lend/advanced/utilization-after-deposit), [advanced/native-staked-vault/overview](https://developers.jup.ag/docs/lend/advanced/native-staked-vault), [advanced/native-staked-vault/deposit](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/deposit), [advanced/native-staked-vault/withdraw](https://developers.jup.ag/docs/lend/advanced/native-staked-vault/withdraw)
 - **Liquidity**: [liquidity/analytics](https://developers.jup.ag/docs/lend/liquidity/analytics)
-- **Resources**: [resources/program-addresses](https://developers.jup.ag/docs/lend/resources/program-addresses), [resources/idl-and-types](https://developers.jup.ag/docs/lend/resources/idl-and-types), [resources/dune](https://developers.jup.ag/docs/lend/resources/dune)
+- **Resources**: [resources/program-addresses](https://developers.jup.ag/docs/lend/program-addresses), [resources/idl-and-types](https://developers.jup.ag/docs/lend/idl-and-types), [resources/dune](https://developers.jup.ag/docs/lend/dune)
 
 ---
 

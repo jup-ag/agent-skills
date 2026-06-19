@@ -53,7 +53,7 @@ const result = await fetch(`${BASE_URL}/execute`, {
 ## New response fields
 
 The v2 `/order` response now also includes:
-- `router` — which router won: `"iris"`, `"jupiterz"`, `"dflow"`, or `"okx"`
+- `router` — which router won: `"metis"`, `"jupiterz"`, `"dflow"`, or `"okx"`
 - `mode` — `"ultra"` (all routers competed) or `"manual"` (optional params restricted routing)
 - `feeBps` — fee basis points applied
 - `feeMint` — mint of the fee token

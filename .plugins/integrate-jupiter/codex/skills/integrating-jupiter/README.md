@@ -20,7 +20,7 @@ Skills for AI coding agents in the Jupiter ecosystem.
 | Send | Token transfers via invite links |
 | Studio | Token creation with Dynamic Bonding Curves |
 | Lock | Token vesting and lock (on-chain program) |
-| Routing | DEX aggregation (Iris), RFQ (JupiterZ), and market listing |
+| Routing | DEX aggregation (Metis), RFQ (JupiterZ), and market listing |
 
 ## Examples
 
@@ -28,7 +28,7 @@ Production-ready code snippets in `examples/`:
 - `swap.md` — Swap order → sign → execute → confirm
 - `lend.md` — USDC deposit into Jupiter Lend
 - `trigger.md` — Create and execute a limit order
-- `price.md` — Multi-token price lookup with confidence filtering
+- `price.md` — Multi-token price lookup with fail-closed handling for unpriced mints
 
 ## Related skills
 
