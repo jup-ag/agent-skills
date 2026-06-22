@@ -4,7 +4,7 @@ description: Comprehensive guidance for integrating Jupiter APIs (Swap, Lend, Pe
 license: MIT
 metadata:
   author: jup-ag
-  version: "1.1.0"
+  version: "1.1.1"
 tags:
   - jupiter
   - jup-ag
@@ -131,9 +131,13 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Fee**: Variable by pair — 0 bps (Jupiter tokens/pegged), 2 bps (SOL-Stable), 5 bps (LST-Stable), 10 bps (most pairs), 50 bps (tokens < 24h). Referral fees: 50-255 bps (Jupiter retains 20%).
 - **Rate Limit**: 50 req/10s base, scales with 24h execute volume (see [Rate Limits](#rate-limits))
 - **Endpoints**: `/order` (GET), `/execute` (POST), `/build` (GET, Metis-only raw instructions)
-- **Routing**: 4 routers compete — Metis (`metis`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). The `router` response field returns one of these values (`metis`, not the legacy `iris`). `swapType` is `aggregator` (Metis, Dflow, or OKX) or `rfq` (JupiterZ). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
+- **Routing**: 4 routers compete — Metis (`metis`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). The `router` response field returns one of these values. `swapType` is `aggregator` (Metis, Dflow, or OKX) or `rfq` (JupiterZ). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
 - **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://developers.jup.ag/docs/swap/advanced/gasless.md) for current thresholds and disqualifying params.
-- **Gotchas**: Signed payloads have ~2 min TTL. Transactions are immutable after receipt. Split order/execute in code and logging. Re-quote before execution when conditions may have changed. Routing impact of optional params: `referralAccount` + `referralFee` disable JupiterZ only (Metis/Dflow/OKX remain); `payer` (integrator gasless) restricts routing to Metis only (disables JupiterZ, Dflow, and OKX); `receiver` does NOT restrict routing, but must differ from `taker` (`receiver=taker` returns `400 "Receiver cannot be same as taker"`). `/build` transactions cannot use `/execute` — self-manage via RPC.
+- **Gotchas**:
+  - Signed payloads have ~2 min TTL. Transactions are immutable after receipt.
+  - Split order/execute in code and logging. Re-quote before execution when conditions may have changed.
+  - Routing impact of optional params: `referralAccount` + `referralFee` disable JupiterZ only (Metis/Dflow/OKX remain); `payer` (integrator gasless) restricts routing to Metis only (disables JupiterZ, Dflow, and OKX); `receiver` does NOT restrict routing, but must differ from `taker` (`receiver=taker` returns `400 "Receiver cannot be same as taker"`).
+  - `/build` transactions cannot use `/execute` — self-manage via RPC.
 - **Migrating from an older integration?** Use the `jupiter-swap-migration` skill.
 - Refs: [Overview](https://developers.jup.ag/docs/swap/index.md) | [Order & Execute](https://developers.jup.ag/docs/swap/order-and-execute.md) | [Build](https://developers.jup.ag/docs/swap/build/index.md) | [Gasless](https://developers.jup.ag/docs/swap/advanced/gasless.md) | [Migration](https://developers.jup.ag/docs/swap/migration/ultra-to-order.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)
 
@@ -196,7 +200,10 @@ On success, `/execute` returns `{ status: "Success", code: 0, signature, inputAm
 - **Endpoints**: `/auth/challenge` (POST, body: `walletPubkey` + `type`), `/auth/verify` (POST, body: `type` + `walletPubkey` + base58 `signature`), `/vault` (GET), `/vault/register` (GET), `/deposit/craft` (POST), `/orders/price` (POST create, PATCH update), `/orders/price/cancel/{orderId}` (POST, initiates withdrawal), `/orders/price/confirm-cancel/{orderId}` (POST, submits signed withdrawal + `cancelRequestId`), `/orders/history` (GET, wallet implicit via JWT)
 - **Order types**: `single` (one directional trigger), `oco` (take-profit + stop-loss pair), `otoco` (entry trigger + OCO). `triggerCondition`: `"above"` or `"below"`.
 - **Architecture**: Off-chain custodial vault (Privy) per wallet. Orders invisible on-chain until execution — MEV-resistant. Triggers on USD price (not pool rate ratios). Partial fills supported.
-- **Gotchas**: Order creation is 3 steps — `GET /vault/register` (register if new; returns `409 "Vault already registered"` if it exists, which is fine), `POST /deposit/craft` (returns `transaction` + `requestId`; the body MUST include `orderType: "price"` and `orderSubType` (`single`/`oco`/`otoco`)), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`. Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`. Create response field is `id` (not `orderId`); order history objects use `orderState`/`rawState` (no `status` field).
+- **Gotchas**:
+  - Order creation is 3 steps — `GET /vault/register` (register if new; returns `409 "Vault already registered"` if it exists, which is fine), `POST /deposit/craft` (returns `transaction` + `requestId`; the body MUST include `orderType: "price"` and `orderSubType` (`single`/`oco`/`otoco`)), sign deposit tx, then `POST /orders/price` with `depositRequestId` + `depositSignedTx`.
+  - Cancellation is two-step — `POST /cancel/{orderId}` returns `transaction` + `requestId`; sign, then `POST /confirm-cancel/{orderId}` with `signedTransaction` + `cancelRequestId`.
+  - Create response field is `id` (not `orderId`); order history objects use `orderState`/`rawState` (no `status` field).
 - Refs: [Overview](https://developers.jup.ag/docs/trigger/index.md) | [Authentication](https://developers.jup.ag/docs/trigger/authentication.md) | [Create order](https://developers.jup.ag/docs/trigger/create-order.md) | [Order history](https://developers.jup.ag/docs/trigger/order-history.md) | [Manage orders](https://developers.jup.ag/docs/trigger/manage-orders.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/trigger/v2/trigger.yaml)
 
 ---
@@ -219,7 +226,11 @@ On success, `/execute` returns `{ status: "Success", code: 0, signature, inputAm
 - **Base URL**: `https://api.jup.ag/tokens/v2`
 - **Triggers**: `token metadata`, `token search`, `shield`
 - **Endpoints**: `/search?query={q}` (GET, comma-separate mints, max 100), `/tag?query={tag}` (GET, `verified` or `lst`), `/{category}/{interval}` (GET, categories: `toporganicscore`, `toptraded`, `toptrending`; intervals: `5m`, `1h`, `6h`, `24h`), `/recent` (GET)
-- **Gotchas**: Use mint address as primary identity; treat symbol/name as convenience. Primary trust signal is top-level `isVerified` (boolean) plus `organicScore` (0-100) and `organicScoreLabel` (`high`/`medium`/`low`). Secondary risk flag: **`audit.isSus`** — a boolean present ONLY when `true` (a safe token has no `isSus` key at all), so check it defensively as `token.audit?.isSus === true`, never read it directly. Verified live on flagged tokens (dev holds ~100% of supply); those also carry `isVerified: null` and `organicScoreLabel: "low"`. Absence of `isSus` is NOT proof of safety — not all risky tokens carry the flag. Other conditional `audit` fields the live API returns: `mintAuthorityDisabled`, `freezeAuthorityDisabled`, `topHoldersPercentage`, `devBalancePercentage`, `devMigrations`, `devMints` (all nullable, any may be absent; `devMigrations` is returned but missing from the current OpenAPI schema).
+- **Gotchas**:
+  - Use mint address as primary identity; treat symbol/name as convenience.
+  - Primary trust signal is top-level `isVerified` (boolean) plus `organicScore` (0-100) and `organicScoreLabel` (`high`/`medium`/`low`).
+  - Secondary risk flag: **`audit.isSus`** — a boolean present ONLY when `true` (a safe token has no `isSus` key at all), so check it defensively as `token.audit?.isSus === true`, never read it directly. Verified live on flagged tokens (dev holds ~100% of supply); those also carry `isVerified: null` and `organicScoreLabel: "low"`. Absence of `isSus` is NOT proof of safety — not all risky tokens carry the flag.
+  - Other conditional `audit` fields the live API returns: `mintAuthorityDisabled`, `freezeAuthorityDisabled`, `topHoldersPercentage`, `devBalancePercentage`, `devMigrations`, `devMints` (all nullable, any may be absent; `devMigrations` is returned but missing from the current OpenAPI schema).
 - Refs: [Overview](https://developers.jup.ag/docs/tokens/index.md) | [Token info v2](https://developers.jup.ag/docs/tokens/token-information.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/tokens/v2/tokens.yaml)
 
 ---
@@ -257,7 +268,10 @@ On success, `/execute` returns `{ status: "Success", code: 0, signature, inputAm
 - **Deposit mints**: JupUSD (`JuprjznTrTSp2UFa3ZBUFgwdAmtZCq4MQCwysN55USD`), USDC
 - **Min order**: $5 (5,000,000 native units)
 - **Endpoints**: `/events` (GET, returns `{data, pagination}`), `/events/search` (GET), `/markets/{marketId}` (GET), `/orderbook/{marketId}` (GET, returns `{yes, no, yes_dollars, no_dollars}`), `/orders` (POST, requires `isBuy` boolean + `ownerPubkey`), `/orders/status/{orderPubkey}` (GET), `/positions` (GET, `?ownerPubkey=`), `/positions/{positionPubkey}` (DELETE), `/positions/{positionPubkey}/claim` (POST), `/history` (GET), `/leaderboards` (GET)
-- **Gotchas**: Check `position.claimable` before claiming. Winners get $1/contract. Markets are FLAT (fields like `provider`, `marketId`, `result`, `resolveAt`, `outcomes`, `clobTokenIds` live at the top level, not nested under `metadata`). Contracts are fractional: use `contractsMicro` (1,000,000 = 1 contract) or `contractsDecimal`, not the legacy whole-number `contracts`.
+- **Gotchas**:
+  - Check `position.claimable` before claiming. Winners get $1/contract.
+  - Markets are FLAT — fields like `provider`, `marketId`, `result`, `resolveAt`, `outcomes`, `clobTokenIds` live at the top level, not nested under `metadata`.
+  - Contracts are fractional: use `contractsMicro` (1,000,000 = 1 contract) or `contractsDecimal`, not the legacy whole-number `contracts`.
 - Refs: [Overview](https://developers.jup.ag/docs/prediction/index.md) | [Events](https://developers.jup.ag/docs/prediction/events-and-markets.md) | [Positions](https://developers.jup.ag/docs/prediction/open-positions.md) | [OpenAPI](https://developers.jup.ag/docs/openapi-spec/prediction/prediction.yaml)
 
 ---
