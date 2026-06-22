@@ -14,35 +14,35 @@ const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const WBTC_MINT = '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh';
 
-async function getPrices(mints: string[], confidenceLevel: 'low' | 'medium' | 'high' = 'medium') {
-  const ids = mints.join(',');
+// Price API V3 response is keyed by mint. Each entry has usdPrice (number),
+// blockId, decimals, priceChange24h, and liquidity. There is NO confidenceLevel
+// field (that was V2). Mints with no reliable price are OMITTED from the
+// response entirely — there is no null placeholder — so treat a missing mint
+// as "unpriced" and fail closed for safety-sensitive actions.
+type PriceEntry = {
+  usdPrice: number;
+  blockId: number;
+  decimals: number;
+  priceChange24h: number;
+  liquidity?: number;
+};
 
-  const data = await jupiterFetch<{
-    data: Record<string, { price: string; confidenceLevel?: string } | null>;
-  }>(`/price/v3?ids=${encodeURIComponent(ids)}`);
+async function getPrices(mints: string[]) {
+  const ids = mints.join(','); // max 50 mints per request
 
-  const prices: Record<string, { price: number; confidence: string } | null> = {};
+  const data = await jupiterFetch<Record<string, PriceEntry>>(
+    `/price/v3?ids=${encodeURIComponent(ids)}`,
+  );
 
+  const prices: Record<string, PriceEntry | null> = {};
   for (const mint of mints) {
-    const entry = data.data?.[mint];
-    if (!entry || !entry.price) {
-      prices[mint] = null; // token not priced or unreliable
-      continue;
-    }
-
-    // Filter by confidence — fail closed on low-confidence data
-    const levels = ['low', 'medium', 'high'];
-    const entryLevel = entry.confidenceLevel || 'low';
-    if (levels.indexOf(entryLevel) < levels.indexOf(confidenceLevel)) {
-      prices[mint] = null;
-      continue;
-    }
-
-    prices[mint] = { price: parseFloat(entry.price), confidence: entryLevel };
+    // Missing mint => no reliable price. Fail closed.
+    prices[mint] = data[mint] ?? null;
   }
-
   return prices;
 }
 
-// Usage: getPrices([SOL_MINT, USDC_MINT, WBTC_MINT])
+// Usage:
+// const prices = await getPrices([SOL_MINT, USDC_MINT, WBTC_MINT]);
+// const solUsd = prices[SOL_MINT]?.usdPrice; // number | undefined
 ```

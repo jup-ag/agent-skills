@@ -4,7 +4,7 @@ description: Migration guide from Jupiter Metis (v1) or Ultra to Swap API v2. Us
 license: MIT
 metadata:
   author: jup-ag
-  version: "1.0.1"
+  version: "1.1.0"
 tags:
   - jupiter
   - swap-migration
@@ -64,7 +64,7 @@ Each path has a dedicated example with before/after code, parameter mappings, an
 6. **ALT handling**: If using `/build`, switch from `addressLookupTableAddresses` (array) to `addressesByLookupTableAddress` (object) — remove RPC ALT resolution code
 7. **Fee event parsing**: V2 instructions don't emit fee events — update any transaction parser that depends on them
 8. **Route plan format**: If parsing route plans, use `bps` field (canonical) instead of `percent`
-9. **Error codes**: Update error handling to match [Swap v2 error codes](https://developers.jup.ag/docs/swap/v2/order-and-execute.md)
+9. **Error codes**: Update error handling to match [Swap v2 error codes](https://developers.jup.ag/docs/swap/order-and-execute.md)
 10. **Test**: Run end-to-end swap on devnet/mainnet with small amount to verify
 
 ## Sunset
@@ -75,9 +75,12 @@ Remove this skill once Jupiter decommissions the v1 (`/swap/v1`) endpoints and t
 
 ## References
 
-- [Migration guide](https://developers.jup.ag/docs/swap/v2/migration.md)
-- [Order & Execute](https://developers.jup.ag/docs/swap/v2/order-and-execute.md)
-- [Build](https://developers.jup.ag/docs/swap/v2/build/index.md)
-- [Fees](https://developers.jup.ag/docs/swap/v2/fees.md)
-- [Routing](https://developers.jup.ag/docs/swap/v2/routing.md)
+Migration is split into three profile-targeted guides (the old single `migration` page no longer exists):
+
+- [Migration: Ultra → /order](https://developers.jup.ag/docs/swap/migration/ultra-to-order.md)
+- [Migration: Metis → /build](https://developers.jup.ag/docs/swap/migration/metis-to-build.md)
+- [Migration: Metis → Meta-Aggregator (/order + /execute)](https://developers.jup.ag/docs/swap/migration/metis-to-meta-aggregator.md)
+- [Order & Execute](https://developers.jup.ag/docs/swap/order-and-execute.md)
+- [Build](https://developers.jup.ag/docs/swap/build/index.md)
+- [Swap overview](https://developers.jup.ag/docs/swap/index.md) (routing and fees)
 - [OpenAPI spec](https://developers.jup.ag/docs/openapi-spec/swap/v2/swap.yaml)

@@ -93,6 +93,8 @@ async function craftDeposit(jwt: string, inputMint: string, amount: string) {
       outputMint: USDC_MINT,    // destination token for the order
       userAddress: wallet.publicKey.toBase58(),
       amount,
+      orderType: 'price',       // required
+      orderSubType: 'single',   // required: match the order you will create (single | oco | otoco)
     }),
   });
 
