@@ -4,7 +4,7 @@ description: Comprehensive guidance for integrating Jupiter APIs (Swap, Lend, Pe
 license: MIT
 metadata:
   author: jup-ag
-  version: "1.1.1"
+  version: "1.2.0"
 tags:
   - jupiter
   - jup-ag
@@ -101,6 +101,14 @@ async function signAndSend(
 }
 ```
 
+## Token Amounts & Decimals
+
+Every Jupiter `amount` field is in the token's **smallest unit (raw integer)** — never a human/UI value.
+
+- Common decimals: **SOL & wSOL = 9**, **USDC & USDT = 6**. Canonical mints: SOL `So11111111111111111111111111111111111111112`, USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
+- Convert human → raw: `raw = Math.round(human * 10 ** decimals)`. Examples: `1 SOL → 1_000_000_000`, `100 USDC → 100_000_000`. `slippageBps` is basis points: `0.5% = 50`, `1% = 100`.
+- **Read decimals per-mint on-chain** with `getMint(connection, mintPubkey)` from `@solana/spl-token` — never hardcode (decimals vary by token), and do **not** call the Price API just to discover decimals.
+
 ## Intent Router (first step)
 
 | User intent | API family | First action |
@@ -131,6 +139,7 @@ Use each block as a minimal execution contract. Fetch the linked refs for full r
 - **Fee**: Variable by pair — 0 bps (Jupiter tokens/pegged), 2 bps (SOL-Stable), 5 bps (LST-Stable), 10 bps (most pairs), 50 bps (tokens < 24h). Referral fees: 50-255 bps (Jupiter retains 20%).
 - **Rate Limit**: 50 req/10s base, scales with 24h execute volume (see [Rate Limits](#rate-limits))
 - **Endpoints**: `/order` (GET), `/execute` (POST), `/build` (GET, Metis-only raw instructions)
+- **Quote vs. execute**: For a read-only quote/price **preview**, call `GET /order` and **omit `taker`** — the response `transaction` is `null` and you read `outAmount`, `routePlan[].swapInfo.label`, and price-impact fields. Pass `taker` (then sign + `POST /execute`) only when you actually intend to swap. There is no separate quote endpoint — `/swap/v1/quote` is **deprecated**; use `/swap/v2/order` for quotes too.
 - **Routing**: 4 routers compete — Metis (`metis`), JupiterZ (`jupiterz`), Dflow (`dflow`), OKX (`okx`). The `router` response field returns one of these values. `swapType` is `aggregator` (Metis, Dflow, or OKX) or `rfq` (JupiterZ). Response `mode` field: `"ultra"` (all routers, default params) or `"manual"` (restricted by optional params). `/build` uses Metis only.
 - **Gasless**: Three paths — automatic (Jupiter-covered), JupiterZ (MM-covered), integrator-payer (`payer` param, Metis-only routing). Eligibility varies by balance, trade size, and parameters used. See [Gasless docs](https://developers.jup.ag/docs/swap/advanced/gasless.md) for current thresholds and disqualifying params.
 - **Gotchas**:
