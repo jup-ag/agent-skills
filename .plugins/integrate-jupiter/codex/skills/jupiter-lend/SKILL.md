@@ -570,7 +570,7 @@ main().catch(console.error);
 ## API Documentation
 
 - **Jupiter Lend Overview**: [developers.jup.ag/docs/lend](https://developers.jup.ag/docs/lend)
-- **Lend API (Earn)**: [api-reference/lend/earn](https://developers.jup.ag/api-reference/lend/earn) | REST API for Earn operations (deposit/withdraw/mint/redeem, tokens, positions, earnings)
+- **Lend API (Earn)**: [docs/lend/earn/api](https://dev.jup.ag/docs/lend/earn/api) | REST API for Earn operations (deposit/withdraw/mint/redeem, tokens, positions, earnings)
 - **Lend API (Borrow)**: *(Coming Soon)*
 
 ## SDKs
